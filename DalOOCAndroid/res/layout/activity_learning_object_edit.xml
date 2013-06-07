@@ -1,0 +1,152 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/svLearningObjectEdit"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <LinearLayout
+        android:id="@+id/llLearningObjectEdit"
+    	android:layout_marginTop="10dp"
+    	android:layout_marginBottom="10dp"
+    	android:layout_marginRight="10dp"
+    	android:layout_marginLeft="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/name" />
+
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textShortMessage"
+            android:ems="10" >
+
+            <requestFocus />
+        </EditText>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/description" />
+
+        <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textMultiLine" />
+
+ 		<RelativeLayout
+            android:id="@+id/rlVideo"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <ImageView
+                android:id="@+id/ivAddVideo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:src="@drawable/content_new" />
+
+            <TextView
+                android:id="@+id/txtVideo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+                android:text="@string/videos" />
+             
+            	
+	        <LinearLayout
+	            android:id="@+id/llVideo"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_marginTop="10dp"
+	            android:layout_marginBottom="10dp"
+	            android:layout_below="@id/txtVideo"
+	            android:orientation="vertical" >
+		        	        
+	        </LinearLayout>
+        </RelativeLayout>
+
+ 		<RelativeLayout
+            android:id="@+id/rlAudio"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <ImageView
+                android:id="@+id/ivAddAudio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:src="@drawable/content_new" />
+
+            <TextView
+                android:id="@+id/txtAudio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+                android:text="@string/audios" />
+             
+            	
+	        <LinearLayout
+	            android:id="@+id/llAudio"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_marginTop="10dp"
+	            android:layout_marginBottom="10dp"
+	            android:layout_below="@id/txtAudio"
+	            android:orientation="vertical" >
+		        	        
+	        </LinearLayout>
+        </RelativeLayout>
+ 		<RelativeLayout
+            android:id="@+id/rlDocument"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <ImageView
+                android:id="@+id/ivAddDocument"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:src="@drawable/content_new" />
+
+            <TextView
+                android:id="@+id/txtDocument"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+                android:text="@string/documents" />
+             
+            	
+	        <LinearLayout
+	            android:id="@+id/llDocument"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_marginTop="10dp"
+	            android:layout_marginBottom="10dp"
+	            android:layout_below="@id/txtDocument"
+	            android:orientation="vertical" >
+		        	        
+	        </LinearLayout>
+        </RelativeLayout>
+    </LinearLayout>
+
+</ScrollView>

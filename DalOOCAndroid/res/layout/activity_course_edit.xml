@@ -1,0 +1,176 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/svCourseEdit"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <LinearLayout
+        android:id="@+id/llCourseEdit"
+    	android:layout_marginTop="10dp"
+    	android:layout_marginBottom="10dp"
+    	android:layout_marginRight="10dp"
+    	android:layout_marginLeft="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/name" />
+
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textShortMessage"
+            android:ems="10" >
+
+            <requestFocus />
+        </EditText>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/description" />
+
+        <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textMultiLine" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/instructor" />
+     
+		<EditText
+            android:id="@+id/etInstructor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textShortMessage"
+            android:ems="10" />
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/course_detail" />
+        
+        <EditText
+            android:id="@+id/etCourseDetail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textMultiLine" />
+ 
+ 		<RelativeLayout
+            android:id="@+id/rlPrerequisites"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <ImageView
+                android:id="@+id/ivAddPrerequisite"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:src="@drawable/content_new" />
+
+            <TextView
+                android:id="@+id/txtPrerequisite"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+                android:text="@string/prerequisites" />
+             
+            	
+	        <LinearLayout
+	            android:id="@+id/llPrerequisites"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_marginTop="10dp"
+	            android:layout_marginBottom="10dp"
+	            android:layout_below="@id/txtPrerequisite"
+	            android:orientation="vertical" >
+		        	        
+	        </LinearLayout>
+        </RelativeLayout>
+        
+        <RelativeLayout
+            android:id="@+id/rlReferences"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/ivAddReference"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:src="@drawable/content_new" />
+
+            <TextView
+                android:id="@+id/txtReferences"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+                android:text="@string/references" />
+             
+	        <LinearLayout
+	            android:id="@+id/llReferences"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+   	            android:layout_marginTop="10dp"
+	            android:layout_marginBottom="10dp"
+	            android:layout_below="@id/txtReferences"
+	            android:orientation="vertical" >
+		        	        
+	        </LinearLayout>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/rlLearningObjects"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            
+             <ImageView
+                android:id="@+id/ivAddLearningObject"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:src="@drawable/content_new" />
+             
+	        <TextView 
+	            android:id="@+id/txtLearningObjects"
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+	            android:text="@string/learning_objects" />
+	
+	        <LinearLayout
+	            android:id="@+id/llLearningObject"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+    	        android:layout_marginTop="10dp"
+	            android:layout_marginBottom="10dp"
+	            android:layout_below="@id/txtLearningObjects"
+	            android:orientation="vertical" >
+	                 
+		        	        
+	        </LinearLayout>
+        </RelativeLayout>
+    </LinearLayout>
+
+</ScrollView>

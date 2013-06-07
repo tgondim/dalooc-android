@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">DalOOC</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_edit_course">Edit Course</string>
+    <string name="action_edit_learning_object">Edit Learning Object</string>
+    <string name="action_new_course">New Course</string>
+    <string name="action_new_learning_object">New Learning Object</string>
+    <string name="action_new_video">New Video</string>
+    <string name="action_new_audio">New Audio</string>
+    <string name="action_new_document">New Document</string>
+    <string name="title_activity_learning_object">Learning Object Name</string>
+    <string name="videos">Videos</string>
+    <string name="audios">Audio</string>
+    <string name="documents">Documents</string>
+    <string name="syllabus">Syllabus</string>
+    <string name="courses">COURSES</string>
+    <string name="instructor">Instructor</string>
+    <string name="course_detail">Course Detail</string>
+    <string name="name">Name</string>
+    <string name="description">Description</string>
+    <string name="references">References</string>
+    <string name="prerequisites">Prerequisites</string>
+    <string name="learning_objects">Learning Objects</string>
+    <string name="no_references">No references</string>
+    <string name="no_prerequisites">No prerequisites</string>
+    <string name="title_activity_course">Course Name</string>
+    <string name="title_activity_audio_detail">Audio Detail</string>
+    <string name="title_activity_video_detail">Video Detail</string>
+    <string name="title_activity_document_detail">Document Detail</string>
+    <string name="title_activity_document_preview">Document Preview</string>
+    <string name="title_activity_course_edit">Course Edit</string>
+    <string name="ib_audio_play_description">Press this button to listen to the selected audio</string>
+    <string name="ib_audio_record_description">Press this button to record a new audio</string>
+    <string name="no_application_available">No Application Available to View PDF</string>
+    <string name="no_document_added">No document was added to this learning object</string>
+    <string name="no_video_added">No video was added to this learning object</string>
+    <string name="no_audio_added">No audio was added to this learning object</string>
+    <string name="video_overwrite_confirm">Do you really want to replace the old video file?</string>
+    <string name="audio_overwrite_confirm">Do you really want to replace the old audio file?</string>
+    <string name="document_overwrite_confirm">Do you really want to replace the old document file?</string>
+    <string name="default_overwrite_confirm">Do you really want to replace the old file?</string>
+    <string name="confirm_learning_object_changes">Do you want to save the changes?</string>
+    <string name="dialog_title_learning_object">Learning Object Edit</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="connection_error">Connection error. Please try again later.</string>
+    <string name="successful_downloaded"> was successfuly downloaded.</string>
+    <string name="unable_create_file">Unable to create new file</string>
+    <string name="download_complete">Download complete</string>
+    <string name="title_course_list">Courses</string>
+    <string name="title_course_detail">Course Detail</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_learning_object_edit">Learning Object Edit</string>
+
+</resources>

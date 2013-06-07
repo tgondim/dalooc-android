@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <ImageView
+        android:id="@+id/ivDocumentDetailThumbnail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:src="@drawable/ic_document_dark" />
+
+    <LinearLayout
+        android:id="@+id/llDocumentDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/txtDocumentItemDescription"
+        android:layout_below="@+id/txtDocumentItemDescription"
+        android:layout_marginTop="25dp" >
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/txtDocumentItemName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/ivDocumentDetailThumbnail"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@+id/ivDocumentDetailThumbnail"
+        android:text="txtDocumentItemName"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/txtDocumentItemDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/ivDocumentDetailThumbnail"
+        android:layout_below="@+id/ivDocumentDetailThumbnail"
+        android:layout_marginTop="10dp"
+        android:text="txtDocumentItemDescription"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+</RelativeLayout>
