@@ -1,5 +1,7 @@
 package ca.dal.cs.dalooc.android.gui;
 
+import java.io.Serializable;
+
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
@@ -7,10 +9,13 @@ import android.view.Menu;
 import ca.dal.cs.android.dalooc.R;
 import ca.dal.cs.dalooc.android.control.LearningObjectSectionsPagerAdapter;
 import ca.dal.cs.dalooc.model.LearningObject;
+import ca.dal.cs.dalooc.model.User;
 
 public class LearningObjectActivity extends FragmentActivity {
 
 	private LearningObjectSectionsPagerAdapter mSectionsPagerAdapter;
+	
+	private User user;
 	
 	private LearningObject learningObject; 
 
@@ -22,6 +27,7 @@ public class LearningObjectActivity extends FragmentActivity {
 		setContentView(R.layout.activity_learning_object);
 
 		this.learningObject = (LearningObject)getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
+		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
 		
 		setTitle(this.learningObject.getName());
 		
@@ -41,5 +47,9 @@ public class LearningObjectActivity extends FragmentActivity {
 
 	public LearningObject getLearningObject() {
 		return this.learningObject;
+	}
+
+	public User getUser() {
+		return this.user;
 	}
 }

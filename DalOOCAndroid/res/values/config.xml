@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="url_webservice">http://192.168.0.3:8080/DalOOCWebServices/services/CourseRepository</string>
+<!--     <string name="url_webservice">http://192.168.0.2:8080/DalOOCWebServices/services</string> -->
+<!--     <string name="host_file_server">http://192.168.0.2:8080</string> -->
+    <string name="url_webservice">http://yen.cs.dal.ca/DalOOCWebServices/services</string>
+    <string name="host_file_server">http://yen.cs.dal.ca</string>
+    <string name="course_repository">CourseRepository</string>
+    <string name="user_repository">UserRepository</string>
     <string name="namespace_webservice">http://webservice.dalooc.cs.dal.ca</string>
     <string name="get_all_courses_webservice_operation">getAllCourses</string>
     <string name="save_course_webservice_operation">saveCourse</string>
-    <string name="host_file_server">http://tgondim.dyndns.info:8080</string>
+    <string name="validate_user_webservice_operation">validateUser</string>
+    <string name="videos_folder">/DalOOC/videos</string>
+    <string name="audio_folder">/DalOOC/audio</string>
+    <string name="documents_folder">/DalOOC/documents</string>
+    <string name="item_separator">) </string>
 </resources>

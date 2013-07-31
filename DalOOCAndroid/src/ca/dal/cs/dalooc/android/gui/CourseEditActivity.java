@@ -15,14 +15,16 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import ca.dal.cs.android.dalooc.R;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
 
 public class CourseEditActivity extends Activity {
 
-	private static final int RELATIVE_LAYOUT_VIEW = 0;
-	private static final int EDIT_TEXT_VIEW = 1;
+	private static final int LAYOUT_VIEW = 0;
+	private static final int NAME_VIEW = 1;
+	private static final int OBJECT_ITEM = 2;
 	
 	private ImageView ivAddPrerequisite;
 	private ImageView ivAddReference;
@@ -30,7 +32,7 @@ public class CourseEditActivity extends Activity {
 	
 	private Map<ImageView, View[]> prerequisitesLayoutMapping;
 	private Map<ImageView, View[]> referencesLayoutMapping;
-	private Map<ImageView, View[]> learningObjectLayoutMapping;
+	private Map<ImageView, Object[]> learningObjectLayoutMapping;
 
 	private LinearLayout llPrerequesites;
 	private LinearLayout llReferences;
@@ -55,7 +57,7 @@ public class CourseEditActivity extends Activity {
 		
 		this.prerequisitesLayoutMapping = new HashMap<ImageView, View[]>();
 		this.referencesLayoutMapping = new HashMap<ImageView, View[]>();
-		this.learningObjectLayoutMapping = new HashMap<ImageView, View[]>();
+		this.learningObjectLayoutMapping = new HashMap<ImageView, Object[]>();
 		
 		this.llPrerequesites = (LinearLayout)findViewById(R.id.llPrerequisites);
 		this.llReferences = (LinearLayout)findViewById(R.id.llReferences);
@@ -109,12 +111,17 @@ public class CourseEditActivity extends Activity {
 		
 		for (String prerequisite : this.course.getSyllabus().getPrerequisites()) {
 			View v = createPrerequisiteEntry();
-			((EditText)this.prerequisitesLayoutMapping.get(v)[EDIT_TEXT_VIEW]).setText(prerequisite);
+			((EditText)this.prerequisitesLayoutMapping.get(v)[NAME_VIEW]).setText(prerequisite);
 		}
 		
 		for (String reference : this.course.getSyllabus().getReferences()) {
 			View v = createReferenceEntry();
-			((EditText)this.referencesLayoutMapping.get(v)[EDIT_TEXT_VIEW]).setText(reference);
+			((EditText)this.referencesLayoutMapping.get(v)[NAME_VIEW]).setText(reference);
+		}
+		
+		for (LearningObject learningObject : this.course.getLearningObjectList()) {
+			View v = createLearningObjectEntry(learningObject);
+//			((TextView)this.learningObjectLayoutMapping.get(v)[NAME_VIEW]).setText(learningObject.getName());
 		}
 	}
 
@@ -139,8 +146,8 @@ public class CourseEditActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				((RelativeLayout)CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[RELATIVE_LAYOUT_VIEW]).removeAllViews();
-				CourseEditActivity.this.llPrerequesites.removeViewInLayout(CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[RELATIVE_LAYOUT_VIEW]);
+				((RelativeLayout)CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[LAYOUT_VIEW]).removeAllViews();
+				CourseEditActivity.this.llPrerequesites.removeViewInLayout(CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[LAYOUT_VIEW]);
 				CourseEditActivity.this.prerequisitesLayoutMapping.remove(v);
 			}
 		});
@@ -161,8 +168,8 @@ public class CourseEditActivity extends Activity {
 		relativeLayout.addView(imageView, params);
 
 		View[] viewArray = new View[2];
-		viewArray[RELATIVE_LAYOUT_VIEW] = relativeLayout;
-		viewArray[EDIT_TEXT_VIEW] = editText;
+		viewArray[LAYOUT_VIEW] = relativeLayout;
+		viewArray[NAME_VIEW] = editText;
 		
 		CourseEditActivity.this.prerequisitesLayoutMapping.put(imageView, viewArray);
 		LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
@@ -188,8 +195,8 @@ public class CourseEditActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				((RelativeLayout)CourseEditActivity.this.referencesLayoutMapping.get(v)[RELATIVE_LAYOUT_VIEW]).removeAllViews();
-				CourseEditActivity.this.llReferences.removeViewInLayout(CourseEditActivity.this.referencesLayoutMapping.get(v)[RELATIVE_LAYOUT_VIEW]);
+				((RelativeLayout)CourseEditActivity.this.referencesLayoutMapping.get(v)[LAYOUT_VIEW]).removeAllViews();
+				CourseEditActivity.this.llReferences.removeViewInLayout(CourseEditActivity.this.referencesLayoutMapping.get(v)[LAYOUT_VIEW]);
 				CourseEditActivity.this.referencesLayoutMapping.remove(v);
 			}
 		});
@@ -210,8 +217,8 @@ public class CourseEditActivity extends Activity {
 		relativeLayout.addView(imageView, params);
 		
 		View[] viewArray = new View[2];
-		viewArray[RELATIVE_LAYOUT_VIEW] = relativeLayout;
-		viewArray[EDIT_TEXT_VIEW] = editText;
+		viewArray[LAYOUT_VIEW] = relativeLayout;
+		viewArray[NAME_VIEW] = editText;
 		
 		CourseEditActivity.this.referencesLayoutMapping.put(imageView, viewArray);
 		
@@ -225,9 +232,69 @@ public class CourseEditActivity extends Activity {
 		return imageView;
 	}
 
-	protected View createLearningObjectEntry() {
-		//TODO create the LearningObjectEntry
-		return null;
+	protected View createLearningObjectEntry(LearningObject learningObject) {
+		RelativeLayout relativeLayout = new RelativeLayout(CourseEditActivity.this);
+		
+		TextView textView = new TextView(CourseEditActivity.this);
+		textView.setTextAppearance(this, android.R.style.TextAppearance_Medium);
+		
+		if (learningObject != null) {
+			textView.setText(learningObject.getName());
+		}
+		
+		textView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(CourseEditActivity.this, LearningObjectEditActivity.class);
+//				int pos = CourseEditActivity.this.learningObjectLayoutMapping.
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, (LearningObject)CourseEditActivity.this.learningObjectLayoutMapping.get(v)[OBJECT_ITEM]);
+				startActivityForResult(intent, LearningObjectEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE);
+			}
+		});
+		
+		ImageView imageView = new ImageView(CourseEditActivity.this);
+		imageView.setImageDrawable(CourseEditActivity.this.getResources().getDrawable(R.drawable.content_discard));
+		imageView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				((RelativeLayout)CourseEditActivity.this.learningObjectLayoutMapping.get(v)[LAYOUT_VIEW]).removeAllViews();
+				CourseEditActivity.this.llLearningObject.removeViewInLayout((View)CourseEditActivity.this.learningObjectLayoutMapping.get(v)[LAYOUT_VIEW]);
+				CourseEditActivity.this.learningObjectLayoutMapping.remove(v);
+			}
+		});
+		
+		//EditText
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
+		
+		relativeLayout.addView(textView, params);
+		
+		//ImageView
+		params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+		
+		relativeLayout.addView(imageView, params);
+		
+		Object[] viewArray = new Object[3];
+		viewArray[LAYOUT_VIEW] = relativeLayout;
+		viewArray[NAME_VIEW] = textView;
+		viewArray[OBJECT_ITEM] = learningObject;
+		
+		CourseEditActivity.this.learningObjectLayoutMapping.put(imageView, viewArray);
+		
+		LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, 
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				0);
+		llParams.setMargins(0, 10, 0, 0);
+		CourseEditActivity.this.llLearningObject.addView(relativeLayout, llParams);
+		
+		return imageView;
 	}
 	
 	@Override
@@ -236,7 +303,7 @@ public class CourseEditActivity extends Activity {
 		if (requestCode == LearningObjectEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				LearningObject lo = (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
-				createLearningObjectEntry();
+				createLearningObjectEntry(lo);
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//TODO see here what to do if edit was canceled
 			}

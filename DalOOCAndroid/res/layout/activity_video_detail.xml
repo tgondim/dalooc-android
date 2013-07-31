@@ -1,44 +1,76 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" >
-
-    <ImageView
-        android:id="@+id/ivVideoDetailThumbnail"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="10dp"
-        android:src="@drawable/ic_video" />
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".VideoDetailActivity" >
+    
+  	<!-- progress status -->
 
     <LinearLayout
-        android:id="@+id/llVideoDetail"
+        android:id="@+id/llDownloadPreviewStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/txtVideoItemDescription"
-        android:layout_below="@+id/txtVideoItemDescription"
-        android:layout_marginTop="25dp" >
+        android:layout_gravity="center"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:visibility="gone" >
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvDownloadPreviewStatusMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="sans-serif-light"
+            android:text="@string/download_preview_in_progress"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/txtVideoItemName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/ivVideoDetailThumbnail"
-        android:layout_marginLeft="10dp"
-        android:layout_toRightOf="@+id/ivVideoDetailThumbnail"
-        android:text="txtVideoItemName"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    <TextView
-        android:id="@+id/txtVideoItemDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/ivVideoDetailThumbnail"
-        android:layout_below="@+id/ivVideoDetailThumbnail"
-        android:layout_marginTop="10dp"
-        android:text="txtVideoItemDescription"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
-
-</RelativeLayout>
+    
+	<RelativeLayout android:id="@+id/rlVideoDetailForm"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent" >
+	
+	    <ImageView
+	        android:id="@+id/ivVideoDetailThumbnail"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentTop="true"
+	        android:layout_marginTop="10dp"
+	        android:layout_marginLeft="10dp"
+	        android:src="@drawable/ic_video_thumbnail_default" />
+	
+	    <LinearLayout
+	        android:orientation="horizontal"
+	        android:id="@+id/llVideoDetail"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignLeft="@+id/txtVideoItemDescription"
+	        android:layout_below="@+id/txtVideoItemDescription"
+	        android:layout_marginTop="25dp" >
+	    </LinearLayout>
+	
+	    <TextView
+	        android:id="@+id/txtVideoItemName"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignTop="@+id/ivVideoDetailThumbnail"
+	        android:layout_marginLeft="10dp"
+	        android:layout_toRightOf="@+id/ivVideoDetailThumbnail"
+	        android:text="txtVideoItemName"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	
+	    <TextView
+	        android:id="@+id/txtVideoItemDescription"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignLeft="@+id/ivVideoDetailThumbnail"
+	        android:layout_below="@+id/ivVideoDetailThumbnail"
+	        android:layout_marginTop="10dp"
+	        android:text="txtVideoItemDescription"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />
+	
+	</RelativeLayout>
+</merge>

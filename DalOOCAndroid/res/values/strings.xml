@@ -14,6 +14,7 @@
     <string name="videos">Videos</string>
     <string name="audios">Audio</string>
     <string name="documents">Documents</string>
+    <string name="test_question">Test Questions</string>
     <string name="syllabus">Syllabus</string>
     <string name="courses">COURSES</string>
     <string name="instructor">Instructor</string>
@@ -29,6 +30,7 @@
     <string name="title_activity_audio_detail">Audio Detail</string>
     <string name="title_activity_video_detail">Video Detail</string>
     <string name="title_activity_document_detail">Document Detail</string>
+    <string name="title_activity_test_question_detail">Test Question Detail</string>
     <string name="title_activity_document_preview">Document Preview</string>
     <string name="title_activity_course_edit">Course Edit</string>
     <string name="ib_audio_play_description">Press this button to listen to the selected audio</string>
@@ -41,19 +43,26 @@
     <string name="audio_overwrite_confirm">Do you really want to replace the old audio file?</string>
     <string name="document_overwrite_confirm">Do you really want to replace the old document file?</string>
     <string name="default_overwrite_confirm">Do you really want to replace the old file?</string>
-    <string name="confirm_learning_object_changes">Do you want to save the changes?</string>
+    <string name="problems_uploading_file">We are unable to upload your file now. Please try again later.</string>
+    <string name="problems_downloading_file">We are unable to load the preview now. Please try again later.</string>
+    <string name="download_preview_in_progress">Loading preview file</string>
+    <string name="upload_file_in_progress">Uploading file</string>
+    <string name="successfull_upload">Your file was uploaded.</string>
+    <string name="confirm">Confirmation</string>
+    <string name="confirm_message">Do you confirm?</string>
     <string name="dialog_title_learning_object">Learning Object Edit</string>
+    <string name="confirm_learning_object_changes">Do you want to save the changes?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="submit">Submit</string>
     <string name="connection_error">Connection error. Please try again later.</string>
     <string name="successful_downloaded"> was successfuly downloaded.</string>
     <string name="unable_create_file">Unable to create new file</string>
     <string name="download_complete">Download complete</string>
     <string name="title_course_list">Courses</string>
     <string name="title_course_detail">Course Detail</string>
-    <string name="hello_world">Hello world!</string>
     <string name="title_activity_learning_object_edit">Learning Object Edit</string>
 
 </resources>

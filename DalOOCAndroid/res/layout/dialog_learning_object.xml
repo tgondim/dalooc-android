@@ -6,7 +6,7 @@
 
     <TextView
         android:id="@+id/tvDialog" 
-        android:text="@string/confirm_learning_object_changes" 
+        android:text="@string/confirm" 
         android:layout_width="wrap_content" 
         android:layout_height="wrap_content" />
 

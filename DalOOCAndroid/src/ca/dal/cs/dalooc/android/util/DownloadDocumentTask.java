@@ -1,6 +1,5 @@
 package ca.dal.cs.dalooc.android.util;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URL;
@@ -26,9 +25,9 @@ public class DownloadDocumentTask extends AsyncTask<String, Void, File> {
         this.listeners = new ArrayList<OnDownloadDocumentDoneListener>();
     }
 
+    @Override
     protected File doInBackground(String... urls) {
         String urlDocument = urls[0];
-        BufferedInputStream bis = null;
         FileOutputStream fos = null;
         
         try {
@@ -54,11 +53,12 @@ public class DownloadDocumentTask extends AsyncTask<String, Void, File> {
         return this.documentFile;
     }
 
+    @Override
     protected void onPostExecute(File result) {
     	fireOnDownloadDocumentDone(result);
     	this.documentFile.deleteOnExit();
     }
-
+    
 	private void fireOnDownloadDocumentDone(File result) {
 		for (OnDownloadDocumentDoneListener dl : this.listeners) {
     		dl.onDownloadDocumentDone(result);

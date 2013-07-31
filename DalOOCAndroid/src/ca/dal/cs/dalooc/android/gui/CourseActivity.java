@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import ca.dal.cs.android.dalooc.R;
 import ca.dal.cs.dalooc.android.control.CourseSectionsPagerAdapter;
 import ca.dal.cs.dalooc.model.Course;
+import ca.dal.cs.dalooc.model.User;
 
 public class CourseActivity extends FragmentActivity {
 
@@ -18,6 +19,8 @@ public class CourseActivity extends FragmentActivity {
 	
 	ViewPager mViewPager;
 	
+	private User user;
+	
 	private Course course;
 	
 	@Override
@@ -26,6 +29,7 @@ public class CourseActivity extends FragmentActivity {
 		setContentView(R.layout.activity_course);
 		
 		this.course = (Course)getIntent().getExtras().getSerializable(ARG_COURSE);
+		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
 		
 		setTitle(this.course.getName());
 		
@@ -50,6 +54,7 @@ public class CourseActivity extends FragmentActivity {
 		case 200:
 			Intent intent = new Intent(this, CourseEditActivity.class);
 			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			
 			startActivity(intent);
 			break;
 
@@ -58,7 +63,12 @@ public class CourseActivity extends FragmentActivity {
 		}
 		return super.onMenuItemSelected(featureId, item);
 	}
+
 	public Course getCourse() {
-		return course;
+		return this.course;
+	}
+	
+	public User getUser() {
+		return this.user;
 	}
 }

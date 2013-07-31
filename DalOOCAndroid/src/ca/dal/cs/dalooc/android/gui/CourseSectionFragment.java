@@ -3,6 +3,7 @@ package ca.dal.cs.dalooc.android.gui;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -20,6 +21,7 @@ import ca.dal.cs.android.dalooc.R;
 import ca.dal.cs.dalooc.android.control.LearningObjectAdapter;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
+import ca.dal.cs.dalooc.model.User;
 
 public class CourseSectionFragment extends Fragment { 
 
@@ -28,6 +30,8 @@ public class CourseSectionFragment extends Fragment {
 	public static final String ARG_COURSE =  "course";
 
 	private int sectionNumber;
+	
+	private User user;
 	
 	private LearningObjectAdapter learningOjectAdapter;
 	
@@ -47,8 +51,10 @@ public class CourseSectionFragment extends Fragment {
 		
 		View rootView = inflater.inflate(R.layout.fragment_course, container, false);
 		
-		Course course = (Course)getArguments().getSerializable(ARG_COURSE);
+		this.user = (User)getArguments().getSerializable(LoginActivity.ARG_USER);
 		
+		Course course = (Course)getArguments().getSerializable(ARG_COURSE);
+
 		LinearLayout llFragmentCourse = (LinearLayout)rootView.findViewById(R.id.llFragmentCourse);
 		
 		switch (this.sectionNumber) {
@@ -57,7 +63,8 @@ public class CourseSectionFragment extends Fragment {
 			
 			TextView txtInstructor = new TextView(inflater.getContext());
 			txtInstructor.setId(1);
-			txtInstructor.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Large);
+			txtInstructor.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
+			txtInstructor.setTypeface(null, Typeface.BOLD);
 			txtInstructor.setText(resources.getString(R.string.instructor));
 			
 			RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -68,7 +75,7 @@ public class CourseSectionFragment extends Fragment {
 
 			TextView txtInstructorName = new TextView(inflater.getContext());
 			txtInstructorName.setId(2);
-			txtInstructorName.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
+//			txtInstructorName.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
 			txtInstructorName.setText(course.getSyllabus().getInstructor());
 			
 			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -89,7 +96,8 @@ public class CourseSectionFragment extends Fragment {
 			
 			TextView txtCourseDetail = new TextView(inflater.getContext());
 			txtCourseDetail.setId(4);
-			txtCourseDetail.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Large);
+			txtCourseDetail.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
+			txtCourseDetail.setTypeface(null, Typeface.BOLD);
 			txtCourseDetail.setText(resources.getString(R.string.course_detail));
 			
 			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -100,7 +108,7 @@ public class CourseSectionFragment extends Fragment {
 
 			TextView txtCourseDetailText = new TextView(inflater.getContext());
 			txtCourseDetailText.setId(5);
-			txtCourseDetailText.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
+//			txtCourseDetailText.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
 			txtCourseDetailText.setText(course.getSyllabus().getCourseDetail());
 			
 			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -121,7 +129,8 @@ public class CourseSectionFragment extends Fragment {
 			
 			TextView txtReferences = new TextView(inflater.getContext());
 			txtReferences.setId(7);
-			txtReferences.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Large);
+			txtReferences.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
+			txtReferences.setTypeface(null, Typeface.BOLD);
 			txtReferences.setText(resources.getString(R.string.references));
 			
 			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -132,7 +141,7 @@ public class CourseSectionFragment extends Fragment {
 
 			TextView txtReferencesText = new TextView(inflater.getContext());
 			txtReferencesText.setId(8);
-			txtReferencesText.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
+//			txtReferencesText.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
 			
 			if (course.getSyllabus().getReferences().size() == 0) {
 				txtReferencesText.setText(resources.getString(R.string.no_references));
@@ -162,7 +171,8 @@ public class CourseSectionFragment extends Fragment {
 			
 			TextView txtPrerequisites = new TextView(inflater.getContext());
 			txtPrerequisites.setId(10);
-			txtPrerequisites.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Large);
+			txtPrerequisites.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
+			txtPrerequisites.setTypeface(null, Typeface.BOLD);
 			txtPrerequisites.setText(resources.getString(R.string.prerequisites));
 			
 			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -173,7 +183,7 @@ public class CourseSectionFragment extends Fragment {
 
 			TextView txtPrerequisitesText = new TextView(inflater.getContext());
 			txtPrerequisitesText.setId(11);
-			txtPrerequisitesText.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
+//			txtPrerequisitesText.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
 			
 			
 			if (course.getSyllabus().getPrerequisites().size() == 0) {
@@ -218,7 +228,8 @@ public class CourseSectionFragment extends Fragment {
 					
 					if (learningObject != null) {
 						learningObjectIntent = new Intent("LEARNING_OBJECT_ACTIVITY");
-						learningObjectIntent.putExtra("learning_object", learningObject);
+						learningObjectIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, learningObject);
+						learningObjectIntent.putExtra(LoginActivity.ARG_USER, CourseSectionFragment.this.user);
 
 						startActivity(learningObjectIntent);
 					}

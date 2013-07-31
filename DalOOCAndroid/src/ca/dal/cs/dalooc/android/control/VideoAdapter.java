@@ -1,5 +1,6 @@
 package ca.dal.cs.dalooc.android.control;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,7 +11,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import ca.dal.cs.android.dalooc.R;
-import ca.dal.cs.dalooc.android.util.DownloadVideoIconTask;
+import ca.dal.cs.dalooc.android.util.DownloadImageTask;
 import ca.dal.cs.dalooc.model.Video;
 
 
@@ -37,7 +38,8 @@ public class VideoAdapter extends BaseAdapter {
 
 	@Override
 	public long getItemId(int position) {
-		return Long.valueOf(this.videoList.get(position).getId());
+		BigInteger big = new BigInteger(this.videoList.get(position).getId(), 16);
+		return Long.valueOf(big.longValue());
 	}
 
 	@Override
@@ -47,11 +49,12 @@ public class VideoAdapter extends BaseAdapter {
 		View view = this.inflater.inflate(R.layout.video_list_item, null);
 		
 		TextView txtVideoName = (TextView)view.findViewById(R.id.txtVideoName);
-		txtVideoName.setText(video.getName());
+ 		txtVideoName.setText(video.getName());
 		
-		ImageView ivVideoThumbnail = (ImageView)view.findViewById(R.id.ivVideoThumbnail);
-//		new DownloadVideoIconTask(ivVideoThumbnail).execute(this.inflater.getContext().getResources().getString(R.string.host_file_server) + video.getVideoUrl());
-		new DownloadVideoIconTask(ivVideoThumbnail).execute(video.getVideoUrl());
+		new DownloadImageTask((ImageView)view.findViewById(R.id.ivVideoThumbnail))
+			.execute(this.inflater.getContext().getResources().getString(R.string.host_file_server)
+					+ this.inflater.getContext().getResources().getString(R.string.videos_folder)
+					+ "/thumb/" + video.getVideoUrl().replace("mp4", "jpg"));
 		
 		return view;
 	}

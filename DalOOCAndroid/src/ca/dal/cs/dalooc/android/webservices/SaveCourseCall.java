@@ -5,13 +5,11 @@ import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
 
-import android.app.Activity;
+import android.content.Context;
 import android.util.Log;
 import ca.dal.cs.android.dalooc.R;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.webservice.util.Parser;
-
-import com.mongodb.BasicDBObject;
 
 public class SaveCourseCall implements Runnable {
 
@@ -19,23 +17,24 @@ public class SaveCourseCall implements Runnable {
 	
 	private Course course;
 	private SaveCourseCallBack callBack;
+	private Context context;
 	
 	private boolean isLoading;
-	private boolean saveCourseWebServiceResponseOk;
+//	private boolean saveCourseWebServiceResponseOk;
 	
-	public SaveCourseCall(Course course, SaveCourseCallBack callBack) {
+	public SaveCourseCall(Course course, SaveCourseCallBack callBack, Context context) {
 		super();
 		this.callBack = callBack;
 		this.course = course;
+		this.context = context;
 	}
 	
 	@Override
 	public void run() {
 		
 		this.isLoading = true;
-		SoapObject soap = new SoapObject(((Activity)this.callBack).getResources().getString(
-				R.string.namespace_webservice), ((Activity)this.callBack).getResources().getString(
-						R.string.save_course_webservice_operation));
+		SoapObject soap = new SoapObject(this.context.getResources().getString(R.string.namespace_webservice), 
+			 							this.context.getResources().getString(R.string.save_course_webservice_operation));
 		
 //		soap.addProperty("chave", ((Activity)this.callBack).getResources().getString(R.string.chave_dalooc_webservice));
 		
@@ -50,7 +49,7 @@ public class SaveCourseCall implements Runnable {
 		HttpTransportSE httpTransport = new HttpTransportSE(this.callBack.getUrlWebService(SaveCourseCall.SAVE_COURSE_WEB_SERVICE));
 		
 		try {
-			this.saveCourseWebServiceResponseOk = false;
+//			this.saveCourseWebServiceResponseOk = false;
 			httpTransport.call("", envelope);
 			SoapObject results = (SoapObject) envelope.bodyIn;
 			int count = results.getPropertyCount();

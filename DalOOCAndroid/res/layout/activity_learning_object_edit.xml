@@ -1,11 +1,10 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/svLearningObjectEdit"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
 
-    <LinearLayout
-        android:id="@+id/llLearningObjectEdit"
+    <LinearLayout  android:id="@+id/llLearningObjectEdit"
     	android:layout_marginTop="10dp"
     	android:layout_marginBottom="10dp"
     	android:layout_marginRight="10dp"
@@ -14,13 +13,13 @@
         android:layout_height="wrap_content"
         android:orientation="vertical" >
 
-        <TextView
-            android:layout_width="wrap_content"
+        <TextView  android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/name" />
+            android:text="@string/name" 
+            android:textStyle="bold"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
 
-        <EditText
-            android:id="@+id/etName"
+        <EditText android:id="@+id/etName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textShortMessage"
@@ -29,80 +28,78 @@
             <requestFocus />
         </EditText>
 
-        <TextView
-            android:layout_width="wrap_content"
+        <TextView android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/description" />
+            android:text="@string/description" 
+            android:textStyle="bold"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
 
-        <EditText
-            android:id="@+id/etDescription"
+        <EditText android:id="@+id/etDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="textMultiLine" />
 
- 		<RelativeLayout
-            android:id="@+id/rlVideo"
+ 		<RelativeLayout android:id="@+id/rlVideo"
             android:layout_marginTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
 
-            <ImageView
-                android:id="@+id/ivAddVideo"
+            <ImageView android:id="@+id/ivAddVideo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
                 android:src="@drawable/content_new" />
 
-            <TextView
-                android:id="@+id/txtVideo"
+            <TextView android:id="@+id/txtVideo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
                 android:layout_centerVertical="true"
-                android:text="@string/videos" />
-             
+                android:text="@string/videos" 
+                android:textStyle="bold"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
             	
-	        <LinearLayout
-	            android:id="@+id/llVideo"
-	            android:layout_width="match_parent"
-	            android:layout_height="wrap_content"
-	            android:layout_marginTop="10dp"
-	            android:layout_marginBottom="10dp"
-	            android:layout_below="@id/txtVideo"
-	            android:orientation="vertical" >
+	            <HorizontalScrollView android:id="@+id/hsvVideos"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" >
+
+                    <LinearLayout android:id="@+id/llVideo"
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent" >
+                    </LinearLayout>
+                    
+                </HorizontalScrollView>
 		        	        
-	        </LinearLayout>
         </RelativeLayout>
 
- 		<RelativeLayout
-            android:id="@+id/rlAudio"
+ 		<RelativeLayout  android:id="@+id/rlAudio"
             android:layout_marginTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
 
-            <ImageView
-                android:id="@+id/ivAddAudio"
+            <ImageView android:id="@+id/ivAddAudio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
                 android:src="@drawable/content_new" />
 
-            <TextView
-                android:id="@+id/txtAudio"
+            <TextView android:id="@+id/txtAudio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
                 android:layout_centerVertical="true"
-                android:text="@string/audios" />
+                android:text="@string/audios" 
+                android:textStyle="bold"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
              
             	
-	        <LinearLayout
-	            android:id="@+id/llAudio"
+	        <LinearLayout android:id="@+id/llAudio"
 	            android:layout_width="match_parent"
 	            android:layout_height="wrap_content"
 	            android:layout_marginTop="10dp"
@@ -112,32 +109,31 @@
 		        	        
 	        </LinearLayout>
         </RelativeLayout>
- 		<RelativeLayout
-            android:id="@+id/rlDocument"
+        
+ 		<RelativeLayout android:id="@+id/rlDocument"
             android:layout_marginTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
 
-            <ImageView
-                android:id="@+id/ivAddDocument"
+            <ImageView android:id="@+id/ivAddDocument"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
                 android:src="@drawable/content_new" />
 
-            <TextView
-                android:id="@+id/txtDocument"
+            <TextView android:id="@+id/txtDocument"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
                 android:layout_centerVertical="true"
-                android:text="@string/documents" />
+                android:text="@string/documents" 
+                android:textStyle="bold"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
              
             	
-	        <LinearLayout
-	            android:id="@+id/llDocument"
+	        <LinearLayout android:id="@+id/llDocument"
 	            android:layout_width="match_parent"
 	            android:layout_height="wrap_content"
 	            android:layout_marginTop="10dp"

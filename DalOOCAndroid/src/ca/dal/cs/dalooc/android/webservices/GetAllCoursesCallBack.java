@@ -4,4 +4,6 @@ public interface GetAllCoursesCallBack {
 	
 	public void returnServiceResponse(int serviceCode);
 	
+	public String getUrlWebService(int serviceCode);
+	
 }

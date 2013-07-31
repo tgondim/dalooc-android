@@ -1,5 +1,6 @@
 package ca.dal.cs.dalooc.android.control;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +37,8 @@ public class AudioAdapter extends BaseAdapter {
 
 	@Override
 	public long getItemId(int position) {
-		return Long.valueOf(this.audioList.get(position).getId());
+		BigInteger big = new BigInteger(this.audioList.get(position).getId(), 16);
+		return Long.valueOf(big.longValue());
 	}
 
 	@Override

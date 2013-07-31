@@ -30,6 +30,7 @@ import ca.dal.cs.dalooc.android.webservices.GetAllCoursesCallBack;
 import ca.dal.cs.dalooc.android.webservices.SaveCourseCall;
 import ca.dal.cs.dalooc.android.webservices.SaveCourseCallBack;
 import ca.dal.cs.dalooc.model.Course;
+import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.webservice.util.Parser;
 
 import com.mongodb.BasicDBList;
@@ -41,9 +42,11 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 	private ListView listViewCourse;
 	
 	private boolean getAllCoursesWebServiceResponseOk;
-	private boolean erroConsulta;
+//	private boolean erroConsulta;
 	private boolean inicioConsulta;
-	private boolean loading;
+//	private boolean loading;
+	
+	private User user;
 	
 	private CourseAdapter courseAdapter;
 	
@@ -51,9 +54,9 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 	
 	private Toast toast;
 	
-	private String urlWebService;
+//	private String urlWebService;
 	
-	private int currentIndex;
+//	private int currentIndex;
 	
 	private Handler callBackHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
@@ -70,7 +73,7 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 //				}
 //				MainActivity.this.rlTopBar.setLayoutParams(lp);
 				
-				MainActivity.this.erroConsulta = false;
+//				MainActivity.this.erroConsulta = false;
 //				MainActivity.this.lvListaJogos.removeFooterView(MainActivity.this.impossivelCarregar);
 			}
 			
@@ -85,7 +88,7 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 				}
 //				MainActivity.this.rlTopBar.setLayoutParams(lp);
 				
-				MainActivity.this.erroConsulta = true;
+//				MainActivity.this.erroConsulta = true;
 				MainActivity.this.inicioConsulta = true;
 //				MainActivity.this.lvCourseList.addFooterView(MainActivity.this.impossivelCarregar);
 			}
@@ -111,13 +114,15 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 		
 		this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
 		
+		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
+		
 		getCourses();
 	}
 
 	private void getCourses() {
 		
 		if (this.inicioConsulta) {
-			this.currentIndex = 0;
+//			this.currentIndex = 0;
 //			mostrarDialogEsperaConsultaWebService();
 		}
 		
@@ -127,15 +132,15 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 	@Override
 	public String getUrlWebService(int serviceCode) {
 		if (serviceCode == GetAllCoursesCall.GET_ALL_COURSES_WEB_SERVICE) {
-//			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.get_all_courses_webservice_operation); 
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.get_all_courses_webservice_operation); 
 //			return "http://192.168.0.3:8080/DalOOCWebServices/services/CourseRepository/getAllCourses";
 //			return "http://10.0.2.2:8080/DalOOCWebServices/services/CourseRepository/getAllCourses";
-			return "http://tgondim.dyndns.info:8080/DalOOCWebServices/services/CourseRepository/getAllCourses";
+//			return "http://tgondim.dyndns.info:8080/DalOOCWebServices/services/CourseRepository/getAllCourses";
 		} else if (serviceCode == SaveCourseCall.SAVE_COURSE_WEB_SERVICE) {
-//			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
 //			return "http://192.168.0.3:8080/DalOOCWebServices/services/CourseRepository/saveCourse";
 //			return "http://10.0.2.2:8080/DalOOCWebServices/services/CourseRepository/saveCourse";
-			return "http://tgondim.dyndns.info:8080/DalOOCWebServices/services/CourseRepository/saveCourse";
+//			return "http://tgondim.dyndns.info:8080/DalOOCWebServices/services/CourseRepository/saveCourse";
 		}
 		return null;
 	}
@@ -155,6 +160,8 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 			
 		case 200:
 			Intent intent = new Intent(this, CourseEditActivity.class);
+			intent.putExtra(LoginActivity.ARG_USER, this.user);
+			
 			startActivity(intent);
 			break;
 		}
@@ -169,7 +176,8 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 		if (course != null) {
 			courseIntent = new Intent("COURSE_ACTIVITY");
 			courseIntent.putExtra(CourseActivity.ARG_COURSE, course);
-
+			courseIntent.putExtra(LoginActivity.ARG_USER, this.user);
+			
 			startActivity(courseIntent);
 		}		
 	}
@@ -218,12 +226,12 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 		
 		@Override
 		public void run() {
-			MainActivity.this.loading = true;
+//			MainActivity.this.loading = true;
 			SoapObject soap = new SoapObject(getResources().getString(
 					R.string.namespace_webservice), getResources().getString(
 							R.string.get_all_courses_webservice_operation));
 			
-			int pos = MainActivity.this.currentIndex;
+//			int pos = MainActivity.this.currentIndex;
 //			soap.addProperty("chave", getResources().getString(R.string.chave_dalooc_webservice));
 			
 			SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
@@ -257,7 +265,7 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 				e.printStackTrace();
 			}
 			
-			MainActivity.this.loading = false;
+//			MainActivity.this.loading = false;
 			MainActivity.this.returnServiceResponse(GetAllCoursesCall.GET_ALL_COURSES_WEB_SERVICE);
 		}
 

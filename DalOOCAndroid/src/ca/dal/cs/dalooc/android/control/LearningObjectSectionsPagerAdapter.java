@@ -10,6 +10,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import ca.dal.cs.android.dalooc.R;
 import ca.dal.cs.dalooc.android.gui.LearningObjectActivity;
 import ca.dal.cs.dalooc.android.gui.LearningObjectSectionFragment;
+import ca.dal.cs.dalooc.android.gui.LoginActivity;
 
 public class LearningObjectSectionsPagerAdapter extends FragmentPagerAdapter {
 
@@ -27,6 +28,7 @@ public class LearningObjectSectionsPagerAdapter extends FragmentPagerAdapter {
 		Bundle args = new Bundle();		
 		args.putInt(LearningObjectSectionFragment.ARG_SECTION_NUMBER, position + 1);
 		args.putSerializable(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, ((LearningObjectActivity)this.context).getLearningObject());
+		args.putSerializable(LoginActivity.ARG_USER, ((LearningObjectActivity)this.context).getUser());
 		fragment.setArguments(args);
 		
 		return fragment;
@@ -34,8 +36,8 @@ public class LearningObjectSectionsPagerAdapter extends FragmentPagerAdapter {
 
 	@Override
 	public int getCount() {
-		// Show 3 total pages.
-		return 3;
+		// Show 4 total pages.
+		return 4;
 	}
 
 	@Override
@@ -48,6 +50,8 @@ public class LearningObjectSectionsPagerAdapter extends FragmentPagerAdapter {
 			return this.context.getResources().getString(R.string.audios).toUpperCase(l);
 		case 2:
 			return this.context.getResources().getString(R.string.documents).toUpperCase(l);
+		case 3:
+			return this.context.getResources().getString(R.string.test_question).toUpperCase(l);
 		}
 		return null;
 	}

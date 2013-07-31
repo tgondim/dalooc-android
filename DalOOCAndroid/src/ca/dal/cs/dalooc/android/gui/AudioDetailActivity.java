@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
 import android.app.DownloadManager.Request;
@@ -24,6 +23,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.Gravity;
@@ -34,11 +35,18 @@ import android.widget.Chronometer;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
+import ca.dal.cs.dalooc.android.util.General;
+import ca.dal.cs.dalooc.android.util.UploadFileTask;
 import ca.dal.cs.dalooc.model.Audio;
+import ca.dal.cs.dalooc.model.User;
 
-public class AudioDetailActivity extends Activity implements RecordingBlinkImageViewCallBack {
+public class AudioDetailActivity extends FragmentActivity implements RecordingBlinkImageViewCallBack, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener {
 	
 	private static final String LOG_TAG = "AudioDetailActivity";
 	
@@ -50,11 +58,19 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 	
 	private Audio audio;
 	
+	private User user;
+	
 	private MediaRecorder mediaRecorder = null;
 	
 	private MediaPlayer mediaPlayer = null;
 	
 	private Chronometer audioChronometer;
+	
+	private LinearLayout llDownloadPreviewStatus;
+	
+	private RelativeLayout rlAudioDetailForm;
+	
+	private TextView tvDownloadPreviewStatusMessage;
 	
 	private PlayAudioImageButton ibAudioPlay;
 
@@ -68,29 +84,47 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 	
 	private DownloadManager dm;
 	
+	private ConfirmDialog confirmDialog;
+	
+	private String newFileName = "";
+	
+	private Toast toast;
+	
 	private long enqueue;
 	
 	private BroadcastReceiver receiver;
 	
+	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 			switch (msg.what) {
 			case AudioDetailActivity.IMAGE_RECORDING:
-				AudioDetailActivity.this.ivBlinkingImage.setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording));
+				AudioDetailActivity.this.ivBlinkingImage.setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_light_on));
 				break;
 			case AudioDetailActivity.IMAGE_RECORDING_DARK:
-				AudioDetailActivity.this.ivBlinkingImage.setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_dark));
+				AudioDetailActivity.this.ivBlinkingImage.setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_light_off));
+				break;
+			case UploadFileTask.UPLOAD_DONE:
+				showProgress(false, "");
 				break;
 			}
 		}
 	};
 	
+	@SuppressLint("ShowToast")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_audio_detail);
 	
 		this.audio = (Audio)getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_AUDIO);
+		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
+		
+		this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
+		
+		this.tvDownloadPreviewStatusMessage = (TextView)findViewById(R.id.tvDownloadPreviewStatusMessage);
+		this.llDownloadPreviewStatus = (LinearLayout)findViewById(R.id.llDownloadPreviewStatus);
+		this.rlAudioDetailForm = (RelativeLayout)findViewById(R.id.rlAudioDetailForm);
 		
 		TextView txtAudioItemName = (TextView)findViewById(R.id.txtAudioItemName);
 		txtAudioItemName.setText(this.audio.getName());
@@ -98,22 +132,43 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 		TextView txtAudioItemDescription = (TextView)findViewById(R.id.txtAudioItemDescription);
 		txtAudioItemDescription.setText(this.audio.getDescription());
 		
-		this.ibAudioPlay = new PlayAudioImageButton(this);
-		this.ibAudioRecord = new RecordAudioImageButton(this);
+		LinearLayout llAudioDetail = (LinearLayout)findViewById(R.id.llAudioDetail);
+		llAudioDetail.setGravity(Gravity.CENTER);
 		
-		ibAudioUpload = new ImageButton(this);
-		ibAudioUpload.setImageDrawable(getResources().getDrawable(R.drawable.ic_upload));
-		ibAudioUpload.setOnClickListener(new View.OnClickListener() {
+		this.ibAudioPlay = new PlayAudioImageButton(this);
+
+		llAudioDetail.addView(ibAudioPlay, new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				0));
+		
+		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
+			this.ibAudioRecord = new RecordAudioImageButton(this);
 			
-			@SuppressLint("SimpleDateFormat")
-			@Override
-			public void onClick(View v) {
-				Intent uploadFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
-				uploadFileIntent.setType("audio/*");
+			llAudioDetail.addView(ibAudioRecord, new LinearLayout.LayoutParams(
+					ViewGroup.LayoutParams.WRAP_CONTENT, 
+					ViewGroup.LayoutParams.WRAP_CONTENT, 
+					0));
+			
+			ibAudioUpload = new ImageButton(this);
+			ibAudioUpload.setImageDrawable(getResources().getDrawable(R.drawable.ic_upload));
+			ibAudioUpload.setOnClickListener(new View.OnClickListener() {
 				
-				startActivityForResult(uploadFileIntent, GET_AUDIO_FILE_ACTIVITY_REQUEST_CODE);				
-			}
-		});
+				@SuppressLint("SimpleDateFormat")
+				@Override
+				public void onClick(View v) {
+					Intent uploadFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
+					uploadFileIntent.setType("audio/*");
+					
+					startActivityForResult(uploadFileIntent, GET_AUDIO_FILE_ACTIVITY_REQUEST_CODE);				
+				}
+			});
+			
+			llAudioDetail.addView(ibAudioUpload, new LinearLayout.LayoutParams(
+					ViewGroup.LayoutParams.WRAP_CONTENT, 
+					ViewGroup.LayoutParams.WRAP_CONTENT, 
+					0));
+		}
 		
 		ibAudioDownload = new ImageButton(this);
 		ibAudioDownload.setImageDrawable(getResources().getDrawable(R.drawable.ic_download));
@@ -121,33 +176,16 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 			
 			@Override
 			public void onClick(View v) {
-				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download" + AudioDetailActivity.this.audio.getAudioUrl().replace("/DalOOC",""));
+				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + AudioDetailActivity.this.audio.getAudioUrl());
 				AudioDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 				Request request = new Request(Uri.parse(AudioDetailActivity.this.getResources().getString(R.string.host_file_server) 
-						+ AudioDetailActivity.this.audio.getAudioUrl()));
+						+ AudioDetailActivity.this.getResources().getString(R.string.audio_folder)
+						+ "/" + AudioDetailActivity.this.audio.getAudioUrl()));
 				request.setDestinationUri(Uri.fromFile(destDocFile));
 				enqueue = dm.enqueue(request);			
 			}
 		});
 		
-		LinearLayout llAudioDetail = (LinearLayout)findViewById(R.id.llAudioDetail);
-		llAudioDetail.setGravity(Gravity.CENTER);
-		
-		llAudioDetail.addView(ibAudioPlay, new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.WRAP_CONTENT, 
-				ViewGroup.LayoutParams.WRAP_CONTENT, 
-				0));
-		
-		llAudioDetail.addView(ibAudioRecord, new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.WRAP_CONTENT, 
-				ViewGroup.LayoutParams.WRAP_CONTENT, 
-				0));
-		
-		llAudioDetail.addView(ibAudioUpload, new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.WRAP_CONTENT, 
-				ViewGroup.LayoutParams.WRAP_CONTENT, 
-				0));
-
 		llAudioDetail.addView(ibAudioDownload, new LinearLayout.LayoutParams(
 				ViewGroup.LayoutParams.WRAP_CONTENT, 
 				ViewGroup.LayoutParams.WRAP_CONTENT, 
@@ -261,17 +299,24 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 
 	private void stopPlaying() {
 		this.audioChronometer.stop();
-//		this.ivBlinkingImage.stopBlinking();
 		this.mediaPlayer.release();
 		this.mediaPlayer = null;
-		this.ibAudioRecord.setEnabled(true);
-		this.ibAudioUpload.setEnabled(true);
+		if (this.ibAudioRecord != null) {
+			this.ibAudioRecord.setEnabled(true);
+		}
+		if (this.ibAudioUpload != null) {
+			this.ibAudioUpload.setEnabled(true);
+		}
 		this.ibAudioDownload.setEnabled(true);
 	}
 
 	private void startPlaying() {
-		this.ibAudioRecord.setEnabled(false);
-		this.ibAudioUpload.setEnabled(false);
+		if (this.ibAudioRecord != null) {
+			this.ibAudioRecord.setEnabled(false);
+		}
+		if (this.ibAudioUpload != null) {
+			this.ibAudioUpload.setEnabled(false);
+		}
 		this.ibAudioDownload.setEnabled(false);
 		this.mediaPlayer = new MediaPlayer();
 		this.mediaPlayer.setOnCompletionListener(new OnCompletionListener() {
@@ -282,12 +327,13 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 			}
 		});
 		try {
-			this.mediaPlayer.setDataSource(getResources().getString(R.string.host_file_server) + this.audio.getAudioUrl());
+			this.mediaPlayer.setDataSource(getResources().getString(R.string.host_file_server) 
+					+ getResources().getString(R.string.audio_folder) 
+					+ "/" + this.audio.getAudioUrl());
 			this.mediaPlayer.prepare();
 			this.audioChronometer.setBase(SystemClock.elapsedRealtime());
 			this.mediaPlayer.start();
 			this.audioChronometer.start();
-//			this.ivBlinkingImage.startBlinking();
 		} catch (IOException e) {
 			Log.e(LOG_TAG, "prepare() failed");
 		}
@@ -311,7 +357,7 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 	    this.mediaRecorder = new MediaRecorder();
 	    this.mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
 	    this.mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-	    this.mediaRecorder.setOutputFile(Environment.getExternalStorageDirectory() + this.audio.getAudioUrl());
+	    this.mediaRecorder.setOutputFile(Environment.getExternalStorageDirectory() + "/DalOOC/" + this.audio.getAudioUrl());
 	    this.mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
         try {
@@ -376,6 +422,18 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 		}
 	}
 	
+	private void showToast(String msg) {
+		this.toast.setText(msg);
+		this.toast.cancel();
+		this.toast.show();
+	};
+	
+	private void showProgress(boolean show, String msg) {
+		this.llDownloadPreviewStatus.setVisibility(show ? View.VISIBLE : View.GONE);
+		this.rlAudioDetailForm.setVisibility(show ? View.GONE : View.VISIBLE);
+		this.tvDownloadPreviewStatusMessage.setText(msg);
+	}
+	
 	class RecordingBlinkImageView extends ImageView {
 		
 		private Thread blinkButton;
@@ -385,11 +443,11 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 		public RecordingBlinkImageView(Context context) {
 			super(context);
 //			setBackgroundColor(Color.DKGRAY);
-			setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_dark));
+			setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_light_off));
 		}
 		
 		public void startBlinking() {
-			RecordingBlinkImageView.this.setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording));
+			RecordingBlinkImageView.this.setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_light_on));
 
 			this.blinkButton = new Thread(new Runnable() {
 				
@@ -434,16 +492,17 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 		super.onActivityResult(requestCode, resultCode, data);
 	    if (requestCode == GET_AUDIO_FILE_ACTIVITY_REQUEST_CODE) {
 	        if (resultCode == RESULT_OK) {
-	        	ConfirmDialogFragment confirm = new ConfirmDialogFragment();
-	        	Bundle bundle = new Bundle();
-	        	bundle.putInt(ConfirmDialogFragment.ARG_CONFIRM_MESSAGE, ConfirmDialogFragment.AUDIO_CONFIRM_MESSAGE);
-	        	confirm.setArguments(bundle);
-	        	confirm.show(getFragmentManager(), "Confirm");
-	        	if (confirm.getLastChoice()) {
-	        		this.audio.setAudioUrl(data.getDataString().replace("file://", ""));
-	         	} else {
-	         		//DO NOTHING
-	         	}
+	        	this.newFileName = data.getDataString().replace("file://", "");
+	        	FragmentManager fm = getSupportFragmentManager();
+	            
+	            Bundle args = new Bundle();
+	            args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.audio_overwrite_confirm));
+	            args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
+	            
+	            this.confirmDialog = new ConfirmDialog();
+	            this.confirmDialog.setArguments(args);
+	            this.confirmDialog.setOnConfirmDialogResultListener(this);
+	            this.confirmDialog.show(fm, "fragment_edit_name");
 	        } else if (resultCode == RESULT_CANCELED) {
 	            // User cancelled the video capture
 	        	//DO NOTHING
@@ -452,5 +511,31 @@ public class AudioDetailActivity extends Activity implements RecordingBlinkImage
 	        	//TODO
 	        }
 	    }
+	}
+	
+	@Override
+	public void onConfirmDialogReturn(boolean confirm) {
+		if (confirm) {
+			showProgress(true, getResources().getString(R.string.upload_file_in_progress));
+    		UploadFileTask uploadFileTask = new UploadFileTask();
+    		uploadFileTask.setOnUploadFileTaskDoneListener(this);
+    		uploadFileTask.execute(this.newFileName, getResources().getString(R.string.audio_folder), this.audio.getId());
+     	} else {
+     		this.newFileName = "";
+     	}
+	}
+
+	@Override
+	public void onUploadFileTaskDone(int returnCode) {
+		callBackHandler.sendEmptyMessage(UploadFileTask.UPLOAD_DONE);
+		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
+			this.newFileName = General.getIdFileName(this.newFileName, this.audio.getId());
+			this.audio.setAudioUrl(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
+			showToast(getResources().getString(R.string.successfull_upload));
+			//TODO save the document modification
+		} else {
+			showToast(getResources().getString(R.string.problems_uploading_file));
+		}
+		this.newFileName = "";
 	}
 }

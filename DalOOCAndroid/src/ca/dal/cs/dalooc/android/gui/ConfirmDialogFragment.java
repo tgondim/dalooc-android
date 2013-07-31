@@ -11,6 +11,8 @@ public class ConfirmDialogFragment extends DialogFragment {
 	
 	public static final String ARG_CONFIRM_MESSAGE = "confirm_message";
 	
+	public static final String ARG_FILE_NAME = "file_name";
+	
 	public static final int VIDEO_CONFIRM_MESSAGE = 0;
 	
 	public static final int AUDIO_CONFIRM_MESSAGE = 1;
