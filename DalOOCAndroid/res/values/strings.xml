@@ -12,9 +12,9 @@
     <string name="action_new_document">New Document</string>
     <string name="title_activity_learning_object">Learning Object Name</string>
     <string name="videos">Videos</string>
-    <string name="audios">Audio</string>
+    <string name="audio">Audio</string>
     <string name="documents">Documents</string>
-    <string name="test_question">Test Questions</string>
+    <string name="test_questions">Test Questions</string>
     <string name="syllabus">Syllabus</string>
     <string name="courses">COURSES</string>
     <string name="instructor">Instructor</string>
@@ -46,8 +46,9 @@
     <string name="problems_uploading_file">We are unable to upload your file now. Please try again later.</string>
     <string name="problems_downloading_file">We are unable to load the preview now. Please try again later.</string>
     <string name="download_preview_in_progress">Loading preview file</string>
+    <string name="download_file_in_progress">Download started</string>
     <string name="upload_file_in_progress">Uploading file</string>
-    <string name="successfull_upload">Your file was uploaded.</string>
+    <string name="successfull_upload">Your file was uploaded</string>
     <string name="confirm">Confirmation</string>
     <string name="confirm_message">Do you confirm?</string>
     <string name="dialog_title_learning_object">Learning Object Edit</string>
@@ -64,5 +65,17 @@
     <string name="title_course_list">Courses</string>
     <string name="title_course_detail">Course Detail</string>
     <string name="title_activity_learning_object_edit">Learning Object Edit</string>
+    <string name="title_activity_login">Sign in</string>
 
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in_register"><b>Sign in</b> or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="action_forgot_password">Recover lost password</string>
+    <string name="login_progress_signing_in">Signing in&#8230;</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
 </resources>

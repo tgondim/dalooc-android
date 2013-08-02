@@ -19,18 +19,20 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager.LayoutParams;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.DownloadDocumentTask;
@@ -79,19 +81,20 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 			switch (msg.what) {
 			case UploadFileTask.UPLOAD_DONE:
 				showProgress(false, "");
+				showToast((String)msg.obj);
 				break;
 			}
 		}
 	};
 
-	@SuppressLint("ShowToast")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_document_detail);
 		
-		this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
-	
+		getWindow().setFlags(LayoutParams.FLAG_NOT_TOUCH_MODAL, LayoutParams.FLAG_NOT_TOUCH_MODAL);
+		getWindow().setFlags(LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
+		
 		this.document = (Document)getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_DOCUMENT);
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
 
@@ -170,7 +173,8 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 						+ DocumentDetailActivity.this.getResources().getString(R.string.documents_folder)
 						+ "/" + DocumentDetailActivity.this.document.getDocumentUrl()));
 				request.setDestinationUri(Uri.fromFile(destDocFile));
-				enqueue = dm.enqueue(request);			
+				enqueue = dm.enqueue(request);		
+				showToast(getResources().getString(R.string.download_file_in_progress));
 			}
 		});
 
@@ -224,6 +228,17 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	}
 	
 	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		  if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+              if (llDownloadPreviewStatus.getVisibility() != View.VISIBLE) {
+            	  finish();               
+              }
+              return true;
+          }
+          return false;
+	}
+	
+	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		unregisterReceiver(this.receiver);
@@ -235,16 +250,8 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	    if (requestCode == GET_DOCUMENT_FILE_ACTIVITY_REQUEST_CODE) {
 	        if (resultCode == RESULT_OK) {
 	        	this.newFileName = data.getDataString().replace("file://", "");
-	        	FragmentManager fm = getSupportFragmentManager();
 	            
-	            Bundle args = new Bundle();
-	            args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.document_overwrite_confirm));
-	            args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
-	            
-	            this.confirmDialog = new ConfirmDialog();
-	            this.confirmDialog.setArguments(args);
-	            this.confirmDialog.setOnConfirmDialogResultListener(this);
-	            this.confirmDialog.show(fm, "fragment_edit_name");
+	            getConfirmDialog().show(getSupportFragmentManager(), "fragment_edit_name");
 	        } else if (resultCode == RESULT_CANCELED) {
 	            // User cancelled the video capture
 	        } else {
@@ -252,6 +259,19 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	        	//TODO
 	        }
 	    }
+	}
+
+	private ConfirmDialog getConfirmDialog() {
+		if (this.confirmDialog == null) {	
+			Bundle args = new Bundle();
+			args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.document_overwrite_confirm));
+			args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
+			
+			this.confirmDialog = new ConfirmDialog();
+			this.confirmDialog.setArguments(args);
+			this.confirmDialog.setOnConfirmDialogResultListener(this);
+		}
+		return this.confirmDialog;
 	}
 
 	@Override
@@ -271,8 +291,10 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	}
 	
 	private void showToast(String msg) {
+		if (this.toast == null) {
+			this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
+		}
 		this.toast.setText(msg);
-		this.toast.cancel();
 		this.toast.show();
 	}
 
@@ -298,26 +320,35 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	@Override
 	public void onConfirmDialogReturn(boolean confirm) {
 		if (confirm) {
-			showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-    		UploadFileTask uploadFileTask = new UploadFileTask();
-    		uploadFileTask.setOnUploadFileTaskDoneListener(this);
-    		uploadFileTask.execute(this.newFileName, getResources().getString(R.string.documents_folder), this.document.getId());
-     	} else {
-     		this.newFileName = "";
-     	}
+			uploadSelectedFile();
+		} else {
+			this.newFileName = "";
+		}
+	}
+
+	private void uploadSelectedFile() {
+		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
+		UploadFileTask uploadFileTask = new UploadFileTask();
+		uploadFileTask.setOnUploadFileTaskDoneListener(this);
+		uploadFileTask.execute(this.newFileName, 
+				getResources().getString(R.string.documents_folder), 
+				this.document.getId(),
+				getResources().getString(R.string.url_upload_file_servlet));
 	}
 
 	@Override
 	public void onUploadFileTaskDone(int returnCode) {
-		callBackHandler.sendEmptyMessage(UploadFileTask.UPLOAD_DONE);
+		Message msg = new Message();
+		msg.what = UploadFileTask.UPLOAD_DONE;
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
 			this.newFileName = General.getIdFileName(this.newFileName, this.document.getId());
 			this.document.setDocumentUrl(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
-			showToast(getResources().getString(R.string.successfull_upload));
+			msg.obj = getResources().getString(R.string.successfull_upload);
 			//TODO save the document modification
 		} else {
-			showToast(getResources().getString(R.string.problems_uploading_file));
+			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
+		callBackHandler.sendMessage(msg);
 		this.newFileName = "";
 	}
 }

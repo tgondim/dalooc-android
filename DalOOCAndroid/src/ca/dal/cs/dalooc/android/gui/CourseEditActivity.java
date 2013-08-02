@@ -16,9 +16,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
+import ca.dal.cs.dalooc.model.User;
 
 public class CourseEditActivity extends Activity {
 
@@ -44,6 +45,8 @@ public class CourseEditActivity extends Activity {
 	private EditText etCourseDetail;
 	
 	private Course course;
+	
+	private User user;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -96,10 +99,13 @@ public class CourseEditActivity extends Activity {
 		
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
+			this.user = (User)extras.get(LoginActivity.ARG_USER);
 			this.course = (Course)extras.get(CourseActivity.ARG_COURSE);
-			loadData();
-		} else {
-			this.course = new Course();
+			if (this.course != null) {
+				loadData();
+			} else {
+				this.course = new Course();
+			}
 		}
 	}
 

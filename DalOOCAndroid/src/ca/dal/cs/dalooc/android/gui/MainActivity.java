@@ -24,7 +24,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.CourseAdapter;
 import ca.dal.cs.dalooc.android.webservices.GetAllCoursesCallBack;
 import ca.dal.cs.dalooc.android.webservices.SaveCourseCall;
@@ -148,7 +148,9 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
+		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
+			getMenuInflater().inflate(R.menu.main, menu);
+		}
 		return true;
 	}
 

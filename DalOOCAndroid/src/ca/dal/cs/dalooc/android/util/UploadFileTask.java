@@ -34,8 +34,7 @@ public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
 		String pathToOurFile = params[0];
 		String fileFolder = params[1];
 		String fileId = params[2];
-//		String urlServer = "http://192.168.0.2:8080/DalOOCWebServices/UploadFileServlet";
-		String urlServer = "http://yen.cs.dal.ca/DalOOCWebServices/UploadFileServlet";
+		String urlServer = params[3];
 		String lineEnd = "\r\n";
 		String twoHyphens = "--";
 		String boundary =  "*****";
@@ -47,8 +46,6 @@ public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
 		try
 		{
 			BufferedInputStream fileInputStream = new BufferedInputStream(new FileInputStream(new File(pathToOurFile) ), 8192);
-//			String serverFileName = pathToOurFile.substring(0, pathToOurFile.lastIndexOf("/")) + "/" 
-//        			+ fileId + pathToOurFile.substring(pathToOurFile.lastIndexOf("."));
 	
 			URL url = new URL(urlServer);
 			connection = (HttpURLConnection) url.openConnection();

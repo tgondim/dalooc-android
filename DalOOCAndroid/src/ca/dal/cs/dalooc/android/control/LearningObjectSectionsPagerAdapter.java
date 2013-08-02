@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.LearningObjectActivity;
 import ca.dal.cs.dalooc.android.gui.LearningObjectSectionFragment;
 import ca.dal.cs.dalooc.android.gui.LoginActivity;
@@ -47,11 +47,11 @@ public class LearningObjectSectionsPagerAdapter extends FragmentPagerAdapter {
 		case 0:
 			return this.context.getResources().getString(R.string.videos).toUpperCase(l);
 		case 1:
-			return this.context.getResources().getString(R.string.audios).toUpperCase(l);
+			return this.context.getResources().getString(R.string.audio).toUpperCase(l);
 		case 2:
 			return this.context.getResources().getString(R.string.documents).toUpperCase(l);
 		case 3:
-			return this.context.getResources().getString(R.string.test_question).toUpperCase(l);
+			return this.context.getResources().getString(R.string.test_questions).toUpperCase(l);
 		}
 		return null;
 	}

@@ -7,7 +7,7 @@ import org.ksoap2.transport.HttpTransportSE;
 
 import android.content.Context;
 import android.util.Log;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.webservice.util.Parser;
 

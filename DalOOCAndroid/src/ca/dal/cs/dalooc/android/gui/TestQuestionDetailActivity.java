@@ -15,7 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.model.Option;
 import ca.dal.cs.dalooc.model.TestAnswer;
 import ca.dal.cs.dalooc.model.TestQuestion;
@@ -111,7 +111,7 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 					option = this.testQuestion.getOptionList().get(radioButton.index);
 					this.chooseCorrect = option.isCorrect();
 					if (this.chooseCorrect) {
-						this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.correct));
+						this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_correct));
 						this.testAnswer = new TestAnswer();
 						this.testAnswer.setUserId(this.user.getId());
 						this.testAnswer.setTestQuestionId(this.testQuestion.getId());
@@ -119,10 +119,13 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 						//TODO LearningObjectId and CourseId are missing
 					} else {
 						//TODO wrong answer!
-						this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.incorrect));
+						this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_incorrect));
 						this.testAnswer = null;
 					}
 					this.btnSubmit.setEnabled(false);
+					for (RadioButton rb : this.radioButtonList) {
+						rb.setEnabled(false);
+					}
 				}
 			}
 		}

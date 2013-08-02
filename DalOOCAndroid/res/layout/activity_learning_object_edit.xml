@@ -94,7 +94,7 @@
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
                 android:layout_centerVertical="true"
-                android:text="@string/audios" 
+                android:text="@string/audio" 
                 android:textStyle="bold"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
              

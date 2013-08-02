@@ -1,12 +1,10 @@
 package ca.dal.cs.dalooc.android.gui;
 
-import java.io.Serializable;
-
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.LearningObjectSectionsPagerAdapter;
 import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.User;
@@ -41,7 +39,9 @@ public class LearningObjectActivity extends FragmentActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.learning_object, menu);
+		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
+			getMenuInflater().inflate(R.menu.learning_object, menu);
+		}
 		return true;
 	}
 

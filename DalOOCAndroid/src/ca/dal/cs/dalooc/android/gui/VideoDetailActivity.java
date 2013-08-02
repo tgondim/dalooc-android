@@ -21,12 +21,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager.LayoutParams;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -34,16 +37,14 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
-import ca.dal.cs.dalooc.android.util.DownloadImageTask;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
-@SuppressLint("ShowToast")
 public class VideoDetailActivity extends FragmentActivity implements OnUploadFileTaskDoneListener, OnConfirmDialogReturnListener {
 	 
 	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
@@ -84,10 +85,12 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	
 	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
+		@Override
 		public void handleMessage(android.os.Message msg) {
 			switch (msg.what) {
 			case UploadFileTask.UPLOAD_DONE:
 				showProgress(false, "");
+				showToast((String)msg.obj);
 				break;
 			}
 		}
@@ -97,13 +100,14 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_video_detail);
-	
+		
+		getWindow().setFlags(LayoutParams.FLAG_NOT_TOUCH_MODAL, LayoutParams.FLAG_NOT_TOUCH_MODAL);
+		getWindow().setFlags(LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
+		
 		this.video = (Video)getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_VIDEO);
 		byte[] videoThumbnail = (byte[])getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_VIDEO_THUMBNAIL);
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
 		
-		this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
-
 		this.tvDownloadPreviewStatusMessage = (TextView)findViewById(R.id.tvDownloadPreviewStatusMessage);
 		this.llDownloadPreviewStatus = (LinearLayout)findViewById(R.id.llDownloadPreviewStatus);
 		this.rlVideoDetailForm = (RelativeLayout)findViewById(R.id.rlVideoDetailForm);
@@ -113,7 +117,6 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 		Bitmap b = null;
 		if (videoThumbnail != null) {
 			b = BitmapFactory.decodeByteArray(videoThumbnail, 0, videoThumbnail.length);
-//			Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(getResources().getString(R.string.host_file_server) + video.getVideoUrl(), MediaStore.Video.Thumbnails.MICRO_KIND);
 		}
 		
 		if (b != null) {
@@ -176,7 +179,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 					File videoFolder = new File(Environment.getExternalStorageDirectory(), "DalOOC");
 					videoFolder.mkdirs();
 					File videoFile = new File(videoFolder, video.getId() + ".mp4");
-					
+					VideoDetailActivity.this.newFileName = videoFile.getAbsolutePath();
 					VideoDetailActivity.this.video.setVideoUrl(video.getId() + ".mp4");
 					
 					Uri uriSavedVideoFile = Uri.fromFile(videoFile);
@@ -225,7 +228,8 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 						+ VideoDetailActivity.this.getResources().getString(R.string.videos_folder)
 						+ "/" + VideoDetailActivity.this.video.getVideoUrl()));
 				request.setDestinationUri(Uri.fromFile(destDocFile));
-				enqueue = dm.enqueue(request);			
+				enqueue = dm.enqueue(request);	
+				showToast(getResources().getString(R.string.download_file_in_progress));
 			}
 		});
 
@@ -278,15 +282,28 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	}
 	
 	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		  if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+              if (llDownloadPreviewStatus.getVisibility() != View.VISIBLE) {
+            	  finish();               
+              }
+              return true;
+          }
+          return false;
+	}
+	
+	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 	    if (requestCode == CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE) {
 	    	//TODO Implement the return threatment
 	        if (resultCode == RESULT_OK) {
-	        	new DownloadImageTask(this.ivVideoDetailThumbnail)
-				.execute(getResources().getString(R.string.host_file_server)
-						+ getResources().getString(R.string.videos_folder)
-						+ "/thumb/" + video.getVideoUrl().replace(video.getVideoUrl().substring(video.getVideoUrl().lastIndexOf(".")), "jpg"));
+//	        	this.newFileName = data.getDataString().replace("file://", "");
+	        	uploadSelectedFile();
+//	        	new DownloadImageTask(this.ivVideoDetailThumbnail)
+//				.execute(getResources().getString(R.string.host_file_server)
+//						+ getResources().getString(R.string.videos_folder)
+//						+ "/thumb/" + video.getVideoUrl().replace(video.getVideoUrl().substring(video.getVideoUrl().lastIndexOf(".")), "jpg"));
 	        } else if (resultCode == RESULT_CANCELED) {
 	            // User cancelled the video capture
 	        } else {
@@ -316,8 +333,10 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	}
 	
 	private void showToast(String msg) {
+		if (this.toast == null) {
+			this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
+		}
 		this.toast.setText(msg);
-		this.toast.cancel();
 		this.toast.show();
 	}
 	
@@ -336,26 +355,35 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	@Override
 	public void onConfirmDialogReturn(boolean confirm) {
 		if (confirm) {
-			showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-    		UploadFileTask uploadFileTask = new UploadFileTask();
-    		uploadFileTask.setOnUploadFileTaskDoneListener(this);
-    		uploadFileTask.execute(this.newFileName, getResources().getString(R.string.videos_folder), this.video.getId());
-     	} else {
-     		this.newFileName = "";
-     	}
+			uploadSelectedFile();
+		} else {
+			this.newFileName = "";
+		}
+	}
+
+	private void uploadSelectedFile() {
+		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
+		UploadFileTask uploadFileTask = new UploadFileTask();
+		uploadFileTask.setOnUploadFileTaskDoneListener(this);
+		uploadFileTask.execute(this.newFileName, 
+				getResources().getString(R.string.videos_folder),
+				this.video.getId(),
+				getResources().getString(R.string.url_upload_file_servlet));
 	}
 
 	@Override
 	public void onUploadFileTaskDone(int returnCode) {
-		callBackHandler.sendEmptyMessage(UploadFileTask.UPLOAD_DONE);
+		Message msg = new Message();
+		msg.what = UploadFileTask.UPLOAD_DONE;
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
+			msg.obj = getResources().getString(R.string.successfull_upload);
 			this.newFileName = General.getIdFileName(this.newFileName, this.video.getId());
 			this.video.setVideoUrl(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
-			showToast(getResources().getString(R.string.successfull_upload));
 			//TODO save the document modification
 		} else {
-			showToast(getResources().getString(R.string.problems_uploading_file));
+			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
 		this.newFileName = "";
+		callBackHandler.sendMessage(msg);
 	}
 }

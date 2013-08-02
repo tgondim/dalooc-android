@@ -18,7 +18,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageView;
 import android.widget.ListView;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.AudioAdapter;
 import ca.dal.cs.dalooc.android.control.DocumentAdapter;
 import ca.dal.cs.dalooc.android.control.TestQuestionAdapter;
@@ -50,8 +50,6 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 	public static final String ARG_VIDEO_THUMBNAIL =  "document";
 	
 	private int sectionNumber;
-	
-	private int position;
 	
 	private int lastSelectedItemPosition = -1;
 	
@@ -139,8 +137,6 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		
-		this.position = position;
 		
 		switch (this.sectionNumber) {
 		case 1:

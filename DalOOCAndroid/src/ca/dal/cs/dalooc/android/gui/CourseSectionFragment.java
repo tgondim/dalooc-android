@@ -17,7 +17,7 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.LearningObjectAdapter;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
@@ -33,7 +33,7 @@ public class CourseSectionFragment extends Fragment {
 	
 	private User user;
 	
-	private LearningObjectAdapter learningOjectAdapter;
+	private LearningObjectAdapter learningObjectAdapter;
 	
 	private ListView listViewItem;
 
@@ -75,7 +75,6 @@ public class CourseSectionFragment extends Fragment {
 
 			TextView txtInstructorName = new TextView(inflater.getContext());
 			txtInstructorName.setId(2);
-//			txtInstructorName.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
 			txtInstructorName.setText(course.getSyllabus().getInstructor());
 			
 			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -108,7 +107,6 @@ public class CourseSectionFragment extends Fragment {
 
 			TextView txtCourseDetailText = new TextView(inflater.getContext());
 			txtCourseDetailText.setId(5);
-//			txtCourseDetailText.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
 			txtCourseDetailText.setText(course.getSyllabus().getCourseDetail());
 			
 			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -141,7 +139,6 @@ public class CourseSectionFragment extends Fragment {
 
 			TextView txtReferencesText = new TextView(inflater.getContext());
 			txtReferencesText.setId(8);
-//			txtReferencesText.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
 			
 			if (course.getSyllabus().getReferences().size() == 0) {
 				txtReferencesText.setText(resources.getString(R.string.no_references));
@@ -183,8 +180,6 @@ public class CourseSectionFragment extends Fragment {
 
 			TextView txtPrerequisitesText = new TextView(inflater.getContext());
 			txtPrerequisitesText.setId(11);
-//			txtPrerequisitesText.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
-			
 			
 			if (course.getSyllabus().getPrerequisites().size() == 0) {
 				txtPrerequisitesText.setText(resources.getString(R.string.no_prerequisites));
@@ -209,17 +204,17 @@ public class CourseSectionFragment extends Fragment {
 			break;
 			
 		case 2: 
-			this.learningOjectAdapter = new LearningObjectAdapter(inflater);
+			this.learningObjectAdapter = new LearningObjectAdapter(inflater);
 
 			this.listViewItem = new ListView(inflater.getContext());
 			
 			llFragmentCourse.addView(this.listViewItem, new LinearLayout.LayoutParams(
-					ViewGroup.LayoutParams.WRAP_CONTENT, 
-					ViewGroup.LayoutParams.WRAP_CONTENT, 
+					ViewGroup.LayoutParams.MATCH_PARENT, 
+					ViewGroup.LayoutParams.MATCH_PARENT, 
 					0));
 			
 			this.listViewItem.setDividerHeight(0);
-			this.listViewItem.setAdapter(learningOjectAdapter);
+			this.listViewItem.setAdapter(learningObjectAdapter);
 			this.listViewItem.setOnItemClickListener(new OnItemClickListener() {
 				@Override
 				public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -236,9 +231,9 @@ public class CourseSectionFragment extends Fragment {
 				}
 			});
 
-			learningOjectAdapter.setLearningObjectList(course.getLearningObjectList());
+			learningObjectAdapter.setLearningObjectList(course.getLearningObjectList());
 			
-			learningOjectAdapter.notifyDataSetChanged();
+			learningObjectAdapter.notifyDataSetChanged();
 			break;
 			
 		}

@@ -14,9 +14,10 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.model.LearningObject;
+import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
 public class LearningObjectEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener {
@@ -28,6 +29,8 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	public static final int EDIT_LEARNING_OBJECT_REQUEST_CODE = 100;
 	
 	private LearningObject learningObject;
+	
+	private User user;
 	
 	private ConfirmDialog confirmDialog;
 	
@@ -48,10 +51,14 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
+			this.user = (User)extras.get(LoginActivity.ARG_USER);
 			this.learningObject = (LearningObject)extras.get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
-			loadData();
-		} else {
-			this.learningObject = new LearningObject();
+			if (this.learningObject != null) {
+				loadData();
+			} else {
+				this.learningObject = new LearningObject();
+				
+			}
 		}
 	}
 

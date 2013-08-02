@@ -6,7 +6,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
-import ca.dal.cs.android.dalooc.R;
+import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.CourseSectionsPagerAdapter;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
@@ -41,7 +41,9 @@ public class CourseActivity extends FragmentActivity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.course, menu);
+		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
+			getMenuInflater().inflate(R.menu.course, menu);
+		}
 		return true;
 	}
 
@@ -53,6 +55,7 @@ public class CourseActivity extends FragmentActivity {
 			
 		case 200:
 			Intent intent = new Intent(this, CourseEditActivity.class);
+			intent.putExtra(LoginActivity.ARG_USER, this.user);
 			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
 			
 			startActivity(intent);
