@@ -19,14 +19,13 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name="ca.dal.cs.dalooc.android.gui.MainActivity"
-            android:label="@string/app_name" 
-            android:configChanges="orientation|screenSize">
+            android:configChanges="orientation|screenSize"
+            android:label="@string/app_name" >
         </activity>
         <activity
             android:name="ca.dal.cs.dalooc.android.gui.LearningObjectActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/title_activity_learning_object" >
-            
             <intent-filter>
                 <action android:name="LEARNING_OBJECT_ACTIVITY" />
 
@@ -45,8 +44,8 @@
         </activity>
         <activity
             android:name="ca.dal.cs.dalooc.android.gui.AudioDetailActivity"
-            android:label="@string/title_activity_audio_detail"
             android:configChanges="orientation|screenSize"
+            android:label="@string/title_activity_audio_detail"
             android:theme="@android:style/Theme.Holo.Dialog" >
             <intent-filter>
                 <action android:name="AUDIO_DETAIL_ACTIVITY" />
@@ -56,8 +55,8 @@
         </activity>
         <activity
             android:name="ca.dal.cs.dalooc.android.gui.VideoDetailActivity"
-            android:label="@string/title_activity_video_detail"
             android:configChanges="orientation|screenSize"
+            android:label="@string/title_activity_video_detail"
             android:theme="@android:style/Theme.Holo.Dialog" >
             <intent-filter>
                 <action android:name="VIDEO_DETAIL_ACTIVITY" />
@@ -67,8 +66,8 @@
         </activity>
         <activity
             android:name="ca.dal.cs.dalooc.android.gui.DocumentDetailActivity"
-            android:label="@string/title_activity_document_detail"
             android:configChanges="orientation|screenSize"
+            android:label="@string/title_activity_document_detail"
             android:theme="@android:style/Theme.Holo.Dialog" >
             <intent-filter>
                 <action android:name="DOCUMENT_DETAIL_ACTIVITY" />
@@ -78,8 +77,8 @@
         </activity>
         <activity
             android:name="ca.dal.cs.dalooc.android.gui.TestQuestionDetailActivity"
-            android:label="@string/title_activity_test_question_detail"
             android:configChanges="orientation|screenSize"
+            android:label="@string/title_activity_test_question_detail"
             android:theme="@android:style/Theme.Holo.Dialog" >
             <intent-filter>
                 <action android:name="TEST_QUESTION_DETAIL_ACTIVITY" />
@@ -109,14 +108,26 @@
         </activity>
         <activity
             android:name="ca.dal.cs.dalooc.android.gui.LoginActivity"
-            android:label="@string/app_name"
             android:configChanges="orientation|screenSize"
+            android:label="@string/app_name"
             android:windowSoftInputMode="adjustResize|stateVisible" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="ca.dal.cs.dalooc.android.gui.SettingsActivity"
+            android:enabled="true"
+            android:label="@string/title_activity_settings" >
+            <intent-filter>
+                <category android:name="android.intent.category.PREFERENCE" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="ca.dal.cs.dalooc.android.gui.CreateUserActivity"
+            android:label="@string/title_activity_create_user" >
         </activity>
     </application>
 

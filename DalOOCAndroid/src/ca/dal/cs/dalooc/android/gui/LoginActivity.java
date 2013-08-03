@@ -9,12 +9,17 @@ import org.ksoap2.transport.HttpTransportSE;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -24,6 +29,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.webservice.util.Parser;
 
@@ -34,21 +40,10 @@ import com.mongodb.util.JSON;
  * Activity which displays a login screen to the user, offering registration as
  * well.
  */
-public class LoginActivity extends Activity {
+public class LoginActivity extends FragmentActivity implements OnConfirmDialogReturnListener {
 	
 	public static final String ARG_USER =  "user";
 	
-	/**
-	 * DUMMY PASWORD
-	 * TODO comment for production 
-	 */
-	private static final String PASSWORD = "qwert";
-
-	/**
-	 * The default email to populate the email field with.
-	 */
-	public static final String EXTRA_EMAIL = "scott@email.com";
-
 	/**
 	 * Keep track of the login task to ensure we can cancel it if requested.
 	 */
@@ -65,36 +60,70 @@ public class LoginActivity extends Activity {
 	private View mLoginStatusView;
 	private TextView mLoginStatusMessageView;
 
+	private ConfirmDialog confirmDialog;
+	
+	@SuppressLint("HandlerLeak")
+	private Handler callBackHandler = new Handler() {
+		public void handleMessage(android.os.Message msg) {
+			switch (msg.what) {
+			case UserLoginTask.USER_NOT_REGISTERED:
+				resetFieldErrors();
+				showProgress(false);
+				getConfirmDialog().show(getSupportFragmentManager(), "fragment_edit_name");
+				break;
+			}
+		}
+	};
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_login);
-
-		// Set up the login form.
-		mEmail = EXTRA_EMAIL;
-		mPassword = PASSWORD;
-		mEmailView = (EditText) findViewById(R.id.email);
-		mEmailView.setText(mEmail);
 		
-		mPasswordView = (EditText) findViewById(R.id.password);
-		mPasswordView
-				.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-					@Override
-					public boolean onEditorAction(TextView textView, int id,
-							KeyEvent keyEvent) {
-						if (id == R.id.login || id == EditorInfo.IME_NULL) {
-							attemptLogin();
-							return true;
-						}
-						return false;
-					}
-				});
-
 		mLoginFormView = findViewById(R.id.login_form);
 		mLoginStatusView = findViewById(R.id.login_status);
 		mLoginStatusMessageView = (TextView) findViewById(R.id.login_status_message);
+		
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 
+		String userId = null;
+		
+		if (pref.getBoolean("pref_sign_in_automatically", false)) {
+			userId = pref.getString("sign_in_automatically_user_id", "");
+			if (userId != null && !userId.equals("")) {
+				// Show a progress spinner, and kick off a background task to
+				// perform the user login attempt.
+				mLoginStatusMessageView.setText(R.string.login_progress_signing_in);
+				showProgress(true);
+				mAuthTask = new UserLoginTask();
+				mAuthTask.execute(UserLoginTask.AUTOMATICALLY_LOGIN_USER, userId);
+			}
+		}
+
+		if (userId == null) {
+			mLoginFormView.setVisibility(View.VISIBLE);
+		}
+
+		// Set up the login form.
+//		mEmail = EXTRA_EMAIL;
+//		mPassword = PASSWORD;
+		mEmailView = (EditText) findViewById(R.id.email);
+//		mEmailView.setText(mEmail);
+		
+		mPasswordView = (EditText) findViewById(R.id.password);
+		mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+						@Override
+						public boolean onEditorAction(TextView textView, int id,
+								KeyEvent keyEvent) {
+							if (id == R.id.login || id == EditorInfo.IME_NULL) {
+								attemptLogin();
+								return true;
+							}
+							return false;
+						}
+					});
+		
 		findViewById(R.id.sign_in_button).setOnClickListener(
 				new View.OnClickListener() {
 					@Override
@@ -118,17 +147,11 @@ public class LoginActivity extends Activity {
 	 */
 	public void attemptLogin() {
 		
-//		Intent intent = new Intent(this, MainActivity.class);
-//		startActivity(intent);
-//		
-//		/**
 		if (mAuthTask != null) {
 			return;
 		}
 
-		// Reset errors.
-		mEmailView.setError(null);
-		mPasswordView.setError(null);
+		resetFieldErrors();
 
 		// Store values at the time of the login attempt.
 		mEmail = mEmailView.getText().toString();
@@ -169,9 +192,14 @@ public class LoginActivity extends Activity {
 			mLoginStatusMessageView.setText(R.string.login_progress_signing_in);
 			showProgress(true);
 			mAuthTask = new UserLoginTask();
-			mAuthTask.execute((Void) null);
+			mAuthTask.execute(UserLoginTask.VALIDATE_USER, this.mEmail, this.mPassword);
 		}
-//		*/
+	}
+
+	private void resetFieldErrors() {
+		// Reset errors.
+		mEmailView.setError(null);
+		mPasswordView.setError(null);
 	}
 
 	/**
@@ -214,97 +242,155 @@ public class LoginActivity extends Activity {
 			mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
 		}
 	}
+	
+	private ConfirmDialog getConfirmDialog() {
+		if (this.confirmDialog == null) {	
+			Bundle args = new Bundle();
+			args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.want_to_do_registration));
+			args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
+			
+			this.confirmDialog = new ConfirmDialog();
+			this.confirmDialog.setArguments(args);
+			this.confirmDialog.setOnConfirmDialogResultListener(this);
+		}
+		return this.confirmDialog;
+	}
+
+	@Override
+	public void onConfirmDialogReturn(boolean confirm) {
+		if (confirm) {
+			Intent createUserIntent = new Intent(LoginActivity.this, CreateUserActivity.class);
+			createUserIntent.putExtra(CreateUserActivity.ARG_EMAIL, this.mEmailView.getText().toString());
+			startActivity(createUserIntent);
+		}
+	}
 
 	/**
 	 * Represents an asynchronous login/registration task used to authenticate
 	 * the user.
 	 */
-	public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+	public class UserLoginTask extends AsyncTask<String, Void, User> {
+		
+		public static final String AUTOMATICALLY_LOGIN_USER = "get_user";
+
+		public static final String VALIDATE_USER = "validate_user";
+		
+		public static final int USER_NOT_REGISTERED = 1;
 		
 		private User user;
 		
-		@Override
-		protected Boolean doInBackground(Void... params) {
-			// TODO: attempt authentication against a network service.
+		private String userId;
+		
+		private String email;
+		
+		private String password;
 
+		private String requestType;
+		
+		@Override
+		protected User doInBackground(String... params) {
 			
-			SoapObject soap = new SoapObject(LoginActivity.this.getResources().getString(R.string.namespace_webservice),
-											LoginActivity.this.getResources().getString(R.string.validate_user_webservice_operation));
+			this.requestType = params[0];
+			
+			SoapObject soap = null;
 
 			// soap.addProperty("chave",
 			// ((Activity)this.callBack).getResources().getString(R.string.chave_dalooc_webservice));
 
-			// String courseString =
-			// Parser.getCourseDBObject(this.user).toString();
-			// soap.addProperty("courseString", courseString);
-
-			soap.addProperty("email", mEmail);
-			soap.addProperty("password", mPassword);
+			if (this.requestType.equals(VALIDATE_USER)) {
+				this.email = params[1];
+				this.password = params[2];
+				soap = new SoapObject(LoginActivity.this.getResources().getString(R.string.namespace_webservice),
+						LoginActivity.this.getResources().getString(R.string.validate_user_webservice_operation));
+				soap.addProperty("email", this.email);	
+			} else if (this.requestType.equals(AUTOMATICALLY_LOGIN_USER)) {
+				this.userId = params[1];
+				soap = new SoapObject(LoginActivity.this.getResources().getString(R.string.namespace_webservice),
+						LoginActivity.this.getResources().getString(R.string.get_user_webservice_operation));
+				soap.addProperty("userId", this.userId);	
+			}
 
 			SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(
 					SoapEnvelope.VER11);
 
 			envelope.setOutputSoapObject(soap);
-			Log.d("DalOOC", "Calling DalOOCWebServices.validateUser");
+			Log.d("UserLoginTask", "Calling DalOOCWebServices.validateUser");
 
-			HttpTransportSE httpTransport = new HttpTransportSE(getUrlWebService());
+			HttpTransportSE httpTransport = new HttpTransportSE(getUrlWebService(this.requestType));
 			this.user = null;
 
 			try {
-				// this.validateUserWebServiceResponseOk = false;
 				httpTransport.call("", envelope);
 				if (envelope.bodyIn instanceof SoapObject) {
 					SoapObject results = (SoapObject) envelope.bodyIn;
 					int count = results.getPropertyCount();
 					if (count != 0) {
 						SoapPrimitive sp = (SoapPrimitive)results.getProperty(0);
-						this.user = Parser.getUserObject((BasicDBObject)JSON.parse(sp.toString()));
-	//					user.setId(sp.get)
-	//					validUser = Boolean.valueOf(sp.toString());
-						// } else {
-						// MainActivity.this.nextPageCourseList.clear();
+						if (!sp.toString().equals("{}")) {
+							this.user = Parser.getUserObject((BasicDBObject)JSON.parse(sp.toString()));
+						}
 					}
-					// MainActivity.this.getAllCoursesWebServiceResponseOk = true;
 				} else if (envelope.bodyIn instanceof SoapFault) {
 					SoapFault results = (SoapFault) envelope.bodyIn;
-					results.getCause();
+					Log.e("UserLoginTask", results.getLocalizedMessage());
+					//TODO deal when validation webservice is not available
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
 
-//			for (String credential : DUMMY_CREDENTIALS) {
-//				String[] pieces = credential.split(":");
-//				if (pieces[0].equals(mEmail)) {
-//					// Account exists, return true if the password matches.
-//					return pieces[1].equals(mPassword);
-//				}
-//			}
-
-			// TODO: register the new account here.
-			if (this.user == null) {
-				return false;
-			} else {
-				return mPassword.equals(String.valueOf(this.user.getPassword()));
-			}
+			return this.user;
 		}
 
 		@Override
-		protected void onPostExecute(final Boolean success) {
+		protected void onPostExecute(final User user) {
 			mAuthTask = null;
-			showProgress(false);
-
-			if (success) {
-				finish();
-				Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-				intent.putExtra(ARG_USER, this.user);
+			
+			if (this.requestType.equals(VALIDATE_USER)) {
+				boolean success = false;
 				
-				startActivity(intent);
-			} else {
-				mPasswordView.setError(getString(R.string.error_incorrect_password));
-				mPasswordView.requestFocus();
+				if (user != null) {
+					if (String.valueOf(user.getPassword()).equals(this.password)) {
+						success = true;
+					}
+				} else {
+					Message msg = new Message();
+					msg.what = UserLoginTask.USER_NOT_REGISTERED;
+					msg.obj = this.email;
+					callBackHandler.sendMessage(msg);
+					return;
+				}
+				
+				showProgress(false);
+	
+				if (success) {
+					this.user = user;
+					if (this.user.isEmailValid()) {
+						callMainActivity();
+					} else {
+						LoginActivity.this.mEmailView.setError(getString(R.string.error_email_not_validated));
+						LoginActivity.this.mEmailView.requestFocus();
+					}
+				} else {
+					mPasswordView.setError(getString(R.string.error_incorrect_password));
+					mPasswordView.requestFocus();
+				}
+			} else if (this.requestType.equals(AUTOMATICALLY_LOGIN_USER)) {
+				if (user != null) {
+					this.user = user;
+					callMainActivity();
+				} else {
+					showProgress(false);
+				}
 			}
+		}
+
+		private void callMainActivity() {
+			Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+			intent.putExtra(ARG_USER, this.user);
+		
+			startActivity(intent);
+			finish();
 		}
 
 		@Override
@@ -313,11 +399,20 @@ public class LoginActivity extends Activity {
 			showProgress(false);
 		}
 		
-		public String getUrlWebService() {
-				return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.user_repository) + "/" + getResources().getString(R.string.validate_user_webservice_operation); 
-//				return "http://192.168.0.3:8080/DalOOCWebServices/services/CourseRepository/saveCourse";
-//				return "http://10.0.2.2:8080/DalOOCWebServices/services/CourseRepository/saveCourse";
-//			return "http://tgondim.dyndns.info:8080/DalOOCWebServices/services/UserRepository/validateUser";
+		public String getUrlWebService(String requestType) {
+			StringBuilder sb = new StringBuilder();
+			sb.append(getResources().getString(R.string.url_webservice));
+			sb.append("/");
+			sb.append(getResources().getString(R.string.user_repository));
+			sb.append("/");
+			
+			if (requestType.equals(UserLoginTask.VALIDATE_USER)) {
+				sb.append(getResources().getString(R.string.validate_user_webservice_operation));
+			} else if (requestType.equals(UserLoginTask.VALIDATE_USER)) {
+				sb.append(getResources().getString(R.string.get_user_webservice_operation));
+			}
+			
+			return sb.toString(); 
 		}
 	}
 }

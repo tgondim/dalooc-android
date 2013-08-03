@@ -11,6 +11,8 @@
     <string name="namespace_webservice">http://webservice.dalooc.cs.dal.ca</string>
     <string name="get_all_courses_webservice_operation">getAllCourses</string>
     <string name="save_course_webservice_operation">saveCourse</string>
+    <string name="get_user_webservice_operation">getUser</string>
+    <string name="register_user_webservice_operation">registerUser</string>
     <string name="validate_user_webservice_operation">validateUser</string>
     <string name="videos_folder">/videos</string>
     <string name="audio_folder">/audio</string>

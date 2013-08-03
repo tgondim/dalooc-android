@@ -1,0 +1,8 @@
+<preference-headers
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+<!--     <header android:fragment="ca.dal.cs.dalooc.android.gui.SettingsActivity$PrefsGeneralFragment" -->
+<!--             android:title="General" > -->
+<!-- 			<extra android:name="pref-resource" android:value="app_prefs_general" /> -->
+<!-- 	</header> -->
+</preference-headers>

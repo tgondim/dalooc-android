@@ -6,10 +6,17 @@
 <!--         android:showAsAction="never" -->
 <!--         android:title="@string/action_settings"/> -->
     
+        
     <item
-        android:id="@+id/action_new_course"
-        android:orderInCategory="200"
+        android:id="@+id/action_settings"
+        android:orderInCategory="888"
         android:showAsAction="never"
-        android:title="@string/action_new_course"/>
+        android:title="@string/action_settings"/>
+    
+    <item
+        android:id="@+id/sign_out"
+        android:orderInCategory="999"
+        android:showAsAction="never"
+        android:title="@string/action_sign_out"/>
 
 </menu>

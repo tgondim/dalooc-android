@@ -1,0 +1,15 @@
+<PreferenceScreen
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+            android:title="@string/pref_header_general">
+
+       <CheckBoxPreference
+                android:key="pref_sign_in_automatically"
+                android:title="@string/pref_title_sign_in_automatically"
+                android:summary="@string/pref_description_sign_in_automatically" />
+
+
+    </PreferenceCategory>
+    
+</PreferenceScreen>
