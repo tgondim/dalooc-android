@@ -32,6 +32,8 @@ public class CourseSectionFragment extends Fragment {
 	private int sectionNumber;
 	
 	private User user;
+
+	private Course course;
 	
 	private LearningObjectAdapter learningObjectAdapter;
 	
@@ -48,13 +50,11 @@ public class CourseSectionFragment extends Fragment {
 		Resources resources = inflater.getContext().getResources();
 		
 		this.sectionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
+		this.user = (User)getArguments().getSerializable(LoginActivity.ARG_USER);
+		this.course = (Course)getArguments().getSerializable(ARG_COURSE);
 		
 		View rootView = inflater.inflate(R.layout.fragment_course, container, false);
 		
-		this.user = (User)getArguments().getSerializable(LoginActivity.ARG_USER);
-		
-		Course course = (Course)getArguments().getSerializable(ARG_COURSE);
-
 		LinearLayout llFragmentCourse = (LinearLayout)rootView.findViewById(R.id.llFragmentCourse);
 		
 		switch (this.sectionNumber) {
@@ -223,8 +223,9 @@ public class CourseSectionFragment extends Fragment {
 					
 					if (learningObject != null) {
 						learningObjectIntent = new Intent("LEARNING_OBJECT_ACTIVITY");
-						learningObjectIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, learningObject);
+						learningObjectIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, position);
 						learningObjectIntent.putExtra(LoginActivity.ARG_USER, CourseSectionFragment.this.user);
+						learningObjectIntent.putExtra(CourseSectionFragment.ARG_COURSE, CourseSectionFragment.this.course);
 
 						startActivity(learningObjectIntent);
 					}

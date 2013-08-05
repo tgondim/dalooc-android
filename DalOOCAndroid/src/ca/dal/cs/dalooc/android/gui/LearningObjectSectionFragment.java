@@ -1,11 +1,8 @@
 package ca.dal.cs.dalooc.android.gui;
 
-import java.io.ByteArrayOutputStream;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.media.ThumbnailUtils;
 import android.os.Bundle;
 import android.os.Environment;
@@ -23,11 +20,9 @@ import ca.dal.cs.dalooc.android.control.AudioAdapter;
 import ca.dal.cs.dalooc.android.control.DocumentAdapter;
 import ca.dal.cs.dalooc.android.control.TestQuestionAdapter;
 import ca.dal.cs.dalooc.android.control.VideoAdapter;
-import ca.dal.cs.dalooc.model.Audio;
-import ca.dal.cs.dalooc.model.Document;
+import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.TestAnswer;
-import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
@@ -38,14 +33,16 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 	public static final String ARG_SECTION_NUMBER = "section_number";
 	
 	public static final String ARG_LEARNING_OBJECT =  "learning_object";
-
-	public static final String ARG_VIDEO =  "video";
 	
-	public static final String ARG_AUDIO =  "audio";
-	
-	public static final String ARG_DOCUMENT =  "document";
+	public static final String ARG_LEARNING_OBJECT_INDEX =  "learning_object_index";
 
-	public static final String ARG_TEST_QUESTION =  "test_question";
+	public static final String ARG_VIDEO_INDEX =  "video_index";
+
+	public static final String ARG_AUDIO_INDEX =  "audio_index";
+	
+	public static final String ARG_DOCUMENT_INDEX =  "document_index";
+
+	public static final String ARG_TEST_QUESTION_INDEX =  "test_question_index";
 
 	public static final String ARG_VIDEO_THUMBNAIL =  "document";
 	
@@ -53,7 +50,11 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 	
 	private int lastSelectedItemPosition = -1;
 	
+	private int learningObjectIndex;
+	
 	private User user;
+	
+	private Course course;
 	
 	private VideoAdapter videoAdapter;
 
@@ -76,8 +77,10 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 		this.sectionNumber = getArguments().getInt(ARG_SECTION_NUMBER);
 		
 		this.user = (User)getArguments().getSerializable(LoginActivity.ARG_USER);
+		this.course = (Course)getArguments().getSerializable(CourseSectionFragment.ARG_COURSE);
+		this.learningObjectIndex = getArguments().getInt(ARG_LEARNING_OBJECT_INDEX);
 		
-		LearningObject learningObject = (LearningObject)getArguments().getSerializable(ARG_LEARNING_OBJECT);
+		LearningObject learningObject = this.course.getLearningObjectList().get(this.learningObjectIndex);
 
 		View rootView = null;
 		rootView = inflater.inflate(R.layout.fragment_learning_object, container, false);
@@ -142,48 +145,41 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 		case 1:
 			this.lastSelectedItemPosition = position;
 			
-			Video video = (Video)this.videoAdapter.getItem(position);
-			
 			Intent videoDetailIntent = new Intent("VIDEO_DETAIL_ACTIVITY");
-			videoDetailIntent.putExtra(ARG_VIDEO, video);
 			videoDetailIntent.putExtra(LoginActivity.ARG_USER, this.user);
-			
-			Bitmap b = ((BitmapDrawable)((ImageView)view.findViewById(R.id.ivVideoThumbnail)).getDrawable()).getBitmap();
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			b.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-			byte[] videoThumbnail = baos.toByteArray();
-			
-			videoDetailIntent.putExtra(ARG_VIDEO_THUMBNAIL, videoThumbnail);
+			videoDetailIntent.putExtra(CourseSectionFragment.ARG_COURSE, this.course);
+			videoDetailIntent.putExtra(ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
+			videoDetailIntent.putExtra(ARG_VIDEO_INDEX, position);
 			
 			startActivity(videoDetailIntent);
-		break;
+			break;
 		
 		case 2: 
-			Audio audio = (Audio)this.audioAdapter.getItem(position);
-
 			Intent audioDetailIntent = new Intent("AUDIO_DETAIL_ACTIVITY");
-			audioDetailIntent.putExtra(ARG_AUDIO, audio);
 			audioDetailIntent.putExtra(LoginActivity.ARG_USER, this.user);
+			audioDetailIntent.putExtra(CourseSectionFragment.ARG_COURSE, this.course);
+			audioDetailIntent.putExtra(ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
+			audioDetailIntent.putExtra(ARG_AUDIO_INDEX, position);
 			
 			startActivity(audioDetailIntent);
 			break;
 		
 		case 3: 
-			Document document = (Document)this.documentAdapter.getItem(position);
-			
 			Intent documentDetailIntent = new Intent("DOCUMENT_DETAIL_ACTIVITY");
-			documentDetailIntent.putExtra(ARG_DOCUMENT, document);
 			documentDetailIntent.putExtra(LoginActivity.ARG_USER, this.user);
+			documentDetailIntent.putExtra(CourseSectionFragment.ARG_COURSE, this.course);
+			documentDetailIntent.putExtra(ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
+			documentDetailIntent.putExtra(ARG_DOCUMENT_INDEX, position);
 			
 			startActivity(documentDetailIntent);
 			break;
 
 		case 4: 
-			TestQuestion testQuestion = (TestQuestion)this.testQuestionAdapter.getItem(position);
-			
 			Intent testQuestionDetailIntent = new Intent("TEST_QUESTION_DETAIL_ACTIVITY");
-			testQuestionDetailIntent.putExtra(ARG_TEST_QUESTION, testQuestion);
+			testQuestionDetailIntent.putExtra(ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
+			testQuestionDetailIntent.putExtra(ARG_TEST_QUESTION_INDEX, position);
 			testQuestionDetailIntent.putExtra(LoginActivity.ARG_USER, this.user);
+			testQuestionDetailIntent.putExtra(CourseSectionFragment.ARG_COURSE, this.course);
 			
 			startActivityForResult(testQuestionDetailIntent, TEST_QUESTION_ANSWER_ACTIVITY_REQUEST_CODE);
 			break;
@@ -199,7 +195,7 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 			
 			Video video = ((Video)this.videoAdapter.getItem(this.lastSelectedItemPosition));
 			
-			Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(Environment.getExternalStorageDirectory() + video.getVideoUrl(), MediaStore.Video.Thumbnails.MICRO_KIND);
+			Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(Environment.getExternalStorageDirectory() + video.getContentFileName(), MediaStore.Video.Thumbnails.MICRO_KIND);
 			
 			if (bitmap != null) {
 				ivVideoThumbnail.setImageBitmap(bitmap);

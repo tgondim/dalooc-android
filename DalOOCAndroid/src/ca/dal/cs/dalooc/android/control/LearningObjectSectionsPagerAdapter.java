@@ -8,6 +8,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.android.gui.CourseSectionFragment;
 import ca.dal.cs.dalooc.android.gui.LearningObjectActivity;
 import ca.dal.cs.dalooc.android.gui.LearningObjectSectionFragment;
 import ca.dal.cs.dalooc.android.gui.LoginActivity;
@@ -27,7 +28,8 @@ public class LearningObjectSectionsPagerAdapter extends FragmentPagerAdapter {
 		
 		Bundle args = new Bundle();		
 		args.putInt(LearningObjectSectionFragment.ARG_SECTION_NUMBER, position + 1);
-		args.putSerializable(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, ((LearningObjectActivity)this.context).getLearningObject());
+		args.putInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, ((LearningObjectActivity)this.context).getLearningObjectIndex());
+		args.putSerializable(CourseSectionFragment.ARG_COURSE, ((LearningObjectActivity)this.context).getCourse());
 		args.putSerializable(LoginActivity.ARG_USER, ((LearningObjectActivity)this.context).getUser());
 		fragment.setArguments(args);
 		

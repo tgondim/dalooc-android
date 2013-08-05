@@ -18,6 +18,18 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
 
     protected Bitmap doInBackground(String... urls) {
         String urldisplay = urls[0];
+        
+        int waitTime = 0;
+        
+        if (urls.length > 1) { 
+        	try {
+        		waitTime = Integer.valueOf(urls[1]);
+        		if (waitTime > 0) {
+        			Thread.sleep(waitTime);
+        		}
+        	} catch (Exception ignored) {}
+        }
+        
         Bitmap mIcon11 = null;
         try {
             InputStream in = new java.net.URL(urldisplay).openStream();

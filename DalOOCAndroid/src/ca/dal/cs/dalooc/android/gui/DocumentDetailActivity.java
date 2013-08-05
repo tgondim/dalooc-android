@@ -39,6 +39,7 @@ import ca.dal.cs.dalooc.android.util.DownloadDocumentTask;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
 import ca.dal.cs.dalooc.android.util.listener.OnDownloadDocumentDoneListener;
+import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
 import ca.dal.cs.dalooc.model.User;
 
@@ -50,6 +51,12 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	private Document document;
 	
 	private User user;
+	
+	private Course course;
+	
+	private int learningObjectIndex;
+
+	private int documentIndex;
 	
 	private LinearLayout llDownloadPreviewStatus;
 	
@@ -95,8 +102,12 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 		getWindow().setFlags(LayoutParams.FLAG_NOT_TOUCH_MODAL, LayoutParams.FLAG_NOT_TOUCH_MODAL);
 		getWindow().setFlags(LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
 		
-		this.document = (Document)getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_DOCUMENT);
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
+		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
+		this.learningObjectIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX);
+		this.documentIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX);
+		
+		this.document = this.course.getLearningObjectList().get(this.learningObjectIndex).getDocumentList().get(this.documentIndex);
 
 		TextView txtDocumentItemName = (TextView)findViewById(R.id.txtDocumentItemName);
 		txtDocumentItemName.setText(this.document.getName());
@@ -121,7 +132,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 				downloadDocTask.setOnDownloadDocumentDoneListener(DocumentDetailActivity.this);
 				downloadDocTask.execute(DocumentDetailActivity.this.getResources().getString(R.string.host_file_server) 
 						+ DocumentDetailActivity.this.getResources().getString(R.string.documents_folder)
-						+ "/" + DocumentDetailActivity.this.document.getDocumentUrl());;
+						+ "/" + DocumentDetailActivity.this.document.getContentFileName());;
 			}
 		});
 		
@@ -167,11 +178,11 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 			
 			@Override
 			public void onClick(View v) {
-				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + DocumentDetailActivity.this.document.getDocumentUrl());
+				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + DocumentDetailActivity.this.document.getContentFileName());
 				DocumentDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 				Request request = new Request(Uri.parse(DocumentDetailActivity.this.getResources().getString(R.string.host_file_server)
 						+ DocumentDetailActivity.this.getResources().getString(R.string.documents_folder)
-						+ "/" + DocumentDetailActivity.this.document.getDocumentUrl()));
+						+ "/" + DocumentDetailActivity.this.document.getContentFileName()));
 				request.setDestinationUri(Uri.fromFile(destDocFile));
 				enqueue = dm.enqueue(request);		
 				showToast(getResources().getString(R.string.download_file_in_progress));
@@ -196,7 +207,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
                         if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(columnIndex)) {
                         	Intent documentPreviewIntent = new Intent(Intent.ACTION_VIEW);
                         	String mimeType = "application/*";
-            				String extension = MimeTypeMap.getFileExtensionFromUrl(document.getDocumentUrl());
+            				String extension = MimeTypeMap.getFileExtensionFromUrl(document.getContentFileName());
             				
             				if (MimeTypeMap.getSingleton().hasExtension(extension)) {
             					mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
@@ -300,7 +311,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 
 	private void openDocument(File file) {
 		String mimeType = "application/*";
-		String extension = MimeTypeMap.getFileExtensionFromUrl(document.getDocumentUrl());
+		String extension = MimeTypeMap.getFileExtensionFromUrl(document.getContentFileName());
 		
 		if (MimeTypeMap.getSingleton().hasExtension(extension)) {
 			mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
@@ -342,7 +353,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 		msg.what = UploadFileTask.UPLOAD_DONE;
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
 			this.newFileName = General.getIdFileName(this.newFileName, this.document.getId());
-			this.document.setDocumentUrl(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
+			this.document.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			//TODO save the document modification
 		} else {

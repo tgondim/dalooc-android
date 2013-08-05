@@ -10,16 +10,22 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.model.Audio;
+import ca.dal.cs.dalooc.model.Course;
+import ca.dal.cs.dalooc.model.Document;
+import ca.dal.cs.dalooc.model.LearningObjectContent;
 import ca.dal.cs.dalooc.model.Option;
 import ca.dal.cs.dalooc.model.TestAnswer;
 import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
+import ca.dal.cs.dalooc.model.Video;
 
 public class TestQuestionDetailActivity extends Activity implements OnClickListener {
 	
@@ -28,11 +34,17 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 	
 	private User user;
 	
-	private boolean chooseCorrect = false;
+	private Course course;
 	
 	private TestQuestion testQuestion;
 	
 	private TestAnswer testAnswer;
+	
+	private int learningObjectIndex;
+
+	private int testQuestionIndex;
+	
+	private boolean chooseCorrect = false;
 	
 	private RadioGroup radioGroup;
 	
@@ -41,26 +53,65 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 	private Button btnSubmit;
 	
 	private ImageView ivTestQuestionDetailThumbnail;
+
+	private ImageView ivTestQuestionRelatedContentThumbnail;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_test_question_detail);
 	
-		this.testQuestion = (TestQuestion)getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_TEST_QUESTION);
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
+		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
+		this.learningObjectIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX);
+		this.testQuestionIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX);
+
+		this.testQuestion = this.course.getLearningObjectList().get(learningObjectIndex).getTestQuestionList().get(testQuestionIndex);
 		
 		this.radioButtonList = new ArrayList<MyRadioButton>();
 		
 		this.btnSubmit = (Button)findViewById(R.id.btnSubmit);
 		this.btnSubmit.setOnClickListener(this);
 		
-		this.ivTestQuestionDetailThumbnail = (ImageView)findViewById(R.id.ivTestQuestionDetailThumbnail);
+		this.ivTestQuestionDetailThumbnail = (ImageView)findViewById(R.id.ivTestQuestionAnswerThumbnail);
+		
+		this.ivTestQuestionRelatedContentThumbnail = (ImageView)findViewById(R.id.ivTestQuestionRelatedContentThumbnail);
+		this.ivTestQuestionRelatedContentThumbnail.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Object[] learningObjectContent = getRelatedContent(TestQuestionDetailActivity.this.testQuestion.getRelatedContendId());
+				if (learningObjectContent != null) {
+					Intent relatedContentDetailIntent = null;
+					
+					if (learningObjectContent[1] instanceof Video) {
+						relatedContentDetailIntent = new Intent("VIDEO_DETAIL_ACTIVITY");
+						
+					} else if (learningObjectContent[1] instanceof Audio) {
+						relatedContentDetailIntent = new Intent("AUDIO_DETAIL_ACTIVITY");
+						
+					} else if (learningObjectContent[1] instanceof Document) {
+						relatedContentDetailIntent = new Intent("DOCUMENT_DETAIL_ACTIVITY");
+					}
+
+					if (relatedContentDetailIntent != null) {
+						relatedContentDetailIntent.putExtra(LoginActivity.ARG_USER, TestQuestionDetailActivity.this.user);
+						relatedContentDetailIntent.putExtra(CourseSectionFragment.ARG_COURSE, TestQuestionDetailActivity.this.course);
+						relatedContentDetailIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, TestQuestionDetailActivity.this.learningObjectIndex);
+						relatedContentDetailIntent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, (Integer)learningObjectContent[0]);
+						
+						startActivity(relatedContentDetailIntent);
+					} 
+				} else {
+					//TODO what to do when the relatedContent is not found
+				}
+			}
+		});
 		
 		TextView txtTestQuestion= (TextView)findViewById(R.id.txtTestQuestion);
 		txtTestQuestion.setText(this.testQuestion.getQuestion());
 		
-		LinearLayout llRadioGroup = (LinearLayout)findViewById(R.id.llRadioGroup);
+		LinearLayout llRadioGroup = (LinearLayout)findViewById(R.id.llTestQuestionRadioGroup);
 		
 		this.radioGroup = new RadioGroup(this);
 		MyRadioButton rb;
@@ -116,6 +167,7 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 						this.testAnswer.setUserId(this.user.getId());
 						this.testAnswer.setTestQuestionId(this.testQuestion.getId());
 						this.testAnswer.setOptionId(option.getId());
+						this.ivTestQuestionRelatedContentThumbnail.setVisibility(View.VISIBLE);
 						//TODO LearningObjectId and CourseId are missing
 					} else {
 						//TODO wrong answer!
@@ -131,57 +183,42 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 		}
 	}
 	
-//	@Override
-//	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//		super.onActivityResult(requestCode, resultCode, data);
-//	    if (requestCode == GET_DOCUMENT_FILE_ACTIVITY_REQUEST_CODE) {
-//	        if (resultCode == RESULT_OK) {
-//    			ConfirmDialogFragment confirm = new ConfirmDialogFragment();
-//	        	Bundle bundle = new Bundle();
-//	        	bundle.putInt(ConfirmDialogFragment.ARG_CONFIRM_MESSAGE, ConfirmDialogFragment.DOCUMENT_CONFIRM_MESSAGE);
-//	        	confirm.setArguments(bundle);
-//	        	confirm.show(getFragmentManager(), "Confirm");
-//	        	if (confirm.getLastChoice()) {
-//	        		this.document.setDocumentUrl(data.getDataString().replace("file://", ""));
-//	         	} else {
-//	         		//DO NOTHING
-//	         	}
-//	        } else if (resultCode == RESULT_CANCELED) {
-//	            // User cancelled the video capture
-//	        } else {
-//	            // Video capture failed, advise user
-//	        	//TODO
-//	        }
-//	    }
-//	}
-//
-//	@Override
-//	public void onDownloadDocumentDone(File file) {
-//		if (file != null) {
-//			openDocument(file);		
-//		} else {
-//			//TODO see what to do case the file is not downloaded
-//		}
-//	}
-
-//	private void openDocument(File file) {
-//		String mimeType = "application/*";
-//		String extension = MimeTypeMap.getFileExtensionFromUrl(document.getDocumentUrl());
-//		
-//		if (MimeTypeMap.getSingleton().hasExtension(extension)) {
-//			mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-//		}
-//		try {
-//			Intent documentPreviewIntent = new Intent(Intent.ACTION_VIEW);
-//			documentPreviewIntent.setDataAndType(Uri.fromFile(file), mimeType);
-//	        startActivity(documentPreviewIntent);
-//		} 
-//		catch (ActivityNotFoundException e) {
-//		    Toast.makeText(TestQuestionDetailActivity.this, 
-//		        getResources().getString(R.string.no_application_available), 
-//		        Toast.LENGTH_LONG).show();
-//		}
-//	}
+	private Object[] getRelatedContent(String relatedContentId) {
+		Object[] relatedContent = getLearningObjectContent(this.course.getLearningObjectList().get(this.learningObjectIndex).getVideoList(), relatedContentId);
+		if (relatedContent != null) {
+			return relatedContent;
+		}
+		
+		relatedContent = getLearningObjectContent(this.course.getLearningObjectList().get(this.learningObjectIndex).getAudioList(), relatedContentId);
+		if (relatedContent != null) {
+			return relatedContent;
+		}
+		
+		relatedContent = getLearningObjectContent(this.course.getLearningObjectList().get(this.learningObjectIndex).getDocumentList(), relatedContentId);
+		if (relatedContent != null) {
+			return relatedContent;
+		}
+		
+		return null;
+	}
+	
+	private Object[] getLearningObjectContent(@SuppressWarnings("rawtypes") List learningObjectContentList, String learningObjectContentId) {
+		Object[] relatedContent = new Object[2];
+		LearningObjectContent learningObjectContent;
+		
+		for (int i =0; i< learningObjectContentList.size(); i++) {
+			learningObjectContent = (LearningObjectContent)learningObjectContentList.get(i);
+			if (learningObjectContent.getId().equals(learningObjectContentId)) {
+				relatedContent[0] = i;
+				relatedContent[1] = learningObjectContent;
+				
+				return relatedContent;
+			}
+		}
+		
+		return null;
+	}
+	
 	private class MyRadioButton extends RadioButton {
 		
 		protected int index;

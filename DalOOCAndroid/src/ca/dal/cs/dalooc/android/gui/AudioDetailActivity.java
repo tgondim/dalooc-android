@@ -47,6 +47,7 @@ import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
 import ca.dal.cs.dalooc.model.Audio;
+import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 
 public class AudioDetailActivity extends FragmentActivity implements RecordingBlinkImageViewCallBack, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener {
@@ -62,6 +63,12 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 	private Audio audio;
 	
 	private User user;
+
+	private Course course;
+	
+	private int learningObjectIndex;
+
+	private int audioIndex;
 	
 	private MediaRecorder mediaRecorder = null;
 	
@@ -123,9 +130,13 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 		getWindow().setFlags(LayoutParams.FLAG_NOT_TOUCH_MODAL, LayoutParams.FLAG_NOT_TOUCH_MODAL);
 		getWindow().setFlags(LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
 	
-		this.audio = (Audio)getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_AUDIO);
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
+		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
+		this.learningObjectIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX);
+		this.audioIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_AUDIO_INDEX);
 		
+		this.audio = this.course.getLearningObjectList().get(this.learningObjectIndex).getAudioList().get(this.audioIndex);
+
 		this.tvDownloadPreviewStatusMessage = (TextView)findViewById(R.id.tvDownloadPreviewStatusMessage);
 		this.llDownloadPreviewStatus = (LinearLayout)findViewById(R.id.llDownloadPreviewStatus);
 		this.rlAudioDetailForm = (RelativeLayout)findViewById(R.id.rlAudioDetailForm);
@@ -180,11 +191,11 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 			
 			@Override
 			public void onClick(View v) {
-				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + AudioDetailActivity.this.audio.getAudioUrl());
+				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + AudioDetailActivity.this.audio.getContentFileName());
 				AudioDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 				Request request = new Request(Uri.parse(AudioDetailActivity.this.getResources().getString(R.string.host_file_server) 
 						+ AudioDetailActivity.this.getResources().getString(R.string.audio_folder)
-						+ "/" + AudioDetailActivity.this.audio.getAudioUrl()));
+						+ "/" + AudioDetailActivity.this.audio.getContentFileName()));
 				request.setDestinationUri(Uri.fromFile(destDocFile));
 				enqueue = dm.enqueue(request);		
 				showToast(getResources().getString(R.string.download_file_in_progress));
@@ -229,7 +240,7 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
                         if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(columnIndex)) {
                         	Intent audioPreviewIntent = new Intent(Intent.ACTION_VIEW);
                         	String mimeType = "application/*";
-            				String extension = MimeTypeMap.getFileExtensionFromUrl(audio.getAudioUrl());
+            				String extension = MimeTypeMap.getFileExtensionFromUrl(audio.getContentFileName());
             				
             				if (MimeTypeMap.getSingleton().hasExtension(extension)) {
             					mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
@@ -346,7 +357,7 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 		try {
 			this.mediaPlayer.setDataSource(getResources().getString(R.string.host_file_server) 
 					+ getResources().getString(R.string.audio_folder) 
-					+ "/" + this.audio.getAudioUrl());
+					+ "/" + this.audio.getContentFileName());
 			this.mediaPlayer.prepare();
 			this.audioChronometer.setBase(SystemClock.elapsedRealtime());
 			this.mediaPlayer.start();
@@ -377,7 +388,7 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 	    this.mediaRecorder = new MediaRecorder();
 	    this.mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
 	    this.mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-	    this.newFileName = Environment.getExternalStorageDirectory() + "/DalOOC/" + this.audio.getAudioUrl();
+	    this.newFileName = Environment.getExternalStorageDirectory() + "/DalOOC/" + this.audio.getContentFileName();
 	    this.mediaRecorder.setOutputFile(this.newFileName);
 	    this.mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
@@ -567,7 +578,7 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 		msg.what = UploadFileTask.UPLOAD_DONE;
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
 			this.newFileName = General.getIdFileName(this.newFileName, this.audio.getId());
-			this.audio.setAudioUrl(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
+			this.audio.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			//TODO save the document modification
 		} else {

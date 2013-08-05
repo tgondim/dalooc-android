@@ -314,9 +314,10 @@ public class LoginActivity extends FragmentActivity implements OnConfirmDialogRe
 					SoapEnvelope.VER11);
 
 			envelope.setOutputSoapObject(soap);
-			Log.d("UserLoginTask", "Calling DalOOCWebServices.validateUser");
+			String urlWebService = getUrlWebService(this.requestType);
+			Log.d("UserLoginTask", "Calling DalOOCWebServices.validateUser at: " + urlWebService);
 
-			HttpTransportSE httpTransport = new HttpTransportSE(getUrlWebService(this.requestType));
+			HttpTransportSE httpTransport = new HttpTransportSE(urlWebService);
 			this.user = null;
 
 			try {

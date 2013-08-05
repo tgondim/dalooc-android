@@ -33,7 +33,7 @@ public class CourseEditActivity extends Activity {
 	
 	private Map<ImageView, View[]> prerequisitesLayoutMapping;
 	private Map<ImageView, View[]> referencesLayoutMapping;
-	private Map<ImageView, Object[]> learningObjectLayoutMapping;
+	private Map<View, Object[]> learningObjectLayoutMapping;
 
 	private LinearLayout llPrerequesites;
 	private LinearLayout llReferences;
@@ -60,7 +60,7 @@ public class CourseEditActivity extends Activity {
 		
 		this.prerequisitesLayoutMapping = new HashMap<ImageView, View[]>();
 		this.referencesLayoutMapping = new HashMap<ImageView, View[]>();
-		this.learningObjectLayoutMapping = new HashMap<ImageView, Object[]>();
+		this.learningObjectLayoutMapping = new HashMap<View, Object[]>();
 		
 		this.llPrerequesites = (LinearLayout)findViewById(R.id.llPrerequisites);
 		this.llReferences = (LinearLayout)findViewById(R.id.llReferences);
@@ -92,6 +92,9 @@ public class CourseEditActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(CourseEditActivity.this, LearningObjectEditActivity.class);
+				intent.putExtra(LoginActivity.ARG_USER, CourseEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, CourseEditActivity.this.course);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, -1);
 				startActivityForResult(intent, LearningObjectEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE);
 			}
 			
@@ -126,8 +129,7 @@ public class CourseEditActivity extends Activity {
 		}
 		
 		for (LearningObject learningObject : this.course.getLearningObjectList()) {
-			View v = createLearningObjectEntry(learningObject);
-//			((TextView)this.learningObjectLayoutMapping.get(v)[NAME_VIEW]).setText(learningObject.getName());
+			createLearningObjectEntry(learningObject);
 		}
 	}
 
@@ -253,8 +255,10 @@ public class CourseEditActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(CourseEditActivity.this, LearningObjectEditActivity.class);
-//				int pos = CourseEditActivity.this.learningObjectLayoutMapping.
-				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, (LearningObject)CourseEditActivity.this.learningObjectLayoutMapping.get(v)[OBJECT_ITEM]);
+				intent.putExtra(LoginActivity.ARG_USER, CourseEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, CourseEditActivity.this.course);
+				int index = CourseEditActivity.this.course.getLearningObjectList().indexOf((LearningObject)CourseEditActivity.this.learningObjectLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, index);
 				startActivityForResult(intent, LearningObjectEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE);
 			}
 		});
@@ -265,9 +269,9 @@ public class CourseEditActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				((RelativeLayout)CourseEditActivity.this.learningObjectLayoutMapping.get(v)[LAYOUT_VIEW]).removeAllViews();
+				((RelativeLayout)CourseEditActivity.this.learningObjectLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW]).removeAllViews();
 				CourseEditActivity.this.llLearningObject.removeViewInLayout((View)CourseEditActivity.this.learningObjectLayoutMapping.get(v)[LAYOUT_VIEW]);
-				CourseEditActivity.this.learningObjectLayoutMapping.remove(v);
+				CourseEditActivity.this.learningObjectLayoutMapping.remove((View)v.getParent());
 			}
 		});
 		
@@ -291,7 +295,7 @@ public class CourseEditActivity extends Activity {
 		viewArray[NAME_VIEW] = textView;
 		viewArray[OBJECT_ITEM] = learningObject;
 		
-		CourseEditActivity.this.learningObjectLayoutMapping.put(imageView, viewArray);
+		CourseEditActivity.this.learningObjectLayoutMapping.put((View)imageView.getParent(), viewArray);
 		
 		LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, 

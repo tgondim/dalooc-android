@@ -60,7 +60,7 @@
     <string name="no">No</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="submit">Submit</string>
+    <string name="answer">Answer</string>
     <string name="connection_error">Connection error. Please try again later.</string>
     <string name="successful_downloaded"> was successfuly downloaded.</string>
     <string name="unable_create_file">Unable to create new file</string>
@@ -78,6 +78,7 @@
     <string name="prompt_retype_password">Retype Password</string>
     <string name="prompt_first_name">First Name</string>
     <string name="prompt_last_name">Last Name</string>
+    <string name="prompt_user_type">User Type</string>
     <string name="action_sign_in_register"><b>Sign in</b> or register</string>
     <string name="action_register"><b>Send Registration</b></string>
     <string name="action_sign_in_short">Sign in</string>

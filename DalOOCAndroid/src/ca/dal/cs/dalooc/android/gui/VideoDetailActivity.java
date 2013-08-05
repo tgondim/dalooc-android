@@ -15,8 +15,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -40,8 +38,10 @@ import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
+import ca.dal.cs.dalooc.android.util.DownloadImageTask;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
+import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
@@ -54,6 +54,12 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	private Video video;
 	
 	private User user;
+	
+	private Course course;
+	
+	private int learningObjectIndex;
+
+	private int videoIndex;
 	
 	private long enqueue;
 	
@@ -73,8 +79,6 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	
 	private ImageButton ibVideoDownload;
 	
-	private ImageView ivVideoDetailThumbnail;
-
 	private ConfirmDialog confirmDialog;
 	
 	private String newFileName = "";
@@ -91,6 +95,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 			case UploadFileTask.UPLOAD_DONE:
 				showProgress(false, "");
 				showToast((String)msg.obj);
+				downloadVideoIcon(1000);
 				break;
 			}
 		}
@@ -104,24 +109,18 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 		getWindow().setFlags(LayoutParams.FLAG_NOT_TOUCH_MODAL, LayoutParams.FLAG_NOT_TOUCH_MODAL);
 		getWindow().setFlags(LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
 		
-		this.video = (Video)getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_VIDEO);
-		byte[] videoThumbnail = (byte[])getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_VIDEO_THUMBNAIL);
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
+		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
+		this.learningObjectIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX);
+		this.videoIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_VIDEO_INDEX);
 		
+		this.video = this.course.getLearningObjectList().get(this.learningObjectIndex).getVideoList().get(this.videoIndex);
+
 		this.tvDownloadPreviewStatusMessage = (TextView)findViewById(R.id.tvDownloadPreviewStatusMessage);
 		this.llDownloadPreviewStatus = (LinearLayout)findViewById(R.id.llDownloadPreviewStatus);
 		this.rlVideoDetailForm = (RelativeLayout)findViewById(R.id.rlVideoDetailForm);
 		
-		this.ivVideoDetailThumbnail = (ImageView)findViewById(R.id.ivVideoDetailThumbnail);
-		
-		Bitmap b = null;
-		if (videoThumbnail != null) {
-			b = BitmapFactory.decodeByteArray(videoThumbnail, 0, videoThumbnail.length);
-		}
-		
-		if (b != null) {
-			ivVideoDetailThumbnail.setImageBitmap(b);
-		}
+		downloadVideoIcon(0);
 		
 		TextView txtVideoItemName = (TextView)findViewById(R.id.txtVideoItemName);
 		txtVideoItemName.setText(this.video.getName());
@@ -139,7 +138,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 			public void onClick(View v) {
 				Intent videoPlayIntent = new Intent(Intent.ACTION_VIEW);
 				String mimeType = "application/*";
-				String extension = MimeTypeMap.getFileExtensionFromUrl(video.getVideoUrl());
+				String extension = MimeTypeMap.getFileExtensionFromUrl(video.getContentFileName());
 				
 				if (MimeTypeMap.getSingleton().hasExtension(extension)) {
 					mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
@@ -148,7 +147,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 				
 				videoPlayIntent.setDataAndType(Uri.parse(getResources().getString(R.string.host_file_server) 
 						+ getResources().getString(R.string.videos_folder) 
-						+ "/" + video.getVideoUrl()), mimeType);
+						+ "/" + video.getContentFileName()), mimeType);
 				videoPlayIntent.putExtra(MediaStore.EXTRA_FINISH_ON_COMPLETION, true);
 				try {
                     startActivity(videoPlayIntent);
@@ -180,7 +179,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 					videoFolder.mkdirs();
 					File videoFile = new File(videoFolder, video.getId() + ".mp4");
 					VideoDetailActivity.this.newFileName = videoFile.getAbsolutePath();
-					VideoDetailActivity.this.video.setVideoUrl(video.getId() + ".mp4");
+					VideoDetailActivity.this.video.setContentFileName(video.getId() + ".mp4");
 					
 					Uri uriSavedVideoFile = Uri.fromFile(videoFile);
 					
@@ -222,11 +221,11 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 			
 			@Override
 			public void onClick(View v) {
-				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + VideoDetailActivity.this.video.getVideoUrl());
+				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + VideoDetailActivity.this.video.getContentFileName());
 				VideoDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 				Request request = new Request(Uri.parse(VideoDetailActivity.this.getResources().getString(R.string.host_file_server) 
 						+ VideoDetailActivity.this.getResources().getString(R.string.videos_folder)
-						+ "/" + VideoDetailActivity.this.video.getVideoUrl()));
+						+ "/" + VideoDetailActivity.this.video.getContentFileName()));
 				request.setDestinationUri(Uri.fromFile(destDocFile));
 				enqueue = dm.enqueue(request);	
 				showToast(getResources().getString(R.string.download_file_in_progress));
@@ -251,7 +250,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
                         if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(columnIndex)) {
                         	Intent videoPreviewIntent = new Intent(Intent.ACTION_VIEW);
                         	String mimeType = "application/video";
-            				String extension = MimeTypeMap.getFileExtensionFromUrl(video.getVideoUrl());
+            				String extension = MimeTypeMap.getFileExtensionFromUrl(video.getContentFileName());
             				
             				if (MimeTypeMap.getSingleton().hasExtension(extension)) {
             					mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
@@ -280,6 +279,16 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 
         registerReceiver(receiver, new IntentFilter( DownloadManager.ACTION_DOWNLOAD_COMPLETE));
 	}
+
+	private void downloadVideoIcon(int waitTime) {
+		ImageView videoThumbnail = (ImageView)findViewById(R.id.ivVideoDetailThumbnail);
+		if (waitTime > 0) {
+			videoThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_video_thumbnail_default));
+		}
+		new DownloadImageTask(videoThumbnail).execute(getResources().getString(R.string.host_file_server)
+				+ getResources().getString(R.string.videos_folder)
+				+ "/thumb/" + video.getContentFileName().replace("mp4", "jpg"), String.valueOf(waitTime));
+	}
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
@@ -300,10 +309,6 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	        if (resultCode == RESULT_OK) {
 //	        	this.newFileName = data.getDataString().replace("file://", "");
 	        	uploadSelectedFile();
-//	        	new DownloadImageTask(this.ivVideoDetailThumbnail)
-//				.execute(getResources().getString(R.string.host_file_server)
-//						+ getResources().getString(R.string.videos_folder)
-//						+ "/thumb/" + video.getVideoUrl().replace(video.getVideoUrl().substring(video.getVideoUrl().lastIndexOf(".")), "jpg"));
 	        } else if (resultCode == RESULT_CANCELED) {
 	            // User cancelled the video capture
 	        } else {
@@ -378,7 +383,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			this.newFileName = General.getIdFileName(this.newFileName, this.video.getId());
-			this.video.setVideoUrl(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
+			this.video.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
 			//TODO save the document modification
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);

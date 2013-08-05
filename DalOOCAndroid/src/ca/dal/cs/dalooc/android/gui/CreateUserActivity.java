@@ -19,8 +19,10 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
@@ -40,6 +42,10 @@ public class CreateUserActivity extends Activity {
 	private EditText etPassword;
 	
 	private EditText etRetypePassword;
+	
+	private Spinner spnUserType;
+	
+	private ArrayAdapter<User.UserType> userTypeAdapter;
 	
 	private View llRegisterStatus;
 
@@ -68,6 +74,12 @@ public class CreateUserActivity extends Activity {
 		this.etPassword = (EditText)findViewById(R.id.etPassword);
 		this.etRetypePassword = (EditText)findViewById(R.id.etRetypePassword);
 		
+		this.spnUserType = (Spinner)findViewById(R.id.spnUserType);
+		this.userTypeAdapter = new ArrayAdapter<User.UserType>(this, android.R.layout.simple_spinner_item, User.UserType.values());
+		this.userTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		this.spnUserType .setAdapter(this.userTypeAdapter);	
+		this.spnUserType.setSelection(0);
+		
 		String email = (String)getIntent().getExtras().getSerializable(ARG_EMAIL);
 		
 		if (email != null) {
@@ -79,15 +91,17 @@ public class CreateUserActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-//				if (mAuthTask != null) {
-//					return;
-//				}
+				if (CreateUserActivity.this.userRegisterTask != null) {
+					return;
+				}
 
 				// Reset errors.
 				CreateUserActivity.this.etEmail.setError(null);
 				CreateUserActivity.this.etPassword.setError(null);
 
 				// Store values at the time of the login attempt.
+				String mFirstName = CreateUserActivity.this.etFirstName.getText().toString();
+				String mLastName = CreateUserActivity.this.etLastName.getText().toString();
 				String mEmail = CreateUserActivity.this.etEmail.getText().toString();
 				String mPassword = CreateUserActivity.this.etPassword.getText().toString();
 				String mRetypePassword = CreateUserActivity.this.etRetypePassword.getText().toString();
@@ -95,6 +109,20 @@ public class CreateUserActivity extends Activity {
 				boolean cancel = false;
 				View focusView = null;
 
+				// Check for a valid firstName
+				if (TextUtils.isEmpty(mFirstName)) {
+					CreateUserActivity.this.etFirstName.setError(getString(R.string.error_field_required));
+					focusView = CreateUserActivity.this.etFirstName;
+					cancel = true;
+				}
+				
+				// Check for a valid lastName
+				if (TextUtils.isEmpty(mLastName)) {
+					CreateUserActivity.this.etLastName.setError(getString(R.string.error_field_required));
+					focusView = CreateUserActivity.this.etLastName;
+					cancel = true;
+				}
+				
 				// Check for a valid password.
 				if (TextUtils.isEmpty(mPassword)) {
 					CreateUserActivity.this.etPassword.setError(getString(R.string.error_field_required));
@@ -145,7 +173,7 @@ public class CreateUserActivity extends Activity {
 					User newUser = new User(new ObjectId().toString(), 
 							CreateUserActivity.this.etFirstName.getText().toString(), 
 							CreateUserActivity.this.etLastName.getText().toString(), 
-							User.UserType.STUDENT, 
+							(User.UserType)CreateUserActivity.this.spnUserType.getSelectedItem(), 
 							CreateUserActivity.this.etEmail.getText().toString(),  
 							CreateUserActivity.this.etPassword.getText().toString().toCharArray(), 
 							false);

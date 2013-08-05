@@ -27,8 +27,8 @@ public class CourseSectionsPagerAdapter extends FragmentPagerAdapter {
 		
 		Bundle args = new Bundle();		
 		args.putInt(CourseSectionFragment.ARG_SECTION_NUMBER, position + 1);
-		args.putSerializable(CourseSectionFragment.ARG_COURSE, ((CourseActivity)this.context).getCourse());
 		args.putSerializable(LoginActivity.ARG_USER, ((CourseActivity)this.context).getUser());
+		args.putSerializable(CourseSectionFragment.ARG_COURSE, ((CourseActivity)this.context).getCourse());
 		fragment.setArguments(args);
 		
 		return fragment;

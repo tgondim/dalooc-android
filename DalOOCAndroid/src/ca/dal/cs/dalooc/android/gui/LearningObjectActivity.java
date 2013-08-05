@@ -6,6 +6,7 @@ import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.LearningObjectSectionsPagerAdapter;
+import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.User;
 
@@ -16,6 +17,10 @@ public class LearningObjectActivity extends FragmentActivity {
 	private User user;
 	
 	private LearningObject learningObject; 
+	
+	private Course course;
+	
+	private int learningObjectIndex;
 
 	ViewPager mViewPager;
 
@@ -24,9 +29,12 @@ public class LearningObjectActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_learning_object);
 
-		this.learningObject = (LearningObject)getIntent().getExtras().getSerializable(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
+		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
+		this.learningObjectIndex = getIntent().getIntExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, -1);
 		
+		this.learningObject = this.course.getLearningObjectList().get(this.learningObjectIndex);
+
 		setTitle(this.learningObject.getName());
 		
 		mSectionsPagerAdapter = new LearningObjectSectionsPagerAdapter(getSupportFragmentManager(), this);
@@ -45,11 +53,15 @@ public class LearningObjectActivity extends FragmentActivity {
 		return true;
 	}
 
-	public LearningObject getLearningObject() {
-		return this.learningObject;
+	public int getLearningObjectIndex() {
+		return this.learningObjectIndex;
 	}
 
 	public User getUser() {
 		return this.user;
+	}
+	
+	public Course getCourse() {
+		return this.course;
 	}
 }

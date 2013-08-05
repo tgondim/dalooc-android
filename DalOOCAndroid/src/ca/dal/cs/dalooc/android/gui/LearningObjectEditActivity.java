@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
@@ -31,6 +32,10 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	private LearningObject learningObject;
 	
 	private User user;
+	
+	private Course course;
+	
+	private int learningObjectIndex;
 	
 	private ConfirmDialog confirmDialog;
 	
@@ -52,7 +57,13 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			this.user = (User)extras.get(LoginActivity.ARG_USER);
-			this.learningObject = (LearningObject)extras.get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
+			this.course = (Course)extras.get(CourseSectionFragment.ARG_COURSE);
+			this.learningObjectIndex = extras.getInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX);
+
+			if (this.learningObjectIndex >= 0) {
+				this.learningObject = this.course.getLearningObjectList().get(this.learningObjectIndex);
+			}
+			
 			if (this.learningObject != null) {
 				loadData();
 			} else {
@@ -74,22 +85,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			((ImageView)this.videosLayoutMapping.get(v)[IMAGE_VIEW]).setImageDrawable(drawable);
 			((TextView)this.videosLayoutMapping.get(v)[TEXT_VIEW]).setText(video.getName());
 		}
-//		
-//		for (String reference : this.course.getSyllabus().getReferences()) {
-//			View v = createReferenceEntry();
-//			((EditText)this.referencesLayoutMapping.get(v)[EDIT_TEXT_VIEW]).setText(reference);
-//		}
-//		
-//		for (LearningObject learningObject : this.course.getLearningObjectList()) {
-//			View v = createLearningObjectEntry();
-//			((TextView)this.learningObjectLayoutMapping.get(v)[TEXT_VIEW]).setText(learningObject.getName());
-//		}		
 	}
 
 	private void fetchData() {
 		this.learningObject.setName(this.etName.getText().toString());
 		this.learningObject.setDescription(this.etDescription.getText().toString());
-		
 	}
 
 	private View createVideoEntry() {

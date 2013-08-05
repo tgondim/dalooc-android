@@ -54,7 +54,7 @@ public class VideoAdapter extends BaseAdapter {
 		new DownloadImageTask((ImageView)view.findViewById(R.id.ivVideoThumbnail))
 			.execute(this.inflater.getContext().getResources().getString(R.string.host_file_server)
 					+ this.inflater.getContext().getResources().getString(R.string.videos_folder)
-					+ "/thumb/" + video.getVideoUrl().replace("mp4", "jpg"));
+					+ "/thumb/" + video.getContentFileName().replace("mp4", "jpg"));
 		
 		return view;
 	}
