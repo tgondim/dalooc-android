@@ -6,23 +6,30 @@ import java.util.Map;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.text.InputType;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.User;
 
-public class CourseEditActivity extends Activity {
+public class CourseEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener {
 
+	public static final int EDIT_LEARNING_OBJECT_REQUEST_CODE = 100;
+	
 	private static final int LAYOUT_VIEW = 0;
 	private static final int NAME_VIEW = 1;
 	private static final int OBJECT_ITEM = 2;
@@ -43,6 +50,8 @@ public class CourseEditActivity extends Activity {
 	private EditText etDescription;
 	private EditText etInstructor;
 	private EditText etCourseDetail;
+	
+	private ConfirmDialog confirmDialog;
 	
 	private Course course;
 	
@@ -95,7 +104,7 @@ public class CourseEditActivity extends Activity {
 				intent.putExtra(LoginActivity.ARG_USER, CourseEditActivity.this.user);
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, CourseEditActivity.this.course);
 				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, -1);
-				startActivityForResult(intent, LearningObjectEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE);
+				startActivityForResult(intent, CourseEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE);
 			}
 			
 		});
@@ -106,6 +115,7 @@ public class CourseEditActivity extends Activity {
 			this.course = (Course)extras.get(CourseActivity.ARG_COURSE);
 			if (this.course != null) {
 				loadData();
+				getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 			} else {
 				this.course = new Course();
 			}
@@ -141,6 +151,51 @@ public class CourseEditActivity extends Activity {
 		return true;
 	}
 
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == CourseEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				LearningObject learningObject = (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
+				createLearningObjectEntry(learningObject);
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//TODO see here what to do if edit was canceled
+			}
+		}
+	}
+	
+	private void showConfirmDialog() {
+        FragmentManager fm = getSupportFragmentManager();
+        
+        Bundle args = new Bundle();
+        args.putString(ConfirmDialog.ARG_TITLE, getResources().getString(R.string.dialog_title_course));
+        args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.confirm_changes));
+        
+        confirmDialog = new ConfirmDialog();
+        confirmDialog.setArguments(args);
+        confirmDialog.setOnConfirmDialogResultListener(this);
+        confirmDialog.show(fm, "fragment_edit_name");
+    }
+
+	@Override
+	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
+		Intent resultIntent = new Intent();
+		
+		if (confirm) {
+			//TODO update here the course object
+		} else {
+			setResult(Activity.RESULT_CANCELED, resultIntent);
+		}
+		
+		this.confirmDialog.dismiss();
+		finish();
+	}
+	
+	@Override
+	public void onBackPressed() {
+		showConfirmDialog();
+	}	
+
 	protected View createPrerequisiteEntry() {
 		RelativeLayout relativeLayout = new RelativeLayout(CourseEditActivity.this);
 		
@@ -154,8 +209,9 @@ public class CourseEditActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				((RelativeLayout)CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[LAYOUT_VIEW]).removeAllViews();
-				CourseEditActivity.this.llPrerequesites.removeViewInLayout(CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[LAYOUT_VIEW]);
+				View viewToRemove = CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[LAYOUT_VIEW];
+				((RelativeLayout)viewToRemove).removeAllViews();
+				CourseEditActivity.this.llPrerequesites.removeViewInLayout(viewToRemove);
 				CourseEditActivity.this.prerequisitesLayoutMapping.remove(v);
 			}
 		});
@@ -203,8 +259,9 @@ public class CourseEditActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				((RelativeLayout)CourseEditActivity.this.referencesLayoutMapping.get(v)[LAYOUT_VIEW]).removeAllViews();
-				CourseEditActivity.this.llReferences.removeViewInLayout(CourseEditActivity.this.referencesLayoutMapping.get(v)[LAYOUT_VIEW]);
+				View viewToRemove = (View)CourseEditActivity.this.referencesLayoutMapping.get(v)[LAYOUT_VIEW];
+				((RelativeLayout)viewToRemove).removeAllViews();
+				CourseEditActivity.this.llReferences.removeViewInLayout(viewToRemove);
 				CourseEditActivity.this.referencesLayoutMapping.remove(v);
 			}
 		});
@@ -240,7 +297,7 @@ public class CourseEditActivity extends Activity {
 		return imageView;
 	}
 
-	protected View createLearningObjectEntry(LearningObject learningObject) {
+	protected void createLearningObjectEntry(LearningObject learningObject) {
 		RelativeLayout relativeLayout = new RelativeLayout(CourseEditActivity.this);
 		
 		TextView textView = new TextView(CourseEditActivity.this);
@@ -259,7 +316,7 @@ public class CourseEditActivity extends Activity {
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, CourseEditActivity.this.course);
 				int index = CourseEditActivity.this.course.getLearningObjectList().indexOf((LearningObject)CourseEditActivity.this.learningObjectLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
 				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, index);
-				startActivityForResult(intent, LearningObjectEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE);
+				startActivityForResult(intent, CourseEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE);
 			}
 		});
 		
@@ -269,16 +326,17 @@ public class CourseEditActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				((RelativeLayout)CourseEditActivity.this.learningObjectLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW]).removeAllViews();
-				CourseEditActivity.this.llLearningObject.removeViewInLayout((View)CourseEditActivity.this.learningObjectLayoutMapping.get(v)[LAYOUT_VIEW]);
-				CourseEditActivity.this.learningObjectLayoutMapping.remove((View)v.getParent());
+				View viewToRemove = (View)CourseEditActivity.this.learningObjectLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				((RelativeLayout)viewToRemove).removeAllViews();
+				CourseEditActivity.this.llLearningObject.removeViewInLayout(viewToRemove);
+				CourseEditActivity.this.learningObjectLayoutMapping.remove(viewToRemove);
 			}
 		});
 		
 		//EditText
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+//		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
 		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
 		
 		relativeLayout.addView(textView, params);
@@ -303,20 +361,5 @@ public class CourseEditActivity extends Activity {
 				0);
 		llParams.setMargins(0, 10, 0, 0);
 		CourseEditActivity.this.llLearningObject.addView(relativeLayout, llParams);
-		
-		return imageView;
-	}
-	
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == LearningObjectEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE) {
-			if (resultCode == Activity.RESULT_OK) {
-				LearningObject lo = (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
-				createLearningObjectEntry(lo);
-			} else if (resultCode == Activity.RESULT_CANCELED) {
-				//TODO see here what to do if edit was canceled
-			}
-		}
 	}
 }

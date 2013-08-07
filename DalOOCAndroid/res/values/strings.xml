@@ -10,6 +10,7 @@
     <string name="action_new_video">New Video</string>
     <string name="action_new_audio">New Audio</string>
     <string name="action_new_document">New Document</string>
+    <string name="action_new_test_question">New Test Question</string>
     <string name="action_sign_out">Sign Out</string>
     <string name="title_activity_learning_object">Learning Object Name</string>
     <string name="videos">Videos</string>
@@ -22,6 +23,7 @@
     <string name="course_detail">Course Detail</string>
     <string name="name">Name</string>
     <string name="description">Description</string>
+    <string name="video_thumbnail">Video Thumbnail</string>
     <string name="references">References</string>
     <string name="prerequisites">Prerequisites</string>
     <string name="learning_objects">Learning Objects</string>
@@ -54,8 +56,13 @@
     <string name="successfull_upload">Your file was uploaded</string>
     <string name="confirm">Confirmation</string>
     <string name="confirm_message">Do you confirm?</string>
+    <string name="dialog_title_course">Course Edit</string>
     <string name="dialog_title_learning_object">Learning Object Edit</string>
-    <string name="confirm_learning_object_changes">Do you want to save the changes?</string>
+    <string name="dialog_title_video">Video Edit</string>
+    <string name="dialog_title_audio">Audio Edit</string>
+    <string name="dialog_title_document">Document Edit</string>
+    <string name="dialog_title_test_question">Test Question Edit</string>
+    <string name="confirm_changes">Do you want to save the changes?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="ok">OK</string>
@@ -68,6 +75,10 @@
     <string name="title_course_list">Courses</string>
     <string name="title_course_detail">Course Detail</string>
     <string name="title_activity_learning_object_edit">Learning Object Edit</string>
+    <string name="title_activity_video_edit">Video Edit</string>
+    <string name="title_activity_audio_edit">Audio Edit</string>
+    <string name="title_activity_document_edit">Document Edit</string>
+    <string name="title_activity_test_question_edit">Test Question Edit</string>
     <string name="title_activity_login">Sign in</string>
 
     <!-- Strings related to login -->

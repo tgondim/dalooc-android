@@ -29,6 +29,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.webservice.util.Parser;
@@ -257,7 +258,7 @@ public class LoginActivity extends FragmentActivity implements OnConfirmDialogRe
 	}
 
 	@Override
-	public void onConfirmDialogReturn(boolean confirm) {
+	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
 		if (confirm) {
 			Intent createUserIntent = new Intent(LoginActivity.this, CreateUserActivity.class);
 			createUserIntent.putExtra(CreateUserActivity.ARG_EMAIL, this.mEmailView.getText().toString());

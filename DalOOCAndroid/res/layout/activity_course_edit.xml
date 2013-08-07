@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:text="@string/name"
             android:textStyle="bold"
-            android:textAppearance="?android:attr/textAppearanceMedium"/>
+            android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <EditText
             android:id="@+id/etName"
@@ -28,7 +28,6 @@
             android:inputType="textShortMessage"
             android:ems="10" >
 
-            <requestFocus />
         </EditText>
 
         <TextView

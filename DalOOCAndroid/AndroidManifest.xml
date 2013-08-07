@@ -86,16 +86,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <!-- <activity -->
-        <!-- android:name="ca.dal.cs.dalooc.android.gui.CourseEditActivity" -->
-        <!-- android:label="@string/title_activity_course_edit" > -->
-        <!-- <intent-filter> -->
-        <!-- <action android:name="COURSE_EDIT_ACTIVITY" /> -->
-
-
-        <!-- <category android:name="android.intent.category.DEFAULT" /> -->
-        <!-- </intent-filter> -->
-        <!-- </activity> -->
         <activity
             android:name="ca.dal.cs.dalooc.android.gui.CourseEditActivity"
             android:configChanges="orientation|screenSize"
@@ -105,6 +95,26 @@
             android:name="ca.dal.cs.dalooc.android.gui.LearningObjectEditActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/title_activity_learning_object_edit" >
+        </activity>
+        <activity
+            android:name="ca.dal.cs.dalooc.android.gui.VideoEditActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/title_activity_video_edit" >
+        </activity>
+        <activity
+            android:name="ca.dal.cs.dalooc.android.gui.AudioEditActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/title_activity_audio_edit" >
+        </activity>
+        <activity
+            android:name="ca.dal.cs.dalooc.android.gui.DocumentEditActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/title_activity_document_edit" >
+        </activity>
+        <activity
+            android:name="ca.dal.cs.dalooc.android.gui.TestQuestionEditActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/title_activity_test_question_edit" >
         </activity>
         <activity
             android:name="ca.dal.cs.dalooc.android.gui.LoginActivity"

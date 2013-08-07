@@ -40,7 +40,7 @@
             android:ems="10"
             android:inputType="textMultiLine" />
 
- 		<RelativeLayout android:id="@+id/rlVideo"
+ 		<RelativeLayout android:id="@+id/rlVideos"
             android:layout_marginTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
@@ -62,17 +62,20 @@
                 android:textStyle="bold"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
             	
-	            <HorizontalScrollView android:id="@+id/hsvVideos"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" >
+<!-- 	            <HorizontalScrollView android:id="@+id/hsvVideos" -->
+<!--                     android:layout_width="match_parent" -->
+<!--                     android:layout_height="match_parent" > -->
 
-                    <LinearLayout android:id="@+id/llVideo"
-                        android:orientation="horizontal"
+                    <LinearLayout android:id="@+id/llVideos"
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent" >
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="10dp"
+	            		android:layout_marginBottom="10dp"
+	            		android:layout_below="@id/txtVideo"
+	            		android:orientation="vertical" >
                     </LinearLayout>
                     
-                </HorizontalScrollView>
+<!--                 </HorizontalScrollView> -->
 		        	        
         </RelativeLayout>
 
@@ -110,7 +113,7 @@
 	        </LinearLayout>
         </RelativeLayout>
         
- 		<RelativeLayout android:id="@+id/rlDocument"
+ 		<RelativeLayout android:id="@+id/rlDocuments"
             android:layout_marginTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
@@ -133,12 +136,46 @@
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
              
             	
-	        <LinearLayout android:id="@+id/llDocument"
+	        <LinearLayout android:id="@+id/llDocuments"
 	            android:layout_width="match_parent"
 	            android:layout_height="wrap_content"
 	            android:layout_marginTop="10dp"
 	            android:layout_marginBottom="10dp"
 	            android:layout_below="@id/txtDocument"
+	            android:orientation="vertical" >
+		        	        
+	        </LinearLayout>
+        </RelativeLayout>
+        
+ 		<RelativeLayout android:id="@+id/rlTestQuestions"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <ImageView android:id="@+id/ivAddTestQuestion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:src="@drawable/content_new" />
+
+            <TextView android:id="@+id/txtTestQuestion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+                android:text="@string/test_questions" 
+                android:textStyle="bold"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+             
+            	
+	        <LinearLayout android:id="@+id/llTestQuestions"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_marginTop="10dp"
+	            android:layout_marginBottom="10dp"
+	            android:layout_below="@id/txtTestQuestion"
 	            android:orientation="vertical" >
 		        	        
 	        </LinearLayout>

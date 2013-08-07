@@ -34,6 +34,14 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 	
 	public static final String ARG_LEARNING_OBJECT =  "learning_object";
 	
+	public static final String ARG_VIDEO =  "video";
+	
+	public static final String ARG_AUDIO =  "audio";
+	
+	public static final String ARG_DOCUMENT =  "document";
+	
+	public static final String ARG_TEST_QUESTION =  "test_question";
+	
 	public static final String ARG_LEARNING_OBJECT_INDEX =  "learning_object_index";
 
 	public static final String ARG_VIDEO_INDEX =  "video_index";

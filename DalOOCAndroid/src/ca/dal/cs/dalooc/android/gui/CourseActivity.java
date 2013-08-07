@@ -49,12 +49,13 @@ public class CourseActivity extends FragmentActivity {
 
 	@Override
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		Intent intent;
 		switch (item.getOrder()) {
 		case 100:
 			break;
 			
 		case 200:
-			Intent intent = new Intent(this, CourseEditActivity.class);
+			intent = new Intent(this, CourseEditActivity.class);
 			intent.putExtra(LoginActivity.ARG_USER, this.user);
 			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
 			
@@ -62,6 +63,12 @@ public class CourseActivity extends FragmentActivity {
 			break;
 
 		case 300:
+			intent = new Intent(this, LearningObjectEditActivity.class);
+			intent.putExtra(LoginActivity.ARG_USER, this.user);
+			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, -1);
+			
+			startActivity(intent);
 			break;
 		}
 		return super.onMenuItemSelected(featureId, item);

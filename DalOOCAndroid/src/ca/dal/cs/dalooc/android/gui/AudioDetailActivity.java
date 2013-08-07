@@ -36,13 +36,17 @@ import android.view.WindowManager.LayoutParams;
 import android.webkit.MimeTypeMap;
 import android.widget.Chronometer;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.components.ToggleImageButton;
+import ca.dal.cs.dalooc.android.gui.components.RecordingBlinkImageView;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnRecordingBlinkListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
@@ -50,15 +54,11 @@ import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 
-public class AudioDetailActivity extends FragmentActivity implements RecordingBlinkImageViewCallBack, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener {
+public class AudioDetailActivity extends FragmentActivity implements OnRecordingBlinkListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener {
 	
 	private static final String LOG_TAG = "AudioDetailActivity";
 	
-	private static final int GET_AUDIO_FILE_ACTIVITY_REQUEST_CODE = 500;
-	
-	public static final int IMAGE_RECORDING = 0;
-	
-	public static final int IMAGE_RECORDING_DARK = 1;
+	public static final int GET_AUDIO_FILE_ACTIVITY_REQUEST_CODE = 500;
 	
 	private Audio audio;
 	
@@ -82,9 +82,9 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 	
 	private TextView tvDownloadPreviewStatusMessage;
 	
-	private PlayAudioImageButton ibAudioPlay;
+	private ToggleImageButton ibAudioPlay;
 
-	private RecordAudioImageButton ibAudioRecord;
+	private ToggleImageButton ibAudioRecord;
 	
 	private ImageButton ibAudioUpload;
 
@@ -108,10 +108,10 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 	private Handler callBackHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 			switch (msg.what) {
-			case AudioDetailActivity.IMAGE_RECORDING:
+			case RecordingBlinkImageView.IMAGE_RECORDING:
 				AudioDetailActivity.this.ivBlinkingImage.setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_light_on));
 				break;
-			case AudioDetailActivity.IMAGE_RECORDING_DARK:
+			case RecordingBlinkImageView.IMAGE_RECORDING_DARK:
 				AudioDetailActivity.this.ivBlinkingImage.setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_light_off));
 				break;
 			case UploadFileTask.UPLOAD_DONE:
@@ -150,7 +150,20 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 		LinearLayout llAudioDetail = (LinearLayout)findViewById(R.id.llAudioDetail);
 		llAudioDetail.setGravity(Gravity.CENTER);
 		
-		this.ibAudioPlay = new PlayAudioImageButton(this);
+		this.ibAudioPlay = new ToggleImageButton(this, 
+				getResources().getDrawable(R.drawable.ic_media_play), 
+				getResources().getDrawable(R.drawable.ic_media_stop));
+		this.ibAudioPlay.setOnRecordAudioImageButtonClick(new OnToggleImageButtonListener() {
+			
+			@Override
+			public void onRecordAudioImageButtonClick(boolean isMediaRecording) {
+				if (isMediaRecording) {
+					startPlaying();
+				} else {
+					stopPlaying();
+				}				
+			}
+		});
 
 		llAudioDetail.addView(ibAudioPlay, new LinearLayout.LayoutParams(
 				ViewGroup.LayoutParams.WRAP_CONTENT, 
@@ -158,7 +171,20 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 				0));
 		
 		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
-			this.ibAudioRecord = new RecordAudioImageButton(this);
+			this.ibAudioRecord = new ToggleImageButton(this, 
+					getResources().getDrawable(R.drawable.ic_audio_record), 
+					getResources().getDrawable(R.drawable.ic_media_stop));
+			this.ibAudioRecord.setOnRecordAudioImageButtonClick(new OnToggleImageButtonListener() {
+				
+				@Override
+				public void onRecordAudioImageButtonClick(boolean isMediaRecording) {
+					if (isMediaRecording) {
+						startRecording();
+					} else {
+						stopRecording();
+					}					
+				}
+			});
 			
 			llAudioDetail.addView(ibAudioRecord, new LinearLayout.LayoutParams(
 					ViewGroup.LayoutParams.WRAP_CONTENT, 
@@ -208,6 +234,7 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 				0));
 		
 		this.ivBlinkingImage = new RecordingBlinkImageView(this);
+		this.ivBlinkingImage.setOnRecordingBlinkListener(this);
 
 		LinearLayout llAudioDetailBelow = (LinearLayout)findViewById(R.id.llAudioDetailBelow);
 		llAudioDetailBelow.setGravity(Gravity.CENTER);
@@ -308,22 +335,6 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 		unregisterReceiver(this.receiver);
 	}
 	
-	private void onRecord(boolean start) {
-        if (start) {
-            startRecording();
-        } else {
-            stopRecording();
-        }
-    }
-	
-	private void onPlay(boolean start) {
-        if (start) {
-            startPlaying();
-        } else {
-            stopPlaying();
-        }
-    }
-
 	private void stopPlaying() {
 		this.audioChronometer.stop();
 		this.audioChronometer.setText("00:00");
@@ -402,57 +413,6 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
             Log.e(LOG_TAG, "prepare() failed");
         }
 	}
-
-	class PlayAudioImageButton extends ImageButton {
-		private boolean mediaStartPlaying = true;
-
-		public PlayAudioImageButton(Context ctx) {
-			super(ctx);
-			setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_media_play));
-			
-			setOnClickListener(new View.OnClickListener() {
-				public void onClick(View v) {
-					PlayAudioImageButton.this.onClick();
-				}
-			});
-		}
-		
-		public void onClick() {
-			onPlay(PlayAudioImageButton.this.mediaStartPlaying);
-			if (PlayAudioImageButton.this.mediaStartPlaying) {
-				setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_media_stop));
-			} else {
-				setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_media_play));
-			}
-			PlayAudioImageButton.this.mediaStartPlaying = !PlayAudioImageButton.this.mediaStartPlaying;
-		}
-	}
-	
-	class RecordAudioImageButton extends ImageButton {
-		
-		private boolean mediaStartRecording = true;
-
-		public RecordAudioImageButton(Context ctx) {
-			super(ctx);
-			setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_record));
-			
-			setOnClickListener(new View.OnClickListener() {
-				public void onClick(View v) {
-					RecordAudioImageButton.this.onClick();
-				}
-			});
-		}
-		
-		public void onClick() {
-			onRecord(RecordAudioImageButton.this.mediaStartRecording);
-			if (RecordAudioImageButton.this.mediaStartRecording) {
-				setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_media_stop));
-			} else {
-				setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_record));
-			}
-			RecordAudioImageButton.this.mediaStartRecording = !RecordAudioImageButton.this.mediaStartRecording;
-		}
-	}
 	
 	private void showToast(String msg) {
 		if (this.toast == null) {
@@ -468,56 +428,8 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 		this.tvDownloadPreviewStatusMessage.setText(msg);
 	}
 	
-	class RecordingBlinkImageView extends ImageView {
-		
-		private Thread blinkButton;
-		
-		private boolean isBlinking = false;
-
-		public RecordingBlinkImageView(Context context) {
-			super(context);
-//			setBackgroundColor(Color.DKGRAY);
-			setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_light_off));
-		}
-		
-		public void startBlinking() {
-			RecordingBlinkImageView.this.setImageDrawable(AudioDetailActivity.this.getResources().getDrawable(R.drawable.ic_audio_recording_light_on));
-
-			this.blinkButton = new Thread(new Runnable() {
-				
-				@Override
-				public void run() {
-					RecordingBlinkImageView.this.isBlinking = true;
-					boolean light = false;
-					while (RecordingBlinkImageView.this.isBlinking) {
-						if (!light) {
-							AudioDetailActivity.this.blinkImage(AudioDetailActivity.IMAGE_RECORDING);
-							light = true;
-							try {
-								Thread.sleep(500);
-							} catch (InterruptedException e) {}
-						} else {
-							AudioDetailActivity.this.blinkImage(AudioDetailActivity.IMAGE_RECORDING_DARK);
-							light = false;
-							try {
-								Thread.sleep(1000);
-							} catch (InterruptedException e) {}
-						}
-					}
-				}
-			});
-			this.blinkButton.start();
-		}
-		
-		public void stopBlinking() {
-			this.isBlinking = false;
-			AudioDetailActivity.this.blinkImage(AudioDetailActivity.IMAGE_RECORDING_DARK);
-		}
-	}
-	
-
 	@Override
-	public void blinkImage(int what) {
+	public void onBlink(int what) {
 		callBackHandler.sendEmptyMessage(what);
 	}
 
@@ -554,7 +466,7 @@ public class AudioDetailActivity extends FragmentActivity implements RecordingBl
 	}
 	
 	@Override
-	public void onConfirmDialogReturn(boolean confirm) {
+	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
 		if (confirm) {
 			uploadSelectedFile();
      	} else {

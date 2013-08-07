@@ -36,6 +36,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.DownloadImageTask;
@@ -47,9 +48,9 @@ import ca.dal.cs.dalooc.model.Video;
 
 public class VideoDetailActivity extends FragmentActivity implements OnUploadFileTaskDoneListener, OnConfirmDialogReturnListener {
 	 
-	private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
+	public static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
 	
-	private static final int GET_VIDEO_FILE_ACTIVITY_REQUEST_CODE = 400;
+	public static final int GET_VIDEO_FILE_ACTIVITY_REQUEST_CODE = 400;
 	
 	private Video video;
 	
@@ -95,7 +96,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 			case UploadFileTask.UPLOAD_DONE:
 				showProgress(false, "");
 				showToast((String)msg.obj);
-				downloadVideoIcon(1000);
+				downloadVideoIcon(1500);
 				break;
 			}
 		}
@@ -130,9 +131,9 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 		
 		LinearLayout llVideoDetail = (LinearLayout)findViewById(R.id.llVideoDetail);
 		
-		ibVideoPlay = new ImageButton(this);
-		ibVideoPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_media_play));
-		ibVideoPlay.setOnClickListener(new View.OnClickListener() {
+		this.ibVideoPlay = new ImageButton(this);
+		this.ibVideoPlay.setImageDrawable(getResources().getDrawable(R.drawable.ic_media_play));
+		this.ibVideoPlay.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
@@ -166,11 +167,10 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 				0));
 		
 		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
-			ibVideoRecord = new ImageButton(this);
-			ibVideoRecord.setImageDrawable(getResources().getDrawable(R.drawable.ic_video_record));
-			ibVideoRecord.setOnClickListener(new View.OnClickListener() {
+			this.ibVideoRecord = new ImageButton(this);
+			this.ibVideoRecord.setImageDrawable(getResources().getDrawable(R.drawable.ic_video_record));
+			this.ibVideoRecord.setOnClickListener(new View.OnClickListener() {
 				
-				@SuppressLint("SimpleDateFormat")
 				@Override
 				public void onClick(View v) {
 					Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
@@ -195,11 +195,10 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 					ViewGroup.LayoutParams.WRAP_CONTENT, 
 					0));
 			
-			ibVideoUpload = new ImageButton(this);
-			ibVideoUpload.setImageDrawable(getResources().getDrawable(R.drawable.ic_upload));
-			ibVideoUpload.setOnClickListener(new View.OnClickListener() {
+			this.ibVideoUpload = new ImageButton(this);
+			this.ibVideoUpload.setImageDrawable(getResources().getDrawable(R.drawable.ic_upload));
+			this.ibVideoUpload.setOnClickListener(new View.OnClickListener() {
 				
-				@SuppressLint("SimpleDateFormat")
 				@Override
 				public void onClick(View v) {
 					Intent uploadFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -215,9 +214,9 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 					0));
 		}
 		
-		ibVideoDownload = new ImageButton(this);
-		ibVideoDownload.setImageDrawable(getResources().getDrawable(R.drawable.ic_download));
-		ibVideoDownload.setOnClickListener(new View.OnClickListener() {
+		this.ibVideoDownload = new ImageButton(this);
+		this.ibVideoDownload.setImageDrawable(getResources().getDrawable(R.drawable.ic_download));
+		this.ibVideoDownload.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
@@ -321,7 +320,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	        	FragmentManager fm = getSupportFragmentManager();
 	            
 	            Bundle args = new Bundle();
-	            args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.document_overwrite_confirm));
+	            args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.video_overwrite_confirm));
 	            args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
 	            
 	            this.confirmDialog = new ConfirmDialog();
@@ -358,7 +357,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	}
 	
 	@Override
-	public void onConfirmDialogReturn(boolean confirm) {
+	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
 		if (confirm) {
 			uploadSelectedFile();
 		} else {

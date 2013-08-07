@@ -33,6 +33,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.DownloadDocumentTask;
@@ -329,7 +330,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	}
 
 	@Override
-	public void onConfirmDialogReturn(boolean confirm) {
+	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
 		if (confirm) {
 			uploadSelectedFile();
 		} else {

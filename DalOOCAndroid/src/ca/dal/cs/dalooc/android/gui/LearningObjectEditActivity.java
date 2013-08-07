@@ -1,33 +1,53 @@
 package ca.dal.cs.dalooc.android.gui;
 
 
+import java.util.HashMap;
 import java.util.Map;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.view.Menu;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
+import ca.dal.cs.dalooc.model.Document;
 import ca.dal.cs.dalooc.model.LearningObject;
+import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
 public class LearningObjectEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener {
-	
-//	private static final int LAYOUT_VIEW = 0;
-	private static final int IMAGE_VIEW = 1;
-	private static final int TEXT_VIEW = 2;
 
-	public static final int EDIT_LEARNING_OBJECT_REQUEST_CODE = 100;
+	private static final int LAYOUT_VIEW = 0;
+	private static final int NAME_VIEW = 1;
+	private static final int OBJECT_ITEM = 2;
+
+	public static final int EDIT_VIDEO_REQUEST_CODE = 200;
+	public static final int EDIT_AUDIO_REQUEST_CODE = 300;
+	public static final int EDIT_DOCUMENT_REQUEST_CODE = 400;
+	public static final int EDIT_TEST_QUESTION_REQUEST_CODE = 500;
+	
+	private ImageView ivAddVideo;
+	
+	private ImageView ivAddAudio;
+	
+	private ImageView ivAddDocument;
+	
+	private ImageView ivAddTestQuestion;
 	
 	private LearningObject learningObject;
 	
@@ -37,14 +57,27 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	
 	private int learningObjectIndex;
 	
+	private Map<View, Object[]> videosLayoutMapping;
+	
+	private Map<View, Object[]> audioLayoutMapping;
+	
+	private Map<View, Object[]> documentsLayoutMapping;
+	
+	private Map<View, Object[]> testQuestionsLayoutMapping;
+	
 	private ConfirmDialog confirmDialog;
 	
 	private EditText etName;
 	private EditText etDescription;
 	
-	private Map<ImageView, View[]> videosLayoutMapping;
+	private LinearLayout llVideos;
+
+	private LinearLayout llAudio;
 	
-//	private LinearLayout llVideos;
+	private LinearLayout llDocuments;
+	
+	private LinearLayout llTestQuestions;
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +86,76 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		
 		this.etName = (EditText)findViewById(R.id.etName);
 		this.etDescription = (EditText)findViewById(R.id.etDescription);
+		
+		this.videosLayoutMapping = new HashMap<View, Object[]>();
+		this.audioLayoutMapping = new HashMap<View, Object[]>();
+		this.documentsLayoutMapping = new HashMap<View, Object[]>();
+		this.testQuestionsLayoutMapping = new HashMap<View, Object[]>();
+		
+		this.llVideos = (LinearLayout)findViewById(R.id.llVideos);
+		this.llAudio = (LinearLayout)findViewById(R.id.llAudio);
+		this.llDocuments = (LinearLayout)findViewById(R.id.llDocuments);
+		this.llTestQuestions = (LinearLayout)findViewById(R.id.llTestQuestions);
+		
+		this.ivAddVideo = (ImageView)findViewById(R.id.ivAddVideo);
+		this.ivAddVideo.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LearningObjectEditActivity.this, VideoEditActivity.class);
+				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+				intent.putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, -1);
+				startActivityForResult(intent, LearningObjectEditActivity.EDIT_VIDEO_REQUEST_CODE);
+			}
+			
+		});
+		
+		this.ivAddAudio = (ImageView)findViewById(R.id.ivAddAudio);
+		this.ivAddAudio.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LearningObjectEditActivity.this, AudioEditActivity.class);
+				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+				intent.putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, -1);
+				startActivityForResult(intent, LearningObjectEditActivity.EDIT_AUDIO_REQUEST_CODE);
+			}
+			
+		});
+		
+		this.ivAddDocument = (ImageView)findViewById(R.id.ivAddDocument);
+		this.ivAddDocument.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LearningObjectEditActivity.this, DocumentEditActivity.class);
+				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+				intent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, -1);
+				startActivityForResult(intent, LearningObjectEditActivity.EDIT_DOCUMENT_REQUEST_CODE);
+			}
+			
+		});
+		
+		this.ivAddTestQuestion = (ImageView)findViewById(R.id.ivAddTestQuestion);
+		this.ivAddTestQuestion.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LearningObjectEditActivity.this, TestQuestionEditActivity.class);
+				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+				intent.putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, -1);
+				startActivityForResult(intent, LearningObjectEditActivity.EDIT_TEST_QUESTION_REQUEST_CODE);
+			}
+			
+		});
 		
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
@@ -66,6 +169,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			
 			if (this.learningObject != null) {
 				loadData();
+				getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 			} else {
 				this.learningObject = new LearningObject();
 				
@@ -78,12 +182,19 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		this.etDescription.setText(this.learningObject.getDescription());
 		
 		for (Video video : this.learningObject.getVideoList()) {
-			View v = createVideoEntry();
-			
-			Drawable drawable = getResources().getDrawable(R.drawable.ic_video_thumbnail_default);
-			
-			((ImageView)this.videosLayoutMapping.get(v)[IMAGE_VIEW]).setImageDrawable(drawable);
-			((TextView)this.videosLayoutMapping.get(v)[TEXT_VIEW]).setText(video.getName());
+			createVideoEntry(video);
+		}
+
+		for (Audio audio : this.learningObject.getAudioList()) {
+			createAudioEntry(audio);
+		}
+		
+		for (Document document : this.learningObject.getDocumentList()) {
+			createDocumentEntry(document);
+		}
+		
+		for (TestQuestion testQuestion : this.learningObject.getTestQuestionList()) {
+			createTestQuestionEntry(testQuestion);
 		}
 	}
 
@@ -91,11 +202,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		this.learningObject.setName(this.etName.getText().toString());
 		this.learningObject.setDescription(this.etDescription.getText().toString());
 	}
-
-	private View createVideoEntry() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -104,13 +211,54 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		
 		return true;
 	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == LearningObjectEditActivity.EDIT_VIDEO_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				Video video = (Video)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO);
+				createVideoEntry(video);
+				this.learningObject.getVideoList().add(video);
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//TODO see here what to do if edit was canceled
+			}
+		}
+		if (requestCode == LearningObjectEditActivity.EDIT_AUDIO_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				Audio audio = (Audio)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO);
+				createAudioEntry(audio);
+				this.learningObject.getAudioList().add(audio);
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//TODO see here what to do if edit was canceled
+			}
+		}
+		if (requestCode == LearningObjectEditActivity.EDIT_DOCUMENT_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				Document document = (Document)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT);
+				createDocumentEntry(document);
+				this.learningObject.getDocumentList().add(document);
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//TODO see here what to do if edit was canceled
+			}
+		}
+		if (requestCode == LearningObjectEditActivity.EDIT_TEST_QUESTION_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				TestQuestion testQuestion = (TestQuestion)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION);
+				createTestQuestionEntry(testQuestion);
+				this.learningObject.getTestQuestionList().add(testQuestion);
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//TODO see here what to do if edit was canceled
+			}
+		}
+	}
 	
-	private void showEditDialog() {
+	private void showConfirmDialog() {
         FragmentManager fm = getSupportFragmentManager();
         
         Bundle args = new Bundle();
         args.putString(ConfirmDialog.ARG_TITLE, getResources().getString(R.string.dialog_title_learning_object));
-        args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.confirm_learning_object_changes));
+        args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.confirm_changes));
         
         confirmDialog = new ConfirmDialog();
         confirmDialog.setArguments(args);
@@ -119,7 +267,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
     }
 
 	@Override
-	public void onConfirmDialogReturn(boolean confirm) {
+	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
 		Intent resultIntent = new Intent();
 		
 		if (confirm) {
@@ -135,9 +283,279 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	
 	@Override
 	public void onBackPressed() {
-//		super.onBackPressed();
 		fetchData();
-		showEditDialog();
+		showConfirmDialog();
 	}
 
+	private void createVideoEntry(Video video) {
+		RelativeLayout relativeLayout = new RelativeLayout(LearningObjectEditActivity.this);
+		
+		TextView textView = new TextView(LearningObjectEditActivity.this);
+		textView.setTextAppearance(this, android.R.style.TextAppearance_Medium);
+		
+		if (video != null) {
+			textView.setText(video.getName());
+		}
+		
+		textView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LearningObjectEditActivity.this, VideoEditActivity.class);
+				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+				int videoIndex = LearningObjectEditActivity.this.learningObject.getVideoList()
+						.indexOf(LearningObjectEditActivity.this.videosLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
+				intent.putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, videoIndex);
+				startActivityForResult(intent, LearningObjectEditActivity.EDIT_VIDEO_REQUEST_CODE);
+			}
+		});
+		
+		ImageView imageView = new ImageView(LearningObjectEditActivity.this);
+		imageView.setImageDrawable(LearningObjectEditActivity.this.getResources().getDrawable(R.drawable.content_discard));
+		imageView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				View viewToRemove = (View)LearningObjectEditActivity.this.videosLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				((RelativeLayout)viewToRemove).removeAllViews();
+				LearningObjectEditActivity.this.llVideos.removeViewInLayout(viewToRemove);
+				LearningObjectEditActivity.this.videosLayoutMapping.remove(viewToRemove);
+			}
+		});
+		
+		//TextView
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+//		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
+		
+		relativeLayout.addView(textView, params);
+		
+		//ImageView
+		params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+		
+		relativeLayout.addView(imageView, params);
+		
+		Object[] viewArray = new Object[3];
+		viewArray[LAYOUT_VIEW] = relativeLayout;
+		viewArray[NAME_VIEW] = textView;
+		viewArray[OBJECT_ITEM] = video;
+		
+		LearningObjectEditActivity.this.videosLayoutMapping.put((View)imageView.getParent(), viewArray);
+		
+		LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, 
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				0);
+		llParams.setMargins(0, 10, 0, 0);
+		LearningObjectEditActivity.this.llVideos.addView(relativeLayout, llParams);
+	}
+	
+	private void createAudioEntry(Audio audio) {
+		RelativeLayout relativeLayout = new RelativeLayout(LearningObjectEditActivity.this);
+		
+		TextView textView = new TextView(LearningObjectEditActivity.this);
+		textView.setTextAppearance(this, android.R.style.TextAppearance_Medium);
+
+		if (audio != null) {
+			textView.setText(audio.getName());
+		}
+		
+		textView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LearningObjectEditActivity.this, AudioEditActivity.class);
+				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+				int audioIndex = LearningObjectEditActivity.this.learningObject.getAudioList()
+						.indexOf(LearningObjectEditActivity.this.audioLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
+				intent.putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, audioIndex);
+				startActivityForResult(intent, LearningObjectEditActivity.EDIT_AUDIO_REQUEST_CODE);
+			}
+		});
+		
+		ImageView imageView = new ImageView(LearningObjectEditActivity.this);
+		imageView.setImageDrawable(LearningObjectEditActivity.this.getResources().getDrawable(R.drawable.content_discard));
+		imageView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				View viewToRemove = (View)LearningObjectEditActivity.this.audioLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				((RelativeLayout)viewToRemove).removeAllViews();
+				LearningObjectEditActivity.this.llAudio.removeViewInLayout(viewToRemove);
+				LearningObjectEditActivity.this.audioLayoutMapping.remove(viewToRemove);
+			}
+		});
+		
+		//TextView
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+//		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
+		
+		relativeLayout.addView(textView, params);
+		
+		//ImageView
+		params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+		
+		relativeLayout.addView(imageView, params);
+		
+		Object[] viewArray = new Object[3];
+		viewArray[LAYOUT_VIEW] = relativeLayout;
+		viewArray[NAME_VIEW] = textView;
+		viewArray[OBJECT_ITEM] = audio;
+		
+		LearningObjectEditActivity.this.audioLayoutMapping.put((View)imageView.getParent(), viewArray);
+		
+		LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, 
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				0);
+		llParams.setMargins(0, 10, 0, 0);
+		LearningObjectEditActivity.this.llAudio.addView(relativeLayout, llParams);
+	}
+
+	private void createDocumentEntry(Document document) {
+		RelativeLayout relativeLayout = new RelativeLayout(LearningObjectEditActivity.this);
+		
+		TextView textView = new TextView(LearningObjectEditActivity.this);
+		textView.setTextAppearance(this, android.R.style.TextAppearance_Medium);
+
+		if (document != null) {
+			textView.setText(document.getName());
+		}
+		
+		textView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LearningObjectEditActivity.this, DocumentEditActivity.class);
+				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+				int documentIndex = LearningObjectEditActivity.this.learningObject.getDocumentList()
+						.indexOf(LearningObjectEditActivity.this.audioLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
+				intent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, documentIndex);
+//				startActivityForResult(intent, LearningObjectEditActivity.EDIT_DOCUMENT_REQUEST_CODE);
+			}
+		});
+		
+		ImageView imageView = new ImageView(LearningObjectEditActivity.this);
+		imageView.setImageDrawable(LearningObjectEditActivity.this.getResources().getDrawable(R.drawable.content_discard));
+		imageView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				View viewToRemove = (View)LearningObjectEditActivity.this.documentsLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				((RelativeLayout)viewToRemove).removeAllViews();
+				LearningObjectEditActivity.this.llDocuments.removeViewInLayout(viewToRemove);
+				LearningObjectEditActivity.this.documentsLayoutMapping.remove(viewToRemove);
+			}
+		});
+		
+		//TextView
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+//		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
+		
+		relativeLayout.addView(textView, params);
+		
+		//ImageView
+		params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+		
+		relativeLayout.addView(imageView, params);
+		
+		Object[] viewArray = new Object[3];
+		viewArray[LAYOUT_VIEW] = relativeLayout;
+		viewArray[NAME_VIEW] = textView;
+		viewArray[OBJECT_ITEM] = document;
+		
+		LearningObjectEditActivity.this.documentsLayoutMapping.put((View)imageView.getParent(), viewArray);
+		
+		LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, 
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				0);
+		llParams.setMargins(0, 10, 0, 0);
+		LearningObjectEditActivity.this.llDocuments.addView(relativeLayout, llParams);
+	}
+	
+	private void createTestQuestionEntry(TestQuestion testQuestion) {
+		RelativeLayout relativeLayout = new RelativeLayout(LearningObjectEditActivity.this);
+		
+		TextView textView = new TextView(LearningObjectEditActivity.this);
+		textView.setTextAppearance(this, android.R.style.TextAppearance_Medium);
+
+		if (testQuestion != null) {
+			textView.setText(testQuestion.getQuestion());
+		}
+		
+		textView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(LearningObjectEditActivity.this, TestQuestionEditActivity.class);
+				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
+				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
+				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+				int testQuestionIndex = LearningObjectEditActivity.this.learningObject.getTestQuestionList()
+						.indexOf(LearningObjectEditActivity.this.testQuestionsLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
+				intent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, testQuestionIndex);
+//				startActivityForResult(intent, LearningObjectEditActivity.EDIT_TEST_QUESTION_REQUEST_CODE);
+			}
+		});
+		
+		ImageView imageView = new ImageView(LearningObjectEditActivity.this);
+		imageView.setImageDrawable(LearningObjectEditActivity.this.getResources().getDrawable(R.drawable.content_discard));
+		imageView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				View viewToRemove = (View)LearningObjectEditActivity.this.testQuestionsLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				((RelativeLayout)viewToRemove).removeAllViews();
+				LearningObjectEditActivity.this.llTestQuestions.removeViewInLayout(viewToRemove);
+				LearningObjectEditActivity.this.testQuestionsLayoutMapping.remove(viewToRemove);
+			}
+		});
+		
+		//TextView
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+//		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
+		
+		relativeLayout.addView(textView, params);
+		
+		//ImageView
+		params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+		params.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+		
+		relativeLayout.addView(imageView, params);
+		
+		Object[] viewArray = new Object[3];
+		viewArray[LAYOUT_VIEW] = relativeLayout;
+		viewArray[NAME_VIEW] = textView;
+		viewArray[OBJECT_ITEM] = testQuestion;
+		
+		LearningObjectEditActivity.this.testQuestionsLayoutMapping.put((View)imageView.getParent(), viewArray);
+		
+		LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, 
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				0);
+		llParams.setMargins(0, 10, 0, 0);
+		LearningObjectEditActivity.this.llTestQuestions.addView(relativeLayout, llParams);
+	}
 }

@@ -20,14 +20,20 @@
 
     <item
         android:id="@+id/action_new_audio"
-        android:orderInCategory="300"
+        android:orderInCategory="400"
         android:showAsAction="never"
         android:title="@string/action_new_audio"/>
 
     <item
         android:id="@+id/action_new_document"
-        android:orderInCategory="300"
+        android:orderInCategory="500"
         android:showAsAction="never"
         android:title="@string/action_new_document"/>
+    
+    <item
+        android:id="@+id/action_new_test_question"
+        android:orderInCategory="600"
+        android:showAsAction="never"
+        android:title="@string/action_new_test_question"/>
 
 </menu>
