@@ -47,7 +47,7 @@ import ca.dal.cs.dalooc.model.User;
 
 public class DocumentDetailActivity extends FragmentActivity implements OnDownloadDocumentDoneListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener {
 	 
-	private static final int GET_DOCUMENT_FILE_ACTIVITY_REQUEST_CODE = 300;
+	public static final int GET_DOCUMENT_FILE_ACTIVITY_REQUEST_CODE = 300;
 	
 	private Document document;
 	
@@ -85,6 +85,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	
 	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
+		@Override
 		public void handleMessage(android.os.Message msg) {
 			switch (msg.what) {
 			case UploadFileTask.UPLOAD_DONE:
@@ -353,14 +354,14 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 		Message msg = new Message();
 		msg.what = UploadFileTask.UPLOAD_DONE;
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
-			this.newFileName = General.getIdFileName(this.newFileName, this.document.getId());
-			this.document.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
 			msg.obj = getResources().getString(R.string.successfull_upload);
+			this.newFileName = General.getIdFileName(this.newFileName, this.document.getId());
+			this.document.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
 			//TODO save the document modification
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
-		callBackHandler.sendMessage(msg);
 		this.newFileName = "";
+		callBackHandler.sendMessage(msg);
 	}
 }

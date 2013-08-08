@@ -6,8 +6,8 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.media.MediaPlayer;
-import android.media.MediaRecorder;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -15,31 +15,31 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
-import ca.dal.cs.dalooc.android.gui.components.ToggleImageButton;
 import ca.dal.cs.dalooc.android.gui.components.RecordingBlinkImageView;
+import ca.dal.cs.dalooc.android.gui.components.ToggleImageButton;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
-import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnRecordingBlinkListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
-import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.User;
 
 public class AudioEditActivity extends FragmentActivity implements OnRecordingBlinkListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener, OnToggleImageButtonListener {
@@ -51,8 +51,6 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	public static final int ACTION_CONFIRM_AUDIO_UPLOAD = 300;
 
 	private Audio audio;
-	
-	private LearningObject learningObject;
 	
 	private User user;
 	
@@ -76,7 +74,7 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	
 	private ToggleImageButton ibAudioRecord;
 	
-	private ScrollView svAudioEdit;
+	private LinearLayout llForm;
 	
 	private RecordingBlinkImageView ivBlinkingImage;
 	
@@ -116,7 +114,7 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_audio_edit);
 		
-		this.svAudioEdit = (ScrollView)findViewById(R.id.svAudioEdit);
+		this.llForm = (LinearLayout)findViewById(R.id.llForm);
 		this.llUploadPreviewStatus = (LinearLayout)findViewById(R.id.llUploadPreviewStatus);
 		this.tvUploadStatusMessage = (TextView)findViewById(R.id.tvUploadStatusMessage);
 
@@ -131,9 +129,14 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 		this.ibAudioPlay.setOnRecordAudioImageButtonClick(new OnToggleImageButtonListener() {
 			
 			@Override
-			public void onRecordAudioImageButtonClick(boolean isMediaRecording) {
-				if (isMediaRecording) {
-					startPlaying();
+			public void onToggleImageButtonClick(boolean isStartImage) {
+				if (isStartImage) {
+					if (!TextUtils.isEmpty(AudioEditActivity.this.audio.getContentFileName())) {
+						startPlaying();
+					} else {
+						showToast(getResources().getString(R.string.no_file_to_open));
+						stopPlaying();
+					}
 				} else {
 					stopPlaying();
 				}				
@@ -189,6 +192,24 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 				ViewGroup.LayoutParams.WRAP_CONTENT, 
 				0));
 		
+		Button btnSave = (Button)findViewById(R.id.btnSave);
+		btnSave.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				finishSaving();
+			}
+		});
+		
+		Button btnDiscard = (Button)findViewById(R.id.btnDiscard);
+		btnDiscard.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				finishWithoutSaving();
+			}
+		});
+		
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			this.user = (User)extras.get(LoginActivity.ARG_USER);
@@ -197,9 +218,8 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 			this.audioIndex = extras.getInt(LearningObjectSectionFragment.ARG_AUDIO_INDEX);
 
 			if (this.learningObjectIndex >= 0) {
-				this.learningObject = this.course.getLearningObjectList().get(this.learningObjectIndex);
 				if (this.audioIndex >= 0) {
-					this.audio = this.learningObject.getAudioList().get(audioIndex);
+					this.audio = this.course.getLearningObjectList().get(this.learningObjectIndex).getAudioList().get(audioIndex);
 				}
 			}
 			
@@ -221,7 +241,21 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 		this.audio.setName(this.etName.getText().toString());
 		this.audio.setDescription(this.etDescription.getText().toString());
 	}
+	
+	private void finishSaving() {
+		fetchData();
+		Intent resultIntent = new Intent();
+		resultIntent.putExtra(LearningObjectSectionFragment.ARG_AUDIO, AudioEditActivity.this.audio);
+		resultIntent.putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, AudioEditActivity.this.audioIndex);
+		setResult(Activity.RESULT_OK, resultIntent);
+		finish();
+	}
 
+	private void finishWithoutSaving() {
+		setResult(Activity.RESULT_CANCELED, new Intent());
+		finish();
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -262,7 +296,7 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	
 	@Override
 	public void onBackPressed() {
-		fetchData();
+//		fetchData();
 		showConfirmDialog(getResources().getString(R.string.confirm_changes), ACTION_CONFIRM_AUDIO_CHANGES);
 	}
 	
@@ -272,16 +306,14 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 		
 		switch (returnCode) {
 		case ACTION_CONFIRM_AUDIO_CHANGES:
-			if (confirm) {
-				setResult(Activity.RESULT_OK, resultIntent);
-				resultIntent.putExtra(LearningObjectSectionFragment.ARG_AUDIO, this.audio);
-			} else {
-				setResult(Activity.RESULT_CANCELED, resultIntent);
-			}
-			
 			this.confirmDialog.dismiss();
-			finish();
-
+			if (confirm) {
+				finishSaving();
+			} else {
+				finishWithoutSaving();
+			}
+//			finish();
+			
 			break;
 			
 		case ACTION_CONFIRM_AUDIO_UPLOAD:
@@ -316,7 +348,7 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	}
 	
 	@Override
-	public void onRecordAudioImageButtonClick(boolean isMediaRecording) {
+	public void onToggleImageButtonClick(boolean isMediaRecording) {
 		if (isMediaRecording) {
 			startRecording();
 		} else {
@@ -425,7 +457,7 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	
 	private void showProgress(boolean show, String msg) {
 		this.llUploadPreviewStatus.setVisibility(show ? View.VISIBLE : View.GONE);
-		this.svAudioEdit.setVisibility(show ? View.GONE : View.VISIBLE);
+		this.llForm.setVisibility(show ? View.GONE : View.VISIBLE);
 		this.tvUploadStatusMessage.setText(msg);
 	}
 	

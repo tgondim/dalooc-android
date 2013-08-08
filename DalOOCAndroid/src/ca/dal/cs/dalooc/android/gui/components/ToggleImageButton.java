@@ -10,7 +10,7 @@ import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
 @SuppressLint("ViewConstructor")
 public class ToggleImageButton extends ImageButton {
 	
-	private boolean mediaStartRecording = true;
+	private boolean isStartImage = true;
 	
 	private Drawable startImage;
 	
@@ -44,16 +44,16 @@ public class ToggleImageButton extends ImageButton {
 	
 	private void fireOnRecordAudioImageButtonClick() {
 		if (this.listener != null) {
-			this.listener.onRecordAudioImageButtonClick(this.mediaStartRecording);
+			this.listener.onToggleImageButtonClick(this.isStartImage);
 		}
 	}
 	
 	public void toggleButton() {
-		if (ToggleImageButton.this.mediaStartRecording) {
+		if (ToggleImageButton.this.isStartImage) {
 			setImageDrawable(this.stopImage);
 		} else {
 			setImageDrawable(this.startImage);
 		}
-		ToggleImageButton.this.mediaStartRecording = !ToggleImageButton.this.mediaStartRecording;
+		ToggleImageButton.this.isStartImage = !ToggleImageButton.this.isStartImage;
 	}
 }

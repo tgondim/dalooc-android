@@ -26,7 +26,6 @@ public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
 	protected Boolean doInBackground(String... params) {
 		HttpURLConnection connection = null;
 		DataOutputStream outputStream = null;
-//		DataInputStream inputStream = null;
 		
 		int serverResponseCode = -1;
 		String serverResponseMessage = "";

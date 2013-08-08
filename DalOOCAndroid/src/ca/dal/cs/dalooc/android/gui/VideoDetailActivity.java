@@ -382,7 +382,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			this.newFileName = General.getIdFileName(this.newFileName, this.video.getId());
-			this.video.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
+			this.video.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
 			//TODO save the document modification
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);

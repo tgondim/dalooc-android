@@ -14,16 +14,17 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
@@ -34,7 +35,6 @@ import ca.dal.cs.dalooc.android.util.DownloadImageTask;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
 import ca.dal.cs.dalooc.model.Course;
-import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
@@ -45,8 +45,6 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	public static final int ACTION_CONFIRM_VIDEO_UPLOAD = 300;
 
 	private Video video;
-	
-	private LearningObject learningObject;
 	
 	private User user;
 	
@@ -70,7 +68,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 
 	private ImageButton ibVideoUpload;
 	
-	private ScrollView svVideoEdit;
+	private LinearLayout llForm;
 	
 	private LinearLayout llUploadPreviewStatus;
 	
@@ -97,7 +95,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_video_edit);
 		
-		this.svVideoEdit = (ScrollView)findViewById(R.id.svVideoEdit);
+		this.llForm = (LinearLayout)findViewById(R.id.llForm);
 		this.llUploadPreviewStatus = (LinearLayout)findViewById(R.id.llUploadPreviewStatus);
 		this.tvUploadStatusMessage = (TextView)findViewById(R.id.tvUploadStatusMessage);
 
@@ -112,27 +110,31 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 			
 			@Override
 			public void onClick(View v) {
-				Intent videoPlayIntent = new Intent(Intent.ACTION_VIEW);
-				String mimeType = "application/*";
-				String extension = MimeTypeMap.getFileExtensionFromUrl(video.getContentFileName());
-				
-				if (MimeTypeMap.getSingleton().hasExtension(extension)) {
-					mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+				if (!TextUtils.isEmpty(VideoEditActivity.this.video.getContentFileName())) {
+					Intent videoPlayIntent = new Intent(Intent.ACTION_VIEW);
+					String mimeType = "application/*";
+					String extension = MimeTypeMap.getFileExtensionFromUrl(video.getContentFileName());
 					
+					if (MimeTypeMap.getSingleton().hasExtension(extension)) {
+						mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+						
+					}
+					
+					videoPlayIntent.setDataAndType(Uri.parse(getResources().getString(R.string.host_file_server) 
+							+ getResources().getString(R.string.videos_folder) 
+							+ "/" + video.getContentFileName()), mimeType);
+					videoPlayIntent.putExtra(MediaStore.EXTRA_FINISH_ON_COMPLETION, true);
+					try {
+	                    startActivity(videoPlayIntent);
+	                } 
+	                catch (ActivityNotFoundException e) {
+	                    Toast.makeText(VideoEditActivity.this, 
+	                        getResources().getString(R.string.no_application_available), 
+	                        Toast.LENGTH_LONG).show();
+	                }		
+				} else {
+					showToast(getResources().getString(R.string.no_file_to_open));
 				}
-				
-				videoPlayIntent.setDataAndType(Uri.parse(getResources().getString(R.string.host_file_server) 
-						+ getResources().getString(R.string.videos_folder) 
-						+ "/" + video.getContentFileName()), mimeType);
-				videoPlayIntent.putExtra(MediaStore.EXTRA_FINISH_ON_COMPLETION, true);
-				try {
-                    startActivity(videoPlayIntent);
-                } 
-                catch (ActivityNotFoundException e) {
-                    Toast.makeText(VideoEditActivity.this, 
-                        getResources().getString(R.string.no_application_available), 
-                        Toast.LENGTH_LONG).show();
-                }		
 			}
 		});
 		
@@ -187,6 +189,26 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 				ViewGroup.LayoutParams.WRAP_CONTENT, 
 				0));
 		
+		Button btnSave = (Button)findViewById(R.id.btnSave);
+		btnSave.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				finishSaving();
+			}
+
+		});
+		
+		Button btnDiscard = (Button)findViewById(R.id.btnDiscard);
+		btnDiscard.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				finishWithoutSaving();
+			}
+
+		});
+		
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			this.user = (User)extras.get(LoginActivity.ARG_USER);
@@ -195,9 +217,8 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 			this.videoIndex = extras.getInt(LearningObjectSectionFragment.ARG_VIDEO_INDEX);
 
 			if (this.learningObjectIndex >= 0) {
-				this.learningObject = this.course.getLearningObjectList().get(this.learningObjectIndex);
 				if (this.videoIndex >= 0) {
-					this.video = this.learningObject.getVideoList().get(videoIndex);
+					this.video = this.course.getLearningObjectList().get(this.learningObjectIndex).getVideoList().get(videoIndex);
 				}
 			}
 			
@@ -219,6 +240,20 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	private void fetchData() {
 		this.video.setName(this.etName.getText().toString());
 		this.video.setDescription(this.etDescription.getText().toString());
+	}
+	
+	private void finishSaving() {
+		fetchData();
+		Intent resultIntent = new Intent();
+		resultIntent.putExtra(LearningObjectSectionFragment.ARG_VIDEO, VideoEditActivity.this.video);
+		resultIntent.putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, VideoEditActivity.this.videoIndex);
+		setResult(Activity.RESULT_OK, resultIntent);
+		finish();
+	}
+
+	private void finishWithoutSaving() {
+		setResult(Activity.RESULT_CANCELED, new Intent());
+		finish();
 	}
 
 	@Override
@@ -254,7 +289,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	@Override
 	public void onBackPressed() {
 //		super.onBackPressed();
-		fetchData();
+//		fetchData();
 		showConfirmDialog(getResources().getString(R.string.confirm_changes), ACTION_CONFIRM_VIDEO_CHANGES);
 	}
 	
@@ -264,15 +299,13 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 		
 		switch (returnCode) {
 		case ACTION_CONFIRM_VIDEO_CHANGES:
-			if (confirm) {
-				setResult(Activity.RESULT_OK, resultIntent);
-				resultIntent.putExtra(LearningObjectSectionFragment.ARG_VIDEO, this.video);
-			} else {
-				setResult(Activity.RESULT_CANCELED, resultIntent);
-			}
-			
 			this.confirmDialog.dismiss();
-			finish();
+			if (confirm) {
+				finishSaving();
+			} else {
+				finishWithoutSaving();
+			}
+//			finish();
 
 			break;
 			
@@ -293,7 +326,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			this.newFileName = General.getIdFileName(this.newFileName, this.video.getId());
-			this.video.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
+			this.video.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
 			//TODO save the document modification
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
@@ -324,7 +357,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	
 	private void showProgress(boolean show, String msg) {
 		this.llUploadPreviewStatus.setVisibility(show ? View.VISIBLE : View.GONE);
-		this.svVideoEdit.setVisibility(show ? View.GONE : View.VISIBLE);
+		this.llForm.setVisibility(show ? View.GONE : View.VISIBLE);
 		this.tvUploadStatusMessage.setText(msg);
 	}
 	

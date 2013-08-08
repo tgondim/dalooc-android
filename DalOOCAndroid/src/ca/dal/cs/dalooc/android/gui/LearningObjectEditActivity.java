@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -40,6 +41,10 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	public static final int EDIT_AUDIO_REQUEST_CODE = 300;
 	public static final int EDIT_DOCUMENT_REQUEST_CODE = 400;
 	public static final int EDIT_TEST_QUESTION_REQUEST_CODE = 500;
+	public static final int NEW_VIDEO_REQUEST_CODE = 600;
+	public static final int NEW_AUDIO_REQUEST_CODE = 700;
+	public static final int NEW_DOCUMENT_REQUEST_CODE = 800;
+	public static final int NEW_TEST_QUESTION_REQUEST_CODE = 900;
 	
 	private ImageView ivAddVideo;
 	
@@ -78,6 +83,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	
 	private LinearLayout llTestQuestions;
 	
+	private View lastClickedView;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +113,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
 				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
 				intent.putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, -1);
-				startActivityForResult(intent, LearningObjectEditActivity.EDIT_VIDEO_REQUEST_CODE);
+				startActivityForResult(intent, LearningObjectEditActivity.NEW_VIDEO_REQUEST_CODE);
 			}
 			
 		});
@@ -122,7 +128,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
 				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
 				intent.putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, -1);
-				startActivityForResult(intent, LearningObjectEditActivity.EDIT_AUDIO_REQUEST_CODE);
+				startActivityForResult(intent, LearningObjectEditActivity.NEW_AUDIO_REQUEST_CODE);
 			}
 			
 		});
@@ -137,7 +143,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
 				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
 				intent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, -1);
-				startActivityForResult(intent, LearningObjectEditActivity.EDIT_DOCUMENT_REQUEST_CODE);
+				startActivityForResult(intent, LearningObjectEditActivity.NEW_DOCUMENT_REQUEST_CODE);
 			}
 			
 		});
@@ -152,9 +158,27 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
 				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
 				intent.putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, -1);
-				startActivityForResult(intent, LearningObjectEditActivity.EDIT_TEST_QUESTION_REQUEST_CODE);
+				startActivityForResult(intent, LearningObjectEditActivity.NEW_TEST_QUESTION_REQUEST_CODE);
 			}
 			
+		});
+		
+		Button btnSave = (Button)findViewById(R.id.btnSave);
+		btnSave.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				finishSaving();
+			}
+		});
+		
+		Button btnDiscard = (Button)findViewById(R.id.btnDiscard);
+		btnDiscard.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				finishWithoutSaving();
+			}
 		});
 		
 		Bundle extras = getIntent().getExtras();
@@ -201,8 +225,22 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	private void fetchData() {
 		this.learningObject.setName(this.etName.getText().toString());
 		this.learningObject.setDescription(this.etDescription.getText().toString());
+		//videos, audio, documents and test questions fetch is made when returning from respective edit activities
 	}
 	
+	private void finishSaving() {
+		fetchData();
+		Intent resultIntent = new Intent();
+		resultIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, LearningObjectEditActivity.this.learningObject);
+		resultIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+		setResult(Activity.RESULT_OK, resultIntent);
+		finish();
+	}
+
+	private void finishWithoutSaving() {
+		setResult(Activity.RESULT_CANCELED, new Intent());
+		finish();
+	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -217,38 +255,92 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == LearningObjectEditActivity.EDIT_VIDEO_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
+				Video returnedVideo = (Video)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO);
+				int videoIndex = (Integer)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO_INDEX);
+				
+				this.learningObject.getVideoList().set(videoIndex, returnedVideo);
+				
+				Object[] viewArray = LearningObjectEditActivity.this.videosLayoutMapping.get(LearningObjectEditActivity.this.lastClickedView);
+				((TextView)viewArray[NAME_VIEW]).setText(returnedVideo.getName());
+				viewArray[OBJECT_ITEM] = returnedVideo;
+				
+				LearningObjectEditActivity.this.lastClickedView = null;
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
+		}else if (requestCode == LearningObjectEditActivity.EDIT_AUDIO_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				Audio returnedAudio = (Audio)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO);
+				int audioIndex = (Integer)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO_INDEX);
+				
+				this.learningObject.getAudioList().set(audioIndex, returnedAudio);
+				Object[] viewArray = LearningObjectEditActivity.this.audioLayoutMapping.get(LearningObjectEditActivity.this.lastClickedView);
+				((TextView)viewArray[NAME_VIEW]).setText(returnedAudio.getName());
+				viewArray[OBJECT_ITEM] = returnedAudio;
+				
+				LearningObjectEditActivity.this.lastClickedView = null;
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
+		} else if (requestCode == LearningObjectEditActivity.EDIT_DOCUMENT_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				Document returnedDocument = (Document)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT);
+				int documentIndex = (Integer)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX);
+				
+				this.learningObject.getDocumentList().set(documentIndex, returnedDocument);
+				Object[] viewArray = LearningObjectEditActivity.this.documentsLayoutMapping.get(LearningObjectEditActivity.this.lastClickedView);
+				((TextView)viewArray[NAME_VIEW]).setText(returnedDocument.getName());
+				viewArray[OBJECT_ITEM] = returnedDocument;
+				
+				LearningObjectEditActivity.this.lastClickedView = null;
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
+		} else if (requestCode == LearningObjectEditActivity.EDIT_TEST_QUESTION_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				TestQuestion returnedTestQuestion = (TestQuestion)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION);
+				int testQuestionIndex = (Integer)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX);
+				
+				this.learningObject.getTestQuestionList().set(testQuestionIndex, returnedTestQuestion);
+				Object[] viewArray = LearningObjectEditActivity.this.testQuestionsLayoutMapping.get(LearningObjectEditActivity.this.lastClickedView);
+				((TextView)viewArray[NAME_VIEW]).setText(returnedTestQuestion.getQuestion());
+				viewArray[OBJECT_ITEM] = returnedTestQuestion;
+				
+				LearningObjectEditActivity.this.lastClickedView = null;
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
+		} else if (requestCode == LearningObjectEditActivity.NEW_VIDEO_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
 				Video video = (Video)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO);
 				createVideoEntry(video);
 				this.learningObject.getVideoList().add(video);
 			} else if (resultCode == Activity.RESULT_CANCELED) {
-				//TODO see here what to do if edit was canceled
+				//do nothing
 			}
-		}
-		if (requestCode == LearningObjectEditActivity.EDIT_AUDIO_REQUEST_CODE) {
+		}else if (requestCode == LearningObjectEditActivity.NEW_AUDIO_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				Audio audio = (Audio)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO);
 				createAudioEntry(audio);
 				this.learningObject.getAudioList().add(audio);
 			} else if (resultCode == Activity.RESULT_CANCELED) {
-				//TODO see here what to do if edit was canceled
+				//do nothing
 			}
-		}
-		if (requestCode == LearningObjectEditActivity.EDIT_DOCUMENT_REQUEST_CODE) {
+		} else if (requestCode == LearningObjectEditActivity.NEW_DOCUMENT_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				Document document = (Document)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT);
 				createDocumentEntry(document);
 				this.learningObject.getDocumentList().add(document);
 			} else if (resultCode == Activity.RESULT_CANCELED) {
-				//TODO see here what to do if edit was canceled
+				//do nothing
 			}
-		}
-		if (requestCode == LearningObjectEditActivity.EDIT_TEST_QUESTION_REQUEST_CODE) {
+		} else if (requestCode == LearningObjectEditActivity.NEW_TEST_QUESTION_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				TestQuestion testQuestion = (TestQuestion)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION);
 				createTestQuestionEntry(testQuestion);
 				this.learningObject.getTestQuestionList().add(testQuestion);
 			} else if (resultCode == Activity.RESULT_CANCELED) {
-				//TODO see here what to do if edit was canceled
+				//do nothing
 			}
 		}
 	}
@@ -268,22 +360,20 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 
 	@Override
 	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
-		Intent resultIntent = new Intent();
+//		Intent resultIntent = new Intent();
+		this.confirmDialog.dismiss();
 		
 		if (confirm) {
-			setResult(Activity.RESULT_OK, resultIntent);
-			resultIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, this.learningObject);
+			finishSaving();
 		} else {
-			setResult(Activity.RESULT_CANCELED, resultIntent);
+			finishWithoutSaving();
 		}
-		
-		this.confirmDialog.dismiss();
-		finish();
+//		finish();
 	}
 	
 	@Override
 	public void onBackPressed() {
-		fetchData();
+//		fetchData();
 		showConfirmDialog();
 	}
 
@@ -301,6 +391,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			
 			@Override
 			public void onClick(View v) {
+				LearningObjectEditActivity.this.lastClickedView = (View)v.getParent();
 				Intent intent = new Intent(LearningObjectEditActivity.this, VideoEditActivity.class);
 				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
@@ -326,10 +417,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		});
 		
 		//TextView
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
 //		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
 		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
+		params.setMargins(0, 0, 50, 0);
 		
 		relativeLayout.addView(textView, params);
 		
@@ -369,6 +461,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			
 			@Override
 			public void onClick(View v) {
+				LearningObjectEditActivity.this.lastClickedView = (View)v.getParent();
 				Intent intent = new Intent(LearningObjectEditActivity.this, AudioEditActivity.class);
 				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
@@ -394,10 +487,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		});
 		
 		//TextView
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
 //		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
 		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
+		params.setMargins(0, 0, 50, 0);
 		
 		relativeLayout.addView(textView, params);
 		
@@ -437,14 +531,15 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			
 			@Override
 			public void onClick(View v) {
+				LearningObjectEditActivity.this.lastClickedView = (View)v.getParent();
 				Intent intent = new Intent(LearningObjectEditActivity.this, DocumentEditActivity.class);
 				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
 				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
 				int documentIndex = LearningObjectEditActivity.this.learningObject.getDocumentList()
-						.indexOf(LearningObjectEditActivity.this.audioLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
+						.indexOf(LearningObjectEditActivity.this.documentsLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
 				intent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, documentIndex);
-//				startActivityForResult(intent, LearningObjectEditActivity.EDIT_DOCUMENT_REQUEST_CODE);
+				startActivityForResult(intent, LearningObjectEditActivity.EDIT_DOCUMENT_REQUEST_CODE);
 			}
 		});
 		
@@ -462,10 +557,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		});
 		
 		//TextView
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
 //		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
 		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
+		params.setMargins(0, 0, 50, 0);
 		
 		relativeLayout.addView(textView, params);
 		
@@ -505,6 +601,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			
 			@Override
 			public void onClick(View v) {
+				LearningObjectEditActivity.this.lastClickedView = (View)v.getParent();
 				Intent intent = new Intent(LearningObjectEditActivity.this, TestQuestionEditActivity.class);
 				intent.putExtra(LoginActivity.ARG_USER, LearningObjectEditActivity.this.user);
 				intent.putExtra(CourseSectionFragment.ARG_COURSE, LearningObjectEditActivity.this.course);
@@ -512,7 +609,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				int testQuestionIndex = LearningObjectEditActivity.this.learningObject.getTestQuestionList()
 						.indexOf(LearningObjectEditActivity.this.testQuestionsLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
 				intent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, testQuestionIndex);
-//				startActivityForResult(intent, LearningObjectEditActivity.EDIT_TEST_QUESTION_REQUEST_CODE);
+				startActivityForResult(intent, LearningObjectEditActivity.EDIT_TEST_QUESTION_REQUEST_CODE);
 			}
 		});
 		
@@ -530,10 +627,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		});
 		
 		//TextView
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
 //		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
 		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
+		params.setMargins(0, 0, 50, 0);
 		
 		relativeLayout.addView(textView, params);
 		

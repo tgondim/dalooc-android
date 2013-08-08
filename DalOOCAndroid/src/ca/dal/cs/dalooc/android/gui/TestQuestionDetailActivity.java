@@ -4,19 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
+import ca.dal.cs.dalooc.android.gui.components.MyRadioButton;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -159,7 +158,7 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 			Option option;
 			for (MyRadioButton radioButton : this.radioButtonList) {
 				if (radioButton.isChecked()) {
-					option = this.testQuestion.getOptionList().get(radioButton.index);
+					option = this.testQuestion.getOptionList().get(radioButton.getIndex());
 					this.chooseCorrect = option.isCorrect();
 					if (this.chooseCorrect) {
 						this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_correct));
@@ -206,7 +205,7 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 		Object[] relatedContent = new Object[2];
 		LearningObjectContent learningObjectContent;
 		
-		for (int i =0; i< learningObjectContentList.size(); i++) {
+		for (int i =0; i < learningObjectContentList.size(); i++) {
 			learningObjectContent = (LearningObjectContent)learningObjectContentList.get(i);
 			if (learningObjectContent.getId().equals(learningObjectContentId)) {
 				relatedContent[0] = i;
@@ -217,16 +216,5 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 		}
 		
 		return null;
-	}
-	
-	private class MyRadioButton extends RadioButton {
-		
-		protected int index;
-
-		public MyRadioButton(Context context, int index) {
-			super(context);
-			this.index = index;
-		}
-		
 	}
 }

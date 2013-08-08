@@ -80,6 +80,36 @@ public class LearningObjectActivity extends FragmentActivity {
 			
 			startActivity(intent);
 			break;
+			
+		case 400:
+			intent = new Intent(this, AudioEditActivity.class);
+			intent.putExtra(LoginActivity.ARG_USER, this.user);
+			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
+			intent.putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, -1);
+			
+			startActivity(intent);
+			break;
+			
+		case 500:
+			intent = new Intent(this, DocumentEditActivity.class);
+			intent.putExtra(LoginActivity.ARG_USER, this.user);
+			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
+			intent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, -1);
+			
+			startActivity(intent);
+			break;
+			
+		case 600:
+			intent = new Intent(this, TestQuestionEditActivity.class);
+			intent.putExtra(LoginActivity.ARG_USER, this.user);
+			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
+			intent.putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, -1);
+			
+			startActivity(intent);
+			break;
 		}
 		return super.onMenuItemSelected(featureId, item);
 	}

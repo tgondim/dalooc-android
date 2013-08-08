@@ -1,0 +1,135 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:baselineAligned="false"
+    android:orientation="vertical"
+    tools:context=".TestQuestionEditActivity">
+    
+	<ScrollView android:id="@+id/svTestQuestionEdit"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	     android:layout_weight="1">
+	
+	    <LinearLayout  android:id="@+id/llTestQuestionEdit"
+	    	android:layout_marginTop="10dp"
+	    	android:layout_marginBottom="10dp"
+	    	android:layout_marginRight="10dp"
+	    	android:layout_marginLeft="10dp"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:orientation="vertical" >
+	
+	        <TextView  android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+	            android:text="@string/question" 
+	            android:textStyle="bold"
+	            android:textAppearance="?android:attr/textAppearanceMedium"/>
+	
+	        <EditText android:id="@+id/etQuestion"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:inputType="textShortMessage"
+	            android:ems="10" >
+	
+	            <requestFocus />
+	        </EditText>
+	        
+			<RelativeLayout android:layout_width="wrap_content"
+		        android:layout_height="wrap_content" >
+	            
+	            <TextView android:id="@+id/txtOption"
+	                android:layout_width="wrap_content"
+	                android:layout_height="wrap_content"
+	                android:layout_alignParentLeft="true"
+	                android:layout_alignParentTop="true"
+	                android:layout_centerVertical="true"
+	                android:text="@string/options" 
+	                android:textStyle="bold"
+	                android:textAppearance="?android:attr/textAppearanceMedium"/>
+	            
+	            <ImageView
+	                android:id="@+id/ivAddOption"
+	                android:layout_width="wrap_content"
+	                android:layout_height="wrap_content"
+	                android:layout_alignParentRight="true"
+	                android:layout_alignParentTop="true"
+	                android:src="@drawable/content_new" />
+	
+	  	        <LinearLayout android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+		            android:layout_marginTop="10dp"
+		            android:layout_marginBottom="10dp"
+		            android:layout_marginLeft="5dp"
+		            android:layout_below="@id/txtOption"
+			        android:orientation="horizontal">
+		            
+		            <LinearLayout  android:id="@+id/llTestQuestionRadioButtons"
+			        	android:layout_width="wrap_content"
+			        	android:layout_height="wrap_content"
+			        	android:orientation="vertical" />
+			        	
+		            <RelativeLayout android:layout_width="wrap_content"
+		        		android:layout_height="wrap_content" >
+		        		
+				        <LinearLayout android:id="@+id/llOptions"
+				            android:layout_width="match_parent"
+				            android:layout_height="wrap_content"
+				            android:orientation="vertical" />
+	                </RelativeLayout>
+		        </LinearLayout>
+	        </RelativeLayout>
+	
+	        <TextView android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+	            android:text="@string/related_content" 
+	            android:textStyle="bold"
+	            android:layout_marginTop="20dp"
+	            android:textAppearance="?android:attr/textAppearanceMedium"/>
+	
+	        <TextView android:id="@+id/tvRelatedContentName"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_marginTop="10dp"
+	            android:layout_marginLeft="10dp"
+	            android:ems="10"
+	            android:visibility="gone"
+	            android:textAppearance="?android:attr/textAppearanceMedium"/>
+	        
+	        <LinearLayout  android:id="@+id/llTestQuestionEditButtons"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:gravity="center"
+		        android:orientation="horizontal" />
+		        
+	    </LinearLayout>
+	
+	</ScrollView>
+	
+	<LinearLayout android:layout_width="match_parent"
+	  	android:layout_height="match_parent"
+		android:layout_weight="11"
+		style="?android:attr/buttonBarStyle"
+	    android:orientation="horizontal" >
+	   
+		<Button android:id="@+id/btnSave"
+			android:layout_width="match_parent"
+	   		android:layout_height="wrap_content" 
+	   		android:text="@string/save"
+	   		android:layout_weight="1" 
+	   		android:background="#222222"
+	   		android:textColor="#FFFFFF"
+	   		style="?android:attr/buttonBarButtonStyle" />
+	
+		<Button android:id="@+id/btnDiscard"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/discard"
+			android:layout_weight="1"
+			android:background="#222222"
+			android:textColor="#FFFFFF"
+			style="?android:attr/buttonBarButtonStyle" />
+			    
+	</LinearLayout>
+	
+</LinearLayout>

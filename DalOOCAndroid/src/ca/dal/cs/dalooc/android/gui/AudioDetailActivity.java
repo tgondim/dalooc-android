@@ -156,7 +156,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 		this.ibAudioPlay.setOnRecordAudioImageButtonClick(new OnToggleImageButtonListener() {
 			
 			@Override
-			public void onRecordAudioImageButtonClick(boolean isMediaRecording) {
+			public void onToggleImageButtonClick(boolean isMediaRecording) {
 				if (isMediaRecording) {
 					startPlaying();
 				} else {
@@ -177,7 +177,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 			this.ibAudioRecord.setOnRecordAudioImageButtonClick(new OnToggleImageButtonListener() {
 				
 				@Override
-				public void onRecordAudioImageButtonClick(boolean isMediaRecording) {
+				public void onToggleImageButtonClick(boolean isMediaRecording) {
 					if (isMediaRecording) {
 						startRecording();
 					} else {
@@ -490,7 +490,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 		msg.what = UploadFileTask.UPLOAD_DONE;
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
 			this.newFileName = General.getIdFileName(this.newFileName, this.audio.getId());
-			this.audio.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/")));
+			this.audio.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			//TODO save the document modification
 		} else {
