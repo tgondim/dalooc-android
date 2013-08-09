@@ -1,6 +1,6 @@
 package ca.dal.cs.dalooc.android.webservices;
 
-public interface SaveCourseCallBack {
+public interface OnUpdateCourseCallDoneListener {
 
 	public void returnServiceResponse(int serviceCode);
 	

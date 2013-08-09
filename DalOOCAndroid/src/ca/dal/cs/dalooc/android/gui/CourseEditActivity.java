@@ -1,6 +1,7 @@
 package ca.dal.cs.dalooc.android.gui;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import android.app.Activity;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -42,8 +44,8 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	private ImageView ivAddReference;
 	private ImageView ivAddLearningObject;
 	
-	private Map<ImageView, View[]> prerequisitesLayoutMapping;
-	private Map<ImageView, View[]> referencesLayoutMapping;
+	private Map<ImageView, Object[]> prerequisitesLayoutMapping;
+	private Map<ImageView, Object[]> referencesLayoutMapping;
 	private Map<View, Object[]> learningObjectsLayoutMapping;
 
 	private LinearLayout llPrerequesites;
@@ -73,8 +75,8 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		this.etInstructor = (EditText)findViewById(R.id.etInstructor);
 		this.etCourseDetail = (EditText)findViewById(R.id.etCourseDetail);
 		
-		this.prerequisitesLayoutMapping = new HashMap<ImageView, View[]>();
-		this.referencesLayoutMapping = new HashMap<ImageView, View[]>();
+		this.prerequisitesLayoutMapping = new HashMap<ImageView, Object[]>();
+		this.referencesLayoutMapping = new HashMap<ImageView, Object[]>();
 		this.learningObjectsLayoutMapping = new HashMap<View, Object[]>();
 		
 		this.llPrerequesites = (LinearLayout)findViewById(R.id.llPrerequisites);
@@ -86,7 +88,7 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 			
 			@Override
 			public void onClick(View v) {
-				createPrerequisiteEntry();
+				createPrerequisiteEntry("");
 			}
 			
 		});
@@ -96,7 +98,7 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 			
 			@Override
 			public void onClick(View v) {
-				createReferenceEntry();
+				createReferenceEntry("");
 			}
 
 		});
@@ -146,6 +148,14 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		}
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.course_edit, menu);
+		
+		return true;
+	}
+	
 	private void loadData() {
 		this.etName.setText(this.course.getName());
 		this.etDescription.setText(this.course.getDescription());
@@ -153,13 +163,13 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		this.etCourseDetail.setText(this.course.getSyllabus().getCourseDetail());
 		
 		for (String prerequisite : this.course.getSyllabus().getPrerequisites()) {
-			View v = createPrerequisiteEntry();
-			((EditText)this.prerequisitesLayoutMapping.get(v)[NAME_VIEW]).setText(prerequisite);
+			createPrerequisiteEntry(prerequisite);
+//			((EditText)this.prerequisitesLayoutMapping.get(v)[NAME_VIEW]).setText(prerequisite);
 		}
 		
 		for (String reference : this.course.getSyllabus().getReferences()) {
-			View v = createReferenceEntry();
-			((EditText)this.referencesLayoutMapping.get(v)[NAME_VIEW]).setText(reference);
+			createReferenceEntry(reference);
+//			((EditText)this.referencesLayoutMapping.get(v)[NAME_VIEW]).setText(reference);
 		}
 		
 		for (LearningObject learningObject : this.course.getLearningObjectList()) {
@@ -179,8 +189,21 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		this.course.getSyllabus().setInstructor(this.etInstructor.getText().toString());
 		this.course.getSyllabus().setCourseDetail(this.etCourseDetail.getText().toString());
 		
-		//TODO implement prerequisites and references fetch 
+		Iterator<ImageView> iterator = this.prerequisitesLayoutMapping.keySet().iterator();
+		this.course.getSyllabus().getPrerequisites().clear();
 		
+		while (iterator.hasNext()) {
+			Object[] object = this.prerequisitesLayoutMapping.get(iterator.next());
+			this.course.getSyllabus().getPrerequisites().add(((EditText)object[NAME_VIEW]).getText().toString());
+		}
+
+		iterator = this.referencesLayoutMapping.keySet().iterator();
+		this.course.getSyllabus().getReferences().clear();
+		
+		while (iterator.hasNext()) {
+			Object[] object = this.referencesLayoutMapping.get(iterator.next());
+			this.course.getSyllabus().getReferences().add(((EditText)object[NAME_VIEW]).getText().toString());
+		}
 		//the learningObjects fetch is made when returning from edit activity
 	}
 	
@@ -196,14 +219,6 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	private void finishWithoutSaving() {
 		setResult(Activity.RESULT_CANCELED, new Intent());
 		finish();
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.course_edit, menu);
-		
-		return true;
 	}
 
 	@Override
@@ -225,9 +240,13 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 				//do nothing
 			}
 		} else if (requestCode == CourseEditActivity.NEW_LEARNING_OBJECT_REQUEST_CODE) {
-			LearningObject learningObject = (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
-			createLearningObjectEntry(learningObject);
-			this.course.getLearningObjectList().add(learningObject);
+			if (resultCode == Activity.RESULT_OK) {
+				LearningObject learningObject = (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
+				createLearningObjectEntry(learningObject);
+				this.course.getLearningObjectList().add(learningObject);
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
 		}
 	}
 	
@@ -262,12 +281,17 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		showConfirmDialog();
 	}	
 
-	protected View createPrerequisiteEntry() {
+	protected View createPrerequisiteEntry(String prerequisite) {
 		RelativeLayout relativeLayout = new RelativeLayout(CourseEditActivity.this);
 		
 		EditText editText = new EditText(CourseEditActivity.this);
 		editText.setInputType(InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE);
+		editText.setHint(R.string.prerequisite_edit_text_hint);
 		editText.setEms(16);
+		
+		if (!TextUtils.isEmpty(prerequisite)) {
+			editText.setText(prerequisite);
+		}
 		
 		ImageView imageView = new ImageView(CourseEditActivity.this);
 		imageView.setImageDrawable(CourseEditActivity.this.getResources().getDrawable(R.drawable.content_discard));
@@ -275,10 +299,12 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 			
 			@Override
 			public void onClick(View v) {
-				View viewToRemove = CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[LAYOUT_VIEW];
+				View viewToRemove = (View)CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[LAYOUT_VIEW];
+				String prerequisiteToRemove = (String)CourseEditActivity.this.prerequisitesLayoutMapping.get(v)[OBJECT_ITEM];
 				((RelativeLayout)viewToRemove).removeAllViews();
 				CourseEditActivity.this.llPrerequesites.removeViewInLayout(viewToRemove);
 				CourseEditActivity.this.prerequisitesLayoutMapping.remove(v);
+				CourseEditActivity.this.course.getSyllabus().getPrerequisites().remove(prerequisiteToRemove);
 			}
 		});
 		
@@ -298,9 +324,10 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		
 		relativeLayout.addView(imageView, params);
 
-		View[] viewArray = new View[2];
+		Object[] viewArray = new Object[3];
 		viewArray[LAYOUT_VIEW] = relativeLayout;
 		viewArray[NAME_VIEW] = editText;
+		viewArray[OBJECT_ITEM] = prerequisite;
 		
 		CourseEditActivity.this.prerequisitesLayoutMapping.put(imageView, viewArray);
 		LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
@@ -313,12 +340,17 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		return imageView;
 	}
 	
-	protected View createReferenceEntry() {
+	protected View createReferenceEntry(String reference) {
 		RelativeLayout relativeLayout = new RelativeLayout(CourseEditActivity.this);
 		
 		EditText editText = new EditText(CourseEditActivity.this);
 		editText.setInputType(InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE);
+		editText.setHint(R.string.reference_edit_text_hint);
 		editText.setEms(16);
+		
+		if (!TextUtils.isEmpty(reference)) {
+			editText.setText(reference);
+		}
 		
 		ImageView imageView = new ImageView(CourseEditActivity.this);
 		imageView.setImageDrawable(CourseEditActivity.this.getResources().getDrawable(R.drawable.content_discard));
@@ -327,9 +359,11 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 			@Override
 			public void onClick(View v) {
 				View viewToRemove = (View)CourseEditActivity.this.referencesLayoutMapping.get(v)[LAYOUT_VIEW];
+				String referenceToRemove = (String)CourseEditActivity.this.referencesLayoutMapping.get(v)[OBJECT_ITEM];
 				((RelativeLayout)viewToRemove).removeAllViews();
 				CourseEditActivity.this.llReferences.removeViewInLayout(viewToRemove);
 				CourseEditActivity.this.referencesLayoutMapping.remove(v);
+				CourseEditActivity.this.course.getSyllabus().getReferences().remove(referenceToRemove);
 			}
 		});
 		
@@ -349,9 +383,10 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		
 		relativeLayout.addView(imageView, params);
 		
-		View[] viewArray = new View[2];
+		Object[] viewArray = new Object[3];
 		viewArray[LAYOUT_VIEW] = relativeLayout;
 		viewArray[NAME_VIEW] = editText;
+		viewArray[OBJECT_ITEM] = reference;
 		
 		CourseEditActivity.this.referencesLayoutMapping.put(imageView, viewArray);
 		
@@ -396,9 +431,11 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 			@Override
 			public void onClick(View v) {
 				View viewToRemove = (View)CourseEditActivity.this.learningObjectsLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				LearningObject learningObjectToRemove = (LearningObject)CourseEditActivity.this.learningObjectsLayoutMapping.get((View)v.getParent())[OBJECT_ITEM];
 				((RelativeLayout)viewToRemove).removeAllViews();
 				CourseEditActivity.this.llLearningObject.removeViewInLayout(viewToRemove);
 				CourseEditActivity.this.learningObjectsLayoutMapping.remove(viewToRemove);
+				CourseEditActivity.this.course.getLearningObjectList().remove(learningObjectToRemove);
 			}
 		});
 		

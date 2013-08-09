@@ -29,8 +29,8 @@ import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.CourseAdapter;
 import ca.dal.cs.dalooc.android.webservices.GetAllCoursesCallBack;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCall;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCallBack;
+import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservices.OnSaveCourseCallDoneListener;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.webservice.util.Parser;
@@ -39,7 +39,7 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.util.JSON;
 
-public class MainActivity extends Activity implements OnItemClickListener, GetAllCoursesCallBack, SaveCourseCallBack {
+public class MainActivity extends Activity implements OnItemClickListener, GetAllCoursesCallBack, OnSaveCourseCallDoneListener {
 
 	private ListView listViewCourse;
 	
@@ -89,10 +89,6 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 		this.listViewCourse.setAdapter(courseAdapter);
 		this.listViewCourse.setOnItemClickListener(this);
 		
-		//for testing purposes
-		//TODO here is where I save a course into DB through webservice
-//		new Thread(new SaveCourseCall(getTempCourseList().get(0), this)).start();
-		
 		this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
 		
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
@@ -105,10 +101,17 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 	}
 	
 	@Override
+	protected void onRestart() {
+		super.onRestart();
+//		this.listViewCourse.removeAllViews();
+//		getCourses();
+	}
+	
+	@Override
 	public String getUrlWebService(int serviceCode) {
 		if (serviceCode == GetAllCoursesCall.GET_ALL_COURSES_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.get_all_courses_webservice_operation); 
-		} else if (serviceCode == SaveCourseCall.SAVE_COURSE_WEB_SERVICE) {
+		} else if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
 		}
 		return null;
@@ -136,7 +139,7 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 			intent = new Intent(this, CourseEditActivity.class);
 			intent.putExtra(LoginActivity.ARG_USER, this.user);
 			
-			startActivity(intent);
+			startActivityForResult(intent, CourseActivity.NEW_COURSE_REQUEST_CODE);
 			break;
 
 		case 888:
@@ -196,15 +199,28 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 	}
 	
 	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == CourseActivity.NEW_COURSE_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				Course course = (Course)data.getExtras().get(CourseActivity.ARG_COURSE);
+				//TODO implement here a web service call to update the course and screen update
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
+		}
+	}
+	
+	@Override
 	public void returnServiceResponse(int serviceCode) {
 		callBackHandler.sendEmptyMessage(0);
 	}
 	
 	private void showToast(String msg) {
-		MainActivity.this.toast.setText(msg);
-		MainActivity.this.toast.cancel();
-		MainActivity.this.toast.show();
-	};
+		this.toast.setText(msg);
+		this.toast.cancel();
+		this.toast.show();
+	}
 	
 	public class GetAllCoursesCall implements Runnable {
 		

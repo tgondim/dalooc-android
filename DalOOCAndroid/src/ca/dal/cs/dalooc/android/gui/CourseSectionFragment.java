@@ -125,47 +125,6 @@ public class CourseSectionFragment extends Fragment {
 			
 			rlSyllabus.addView(line2, params);
 			
-			TextView txtReferences = new TextView(inflater.getContext());
-			txtReferences.setId(7);
-			txtReferences.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
-			txtReferences.setTypeface(null, Typeface.BOLD);
-			txtReferences.setText(resources.getString(R.string.references));
-			
-			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-			params.addRule(RelativeLayout.BELOW, line2.getId());
-			params.setMargins(0, 20, 0, 0);
-			
-			rlSyllabus.addView(txtReferences, params);
-
-			TextView txtReferencesText = new TextView(inflater.getContext());
-			txtReferencesText.setId(8);
-			
-			if (course.getSyllabus().getReferences().size() == 0) {
-				txtReferencesText.setText(resources.getString(R.string.no_references));
-			} else {
-				StringBuffer sb = new StringBuffer();
-				for (int i = 0; i < course.getSyllabus().getReferences().size(); i++) {
-					sb.append(" - " + course.getSyllabus().getReferences().get(i) + ((i + 1) != course.getSyllabus().getReferences().size() ? ";\n" : "."));
-				}
-				txtReferencesText.setText(sb.toString());
-			}
-			
-			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-			params.addRule(RelativeLayout.BELOW, txtReferences.getId());
-			params.setMargins(0, 5, 0, 0);
-			
-			rlSyllabus.addView(txtReferencesText, params);
-			
-			View line3 = new View(inflater.getContext());
-			line3.setId(9);
-			line3.setBackgroundColor(Color.rgb(51, 51, 51));
-			
-			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, 1);
-			params.addRule(RelativeLayout.BELOW, txtReferencesText.getId());
-			params.setMargins(0, 20, 0, 0);
-			
-			rlSyllabus.addView(line3, params);
-			
 			TextView txtPrerequisites = new TextView(inflater.getContext());
 			txtPrerequisites.setId(10);
 			txtPrerequisites.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
@@ -173,7 +132,7 @@ public class CourseSectionFragment extends Fragment {
 			txtPrerequisites.setText(resources.getString(R.string.prerequisites));
 			
 			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-			params.addRule(RelativeLayout.BELOW, line3.getId());
+			params.addRule(RelativeLayout.BELOW, line2.getId());
 			params.setMargins(0, 20, 0, 0);
 			
 			rlSyllabus.addView(txtPrerequisites, params);
@@ -196,6 +155,48 @@ public class CourseSectionFragment extends Fragment {
 			params.setMargins(0, 5, 0, 0);
 			
 			rlSyllabus.addView(txtPrerequisitesText, params);
+			
+			View line3 = new View(inflater.getContext());
+			line3.setId(9);
+			line3.setBackgroundColor(Color.rgb(51, 51, 51));
+			
+			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, 1);
+			params.addRule(RelativeLayout.BELOW, txtPrerequisitesText.getId());
+			params.setMargins(0, 20, 0, 0);
+			
+			rlSyllabus.addView(line3, params);
+			
+			
+			TextView txtReferences = new TextView(inflater.getContext());
+			txtReferences.setId(7);
+			txtReferences.setTextAppearance(inflater.getContext(), android.R.style.TextAppearance_Medium);
+			txtReferences.setTypeface(null, Typeface.BOLD);
+			txtReferences.setText(resources.getString(R.string.references));
+			
+			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+			params.addRule(RelativeLayout.BELOW, line3.getId());
+			params.setMargins(0, 20, 0, 0);
+			
+			rlSyllabus.addView(txtReferences, params);
+
+			TextView txtReferencesText = new TextView(inflater.getContext());
+			txtReferencesText.setId(8);
+			
+			if (course.getSyllabus().getReferences().size() == 0) {
+				txtReferencesText.setText(resources.getString(R.string.no_references));
+			} else {
+				StringBuffer sb = new StringBuffer();
+				for (int i = 0; i < course.getSyllabus().getReferences().size(); i++) {
+					sb.append(" - " + course.getSyllabus().getReferences().get(i) + ((i + 1) != course.getSyllabus().getReferences().size() ? ";\n" : "."));
+				}
+				txtReferencesText.setText(sb.toString());
+			}
+			
+			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+			params.addRule(RelativeLayout.BELOW, txtReferences.getId());
+			params.setMargins(0, 5, 0, 0);
+			
+			rlSyllabus.addView(txtReferencesText, params);
 			
 			ScrollView scrollView = new ScrollView(inflater.getContext());
 			scrollView.addView(rlSyllabus);

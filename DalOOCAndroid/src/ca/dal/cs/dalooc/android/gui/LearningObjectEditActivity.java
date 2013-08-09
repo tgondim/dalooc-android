@@ -410,9 +410,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			@Override
 			public void onClick(View v) {
 				View viewToRemove = (View)LearningObjectEditActivity.this.videosLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				Video videoToRemove = (Video)LearningObjectEditActivity.this.videosLayoutMapping.get((View)v.getParent())[OBJECT_ITEM];
 				((RelativeLayout)viewToRemove).removeAllViews();
 				LearningObjectEditActivity.this.llVideos.removeViewInLayout(viewToRemove);
 				LearningObjectEditActivity.this.videosLayoutMapping.remove(viewToRemove);
+				LearningObjectEditActivity.this.learningObject.getVideoList().remove(videoToRemove);
 			}
 		});
 		
@@ -480,9 +482,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			@Override
 			public void onClick(View v) {
 				View viewToRemove = (View)LearningObjectEditActivity.this.audioLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				Audio audioToRemove = (Audio)LearningObjectEditActivity.this.audioLayoutMapping.get((View)v.getParent())[OBJECT_ITEM];
 				((RelativeLayout)viewToRemove).removeAllViews();
 				LearningObjectEditActivity.this.llAudio.removeViewInLayout(viewToRemove);
 				LearningObjectEditActivity.this.audioLayoutMapping.remove(viewToRemove);
+				LearningObjectEditActivity.this.learningObject.getAudioList().remove(audioToRemove);
 			}
 		});
 		
@@ -550,9 +554,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			@Override
 			public void onClick(View v) {
 				View viewToRemove = (View)LearningObjectEditActivity.this.documentsLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				Document documentToRemove = (Document)LearningObjectEditActivity.this.documentsLayoutMapping.get((View)v.getParent())[OBJECT_ITEM];
 				((RelativeLayout)viewToRemove).removeAllViews();
 				LearningObjectEditActivity.this.llDocuments.removeViewInLayout(viewToRemove);
 				LearningObjectEditActivity.this.documentsLayoutMapping.remove(viewToRemove);
+				LearningObjectEditActivity.this.learningObject.getDocumentList().remove(documentToRemove);
 			}
 		});
 		
@@ -620,9 +626,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			@Override
 			public void onClick(View v) {
 				View viewToRemove = (View)LearningObjectEditActivity.this.testQuestionsLayoutMapping.get((View)v.getParent())[LAYOUT_VIEW];
+				TestQuestion testQuestionToRemove = (TestQuestion)LearningObjectEditActivity.this.testQuestionsLayoutMapping.get((View)v.getParent())[OBJECT_ITEM];
 				((RelativeLayout)viewToRemove).removeAllViews();
 				LearningObjectEditActivity.this.llTestQuestions.removeViewInLayout(viewToRemove);
 				LearningObjectEditActivity.this.testQuestionsLayoutMapping.remove(viewToRemove);
+				LearningObjectEditActivity.this.learningObject.getTestQuestionList().remove(testQuestionToRemove);
 			}
 		});
 		

@@ -7,12 +7,15 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.app.FragmentTransaction;
+import android.view.ViewGroup;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.CourseActivity;
 import ca.dal.cs.dalooc.android.gui.CourseSectionFragment;
 import ca.dal.cs.dalooc.android.gui.LoginActivity;
 
-public class CourseSectionsPagerAdapter extends FragmentPagerAdapter {
+public class CourseSectionsPagerAdapter extends FragmentStatePagerAdapter {
 
 	private Context context;
 	

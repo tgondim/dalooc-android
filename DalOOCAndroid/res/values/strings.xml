@@ -34,6 +34,8 @@
     <string name="no_prerequisites">No prerequisites</string>
     <string name="save">Save</string>
     <string name="discard">Discard</string>
+    <string name="prerequisite_edit_text_hint">Prerequisite</string>
+    <string name="reference_edit_text_hint">Reference</string>
     <string name="select_related_content">Select Related Content</string>
     <string name="title_activity_course">Course Name</string>
     <string name="title_activity_audio_detail">Audio Detail</string>

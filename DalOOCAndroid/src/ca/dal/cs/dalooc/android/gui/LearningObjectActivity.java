@@ -1,5 +1,6 @@
 package ca.dal.cs.dalooc.android.gui;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -35,6 +36,11 @@ public class LearningObjectActivity extends FragmentActivity {
 		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
 		this.learningObjectIndex = getIntent().getIntExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, -1);
 		
+		loadData();
+
+	}
+
+	private void loadData() {
 		this.learningObject = this.course.getLearningObjectList().get(this.learningObjectIndex);
 
 		setTitle(this.learningObject.getName());
@@ -43,7 +49,6 @@ public class LearningObjectActivity extends FragmentActivity {
 
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		mViewPager.setAdapter(mSectionsPagerAdapter);
-
 	}
 
 	@Override
@@ -68,7 +73,7 @@ public class LearningObjectActivity extends FragmentActivity {
 			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
 			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
 			
-			startActivity(intent);
+			startActivityForResult(intent, CourseEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE);
 			break;
 
 		case 300:
@@ -114,6 +119,24 @@ public class LearningObjectActivity extends FragmentActivity {
 		return super.onMenuItemSelected(featureId, item);
 	}
 
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == CourseEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				this.course.getLearningObjectList().set(this.learningObjectIndex, (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT));
+				loadData();
+				//TODO implement here a web service call to update the course
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
+		} else if (requestCode == CourseEditActivity.NEW_LEARNING_OBJECT_REQUEST_CODE) {
+			LearningObject learningObject = (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
+			this.course.getLearningObjectList().add(learningObject);
+			loadData();
+			//TODO implement here a web service call to update the course
+		}
+	}
 	public int getLearningObjectIndex() {
 		return this.learningObjectIndex;
 	}
