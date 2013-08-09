@@ -130,15 +130,15 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 			
 			@Override
 			public void onToggleImageButtonClick(boolean isStartImage) {
-				if (isStartImage) {
-					if (!TextUtils.isEmpty(AudioEditActivity.this.audio.getContentFileName())) {
+				if (!TextUtils.isEmpty(AudioEditActivity.this.audio.getContentFileName())) {
+					if (isStartImage) {
 						startPlaying();
 					} else {
-						showToast(getResources().getString(R.string.no_file_to_open));
 						stopPlaying();
 					}
 				} else {
-					stopPlaying();
+					showToast(getResources().getString(R.string.no_file_to_open));
+					AudioEditActivity.this.ibAudioPlay.toggleButton();
 				}				
 			}
 		});

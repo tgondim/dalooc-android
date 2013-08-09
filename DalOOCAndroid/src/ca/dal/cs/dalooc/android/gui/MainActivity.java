@@ -41,6 +41,8 @@ import com.mongodb.util.JSON;
 
 public class MainActivity extends Activity implements OnItemClickListener, GetAllCoursesCallBack, OnSaveCourseCallDoneListener {
 
+	public static final int COURSE_ACTIVITY_CALL = 300;
+	
 	private ListView listViewCourse;
 	
 	private boolean getAllCoursesWebServiceResponseOk;
@@ -53,6 +55,8 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 	private ArrayList<Course> nextPageCourseList;
 	
 	private Toast toast;
+	
+	private int lastPositionClicked;
 	
 	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
@@ -165,13 +169,14 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		Intent courseIntent;
 		Course course = (Course) this.listViewCourse.getAdapter().getItem(position);
+		this.lastPositionClicked = position;
 		
 		if (course != null) {
 			courseIntent = new Intent("COURSE_ACTIVITY");
 			courseIntent.putExtra(CourseActivity.ARG_COURSE, course);
 			courseIntent.putExtra(LoginActivity.ARG_USER, this.user);
 			
-			startActivity(courseIntent);
+			startActivityForResult(courseIntent, COURSE_ACTIVITY_CALL);
 		}		
 	}
 	
@@ -204,9 +209,21 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 		if (requestCode == CourseActivity.NEW_COURSE_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				Course course = (Course)data.getExtras().get(CourseActivity.ARG_COURSE);
-				//TODO implement here a web service call to update the course and screen update
+				this.courseAdapter.getCourseList().add(course);
+				this.courseAdapter.notifyDataSetChanged();
+				//TODO implement here a web service call to update the course
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
+			}
+		} else if (requestCode == MainActivity.COURSE_ACTIVITY_CALL) {
+			if (data != null) {
+				Bundle extras = data.getExtras();
+				if (extras != null) {
+					Course returnCourse = (Course)extras.get(CourseSectionFragment.ARG_COURSE);
+					if (returnCourse != null) {
+						this.courseAdapter.getCourseList().set(this.lastPositionClicked, returnCourse);
+					}
+				}
 			}
 		}
 	}

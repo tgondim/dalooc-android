@@ -11,9 +11,9 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.view.Menu;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -23,6 +23,9 @@ import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
+import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -31,7 +34,7 @@ import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
-public class LearningObjectEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener {
+public class LearningObjectEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener, OnUpdateCourseCallDoneListener {
 
 	private static final int LAYOUT_VIEW = 0;
 	private static final int NAME_VIEW = 1;
@@ -84,6 +87,8 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	private LinearLayout llTestQuestions;
 	
 	private View lastClickedView;
+	
+	private Intent resultIntent;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -230,15 +235,14 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	
 	private void finishSaving() {
 		fetchData();
-		Intent resultIntent = new Intent();
-		resultIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, LearningObjectEditActivity.this.learningObject);
-		resultIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
+		getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, LearningObjectEditActivity.this.learningObject);
+		getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
 		setResult(Activity.RESULT_OK, resultIntent);
 		finish();
 	}
 
 	private void finishWithoutSaving() {
-		setResult(Activity.RESULT_CANCELED, new Intent());
+		setResult(Activity.RESULT_CANCELED, getResultIntent());
 		finish();
 	}
 
@@ -265,6 +269,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				viewArray[OBJECT_ITEM] = returnedVideo;
 				
 				LearningObjectEditActivity.this.lastClickedView = null;
+				
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO, returnedVideo);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, videoIndex);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -279,6 +288,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				viewArray[OBJECT_ITEM] = returnedAudio;
 				
 				LearningObjectEditActivity.this.lastClickedView = null;
+				
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO, returnedAudio);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, audioIndex);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -293,6 +307,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				viewArray[OBJECT_ITEM] = returnedDocument;
 				
 				LearningObjectEditActivity.this.lastClickedView = null;
+				
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT, returnedDocument);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, documentIndex);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -307,6 +326,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				viewArray[OBJECT_ITEM] = returnedTestQuestion;
 				
 				LearningObjectEditActivity.this.lastClickedView = null;
+				
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION, returnedTestQuestion);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, testQuestionIndex);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -315,6 +339,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				Video video = (Video)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO);
 				createVideoEntry(video);
 				this.learningObject.getVideoList().add(video);
+				
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO, video);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, -1);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -323,6 +352,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				Audio audio = (Audio)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO);
 				createAudioEntry(audio);
 				this.learningObject.getAudioList().add(audio);
+				
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO, audio);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, -1);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -331,6 +365,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				Document document = (Document)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT);
 				createDocumentEntry(document);
 				this.learningObject.getDocumentList().add(document);
+
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT, document);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, -1);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -339,10 +378,43 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				TestQuestion testQuestion = (TestQuestion)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION);
 				createTestQuestionEntry(testQuestion);
 				this.learningObject.getTestQuestionList().add(testQuestion);
+				
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION, testQuestion);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, -1);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
 		}
+	}
+	
+	@Override
+	public String getUrlWebService(int serviceCode) {
+		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
+		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
+		}
+		return null;
+	}
+	
+	@Override
+	public void returnServiceResponse(int serviceCode) {
+//		callBackHandler.sendEmptyMessage(0);		
+	}
+	
+	private void fireUpdateCourseThread() {
+		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
+		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		new Thread(updateCourseCall).start();
+	}
+	
+	private Intent getResultIntent() {
+		if (this.resultIntent == null) {
+			this.resultIntent = new Intent();
+		}
+		return this.resultIntent;
 	}
 	
 	private void showConfirmDialog() {

@@ -24,6 +24,7 @@ import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,11 +43,14 @@ import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.DownloadImageTask;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
+import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
+import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
-public class VideoDetailActivity extends FragmentActivity implements OnUploadFileTaskDoneListener, OnConfirmDialogReturnListener {
+public class VideoDetailActivity extends FragmentActivity implements OnUploadFileTaskDoneListener, OnConfirmDialogReturnListener, OnUpdateCourseCallDoneListener {
 	 
 	public static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
 	
@@ -88,6 +92,10 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	
 	private BroadcastReceiver receiver;
 	
+	private Intent resultIntent;
+	
+	private boolean contentUpdated;
+	
 	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
 		@Override
@@ -121,7 +129,9 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 		this.llDownloadPreviewStatus = (LinearLayout)findViewById(R.id.llDownloadPreviewStatus);
 		this.rlVideoDetailForm = (RelativeLayout)findViewById(R.id.rlVideoDetailForm);
 		
-		downloadVideoIcon(0);
+		if (!TextUtils.isEmpty(this.video.getContentFileName())) {
+			downloadVideoIcon(0);
+		}
 		
 		TextView txtVideoItemName = (TextView)findViewById(R.id.txtVideoItemName);
 		txtVideoItemName.setText(this.video.getName());
@@ -137,27 +147,31 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 			
 			@Override
 			public void onClick(View v) {
-				Intent videoPlayIntent = new Intent(Intent.ACTION_VIEW);
-				String mimeType = "application/*";
-				String extension = MimeTypeMap.getFileExtensionFromUrl(video.getContentFileName());
-				
-				if (MimeTypeMap.getSingleton().hasExtension(extension)) {
-					mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+				if (!TextUtils.isEmpty(video.getContentFileName())) {
+					Intent videoPlayIntent = new Intent(Intent.ACTION_VIEW);
+					String mimeType = "application/*";
+					String extension = MimeTypeMap.getFileExtensionFromUrl(video.getContentFileName());
 					
+					if (MimeTypeMap.getSingleton().hasExtension(extension)) {
+						mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+						
+					}
+					
+					videoPlayIntent.setDataAndType(Uri.parse(getResources().getString(R.string.host_file_server) 
+							+ getResources().getString(R.string.videos_folder) 
+							+ "/" + video.getContentFileName()), mimeType);
+					videoPlayIntent.putExtra(MediaStore.EXTRA_FINISH_ON_COMPLETION, true);
+					try {
+						startActivity(videoPlayIntent);
+					} 
+					catch (ActivityNotFoundException e) {
+						Toast.makeText(VideoDetailActivity.this, 
+								getResources().getString(R.string.no_application_available), 
+								Toast.LENGTH_LONG).show();
+					}		
+				} else {
+					showToast(getResources().getString(R.string.no_file_to_open));
 				}
-				
-				videoPlayIntent.setDataAndType(Uri.parse(getResources().getString(R.string.host_file_server) 
-						+ getResources().getString(R.string.videos_folder) 
-						+ "/" + video.getContentFileName()), mimeType);
-				videoPlayIntent.putExtra(MediaStore.EXTRA_FINISH_ON_COMPLETION, true);
-				try {
-                    startActivity(videoPlayIntent);
-                } 
-                catch (ActivityNotFoundException e) {
-                    Toast.makeText(VideoDetailActivity.this, 
-                        getResources().getString(R.string.no_application_available), 
-                        Toast.LENGTH_LONG).show();
-                }		
 			}
 		});
 		
@@ -220,14 +234,18 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 			
 			@Override
 			public void onClick(View v) {
-				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + VideoDetailActivity.this.video.getContentFileName());
-				VideoDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-				Request request = new Request(Uri.parse(VideoDetailActivity.this.getResources().getString(R.string.host_file_server) 
-						+ VideoDetailActivity.this.getResources().getString(R.string.videos_folder)
-						+ "/" + VideoDetailActivity.this.video.getContentFileName()));
-				request.setDestinationUri(Uri.fromFile(destDocFile));
-				enqueue = dm.enqueue(request);	
-				showToast(getResources().getString(R.string.download_file_in_progress));
+				if (!TextUtils.isEmpty(video.getContentFileName())) {
+					File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + VideoDetailActivity.this.video.getContentFileName());
+					VideoDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+					Request request = new Request(Uri.parse(VideoDetailActivity.this.getResources().getString(R.string.host_file_server) 
+							+ VideoDetailActivity.this.getResources().getString(R.string.videos_folder)
+							+ "/" + VideoDetailActivity.this.video.getContentFileName()));
+					request.setDestinationUri(Uri.fromFile(destDocFile));
+					enqueue = dm.enqueue(request);	
+					showToast(getResources().getString(R.string.download_file_in_progress));
+				} else {
+					showToast(getResources().getString(R.string.no_file_to_open));
+				}
 			}
 		});
 
@@ -293,7 +311,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	public boolean onTouchEvent(MotionEvent event) {
 		  if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
               if (llDownloadPreviewStatus.getVisibility() != View.VISIBLE) {
-            	  finish();               
+            	  onBackPressed();
               }
               return true;
           }
@@ -364,6 +382,24 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 			this.newFileName = "";
 		}
 	}
+	
+	@Override
+	public void onBackPressed() {
+		if (this.contentUpdated) {
+			this.course.getLearningObjectList().get(this.learningObjectIndex).getVideoList().set(this.videoIndex, this.video);
+			
+			getResultIntent().putExtra(CourseActivity.ARG_COURSE, this.course);
+			setResult(LearningObjectActivity.DETAIL_ACTIVITY_CALL, getResultIntent());
+		}
+		finish();
+	}
+	
+	private Intent getResultIntent() {
+		if (this.resultIntent == null) {
+			this.resultIntent = new Intent();
+		}
+		return this.resultIntent;
+	}
 
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
@@ -383,11 +419,33 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			this.newFileName = General.getIdFileName(this.newFileName, this.video.getId());
 			this.video.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
-			//TODO save the document modification
+			fireUpdateCourseThread();
+			this.contentUpdated = true;
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
 		this.newFileName = "";
 		callBackHandler.sendMessage(msg);
+	}
+	
+	private void fireUpdateCourseThread() {
+		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
+		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		new Thread(updateCourseCall).start();
+	}
+
+	@Override
+	public String getUrlWebService(int serviceCode) {
+		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
+		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
+		}
+		return null;
+	}
+	
+	@Override
+	public void returnServiceResponse(int serviceCode) {
+//		callBackHandler.sendEmptyMessage(0);		
 	}
 }

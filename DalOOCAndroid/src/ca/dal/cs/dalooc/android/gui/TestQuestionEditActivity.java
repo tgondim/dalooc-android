@@ -1,7 +1,10 @@
 package ca.dal.cs.dalooc.android.gui;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +55,8 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 	private static final int NAME_VIEW = 1;
 	
 	private static final int RADIO_BUTTON = 2;
+
+	private static final int OBJECT_ITEM = 3;
 
 	private TestQuestion testQuestion;
 
@@ -106,6 +111,22 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 		LinearLayout llTestQuestionRadioButtons = (LinearLayout)findViewById(R.id.llTestQuestionRadioButtons);
 		
 		this.radioGroup = new RadioGroup(this);
+		this.radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(RadioGroup group, int checkedId) {
+				 int index = group.indexOfChild(group.findViewById(checkedId));
+				 
+				 for (int i = 0; i < TestQuestionEditActivity.this.testQuestion.getOptionList().size(); i++) {
+					 if (index == i) {
+						 TestQuestionEditActivity.this.testQuestion.getOptionList().get(i).setCorrect(true);
+					 } else {
+						 TestQuestionEditActivity.this.testQuestion.getOptionList().get(i).setCorrect(false);
+						 
+					 }
+				}
+			}
+		});
 		
 		this.ivAddOption = (ImageView)findViewById(R.id.ivAddOption);
 		this.ivAddOption.setOnClickListener(new View.OnClickListener() {
@@ -216,9 +237,40 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 
 	private void fetchData() {
 		this.testQuestion.setQuestion(this.etQuestion.getText().toString());
-		this.testQuestion.setRelatedContendId(((LearningObjectContent)this.relatedContent[RELATED_CONTENT_OBJECT]).getId());
+		if (this.relatedContent != null) {
+			this.testQuestion.setRelatedContendId(((LearningObjectContent)this.relatedContent[RELATED_CONTENT_OBJECT]).getId());
+		}
 		
-		//TODO implement the options fetch
+		Iterator<ImageView> iterator = this.optionsLayoutMapping.keySet().iterator();
+		this.testQuestion.getOptionList().clear();
+		
+		while (iterator.hasNext()) {
+			Object[] object = this.optionsLayoutMapping.get(iterator.next());
+			Option option = ((Option)object[OBJECT_ITEM]);
+			option.setStatement(((EditText)object[NAME_VIEW]).getText().toString());
+			option.setStatement(((EditText)object[NAME_VIEW]).getText().toString());
+			
+			MyRadioButton radioButton = (MyRadioButton)object[RADIO_BUTTON];
+			
+			if (radioButton != null) {
+				if (radioButton.isChecked()) {
+					option.setCorrect(true);
+				}
+			}
+
+			option.setItem(String.valueOf(ItemLetterDispenser
+					.getLetterInPosition(radioButton.getIndex())));
+			this.testQuestion.getOptionList().add(option);
+		}
+		if (this.testQuestion.getOptionList().size() > 0) {
+			Collections.sort(this.testQuestion.getOptionList(),
+					new Comparator<Option>() {
+						@Override
+						public int compare(final Option object1, final Option object2) {
+							return object1.getItem().toLowerCase().compareTo(object2.getItem().toLowerCase());
+						}
+					});
+		}
 	}
 	
 	private void finishSaving() {
@@ -231,7 +283,8 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 	}
 
 	private void finishWithoutSaving() {
-		setResult(Activity.RESULT_CANCELED, new Intent());
+		Intent resultIntent = new Intent();
+		setResult(Activity.RESULT_CANCELED, resultIntent);
 		finish();
 	}
 	
@@ -252,8 +305,6 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 	
 	@Override
 	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
-//		Intent resultIntent = new Intent();
-		
 		switch (returnCode) {
 		case ACTION_CONFIRM_TEST_QUESTION_CHANGES:
 			this.confirmDialog.dismiss();
@@ -263,37 +314,28 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 				finishWithoutSaving();
 			}
 			
-//			finish();
-
 			break;
-			
 		}
 	}
 	
 	protected void createOptionEntry(Option option, int position) {
 		
+		EditText editText = new EditText(TestQuestionEditActivity.this);
+		editText.setInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+		
 		if (option == null) {
 			option = new Option();
 			option.setItem(String.valueOf(this.letterDispenser.getNextItem()));
 			position = this.letterDispenser.getLastItemNumberTaken();
+			editText.requestFocus();
 		} else {
 			this.letterDispenser.getNextItem();
 		}
 		
 		RelativeLayout relativeLayout = new RelativeLayout(TestQuestionEditActivity.this);
 		
-//		TextView textView = new TextView(TestQuestionEditActivity.this);
-//		textView.setTextAppearance(this, android.R.attr.textAppearanceMedium);
 		
-		EditText editText = new EditText(TestQuestionEditActivity.this);
-//		editText.setInputType(InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE);
-//		editText.setEms(16);
-		editText.setInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-		
-		if (option != null) {
-//			textView.setText(option.getItem() + getResources().getString(R.string.item_separator));
-			editText.setText(option.getStatement());
-		}
+		editText.setText(option.getStatement());
 		
 		ImageView imageView = new ImageView(TestQuestionEditActivity.this);
 		imageView.setImageDrawable(TestQuestionEditActivity.this.getResources().getDrawable(R.drawable.content_discard));
@@ -307,26 +349,9 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 				((RelativeLayout)viewToRemove).removeAllViews();
 				TestQuestionEditActivity.this.llOptions.removeViewInLayout(viewToRemove);
 				TestQuestionEditActivity.this.optionsLayoutMapping.remove(v);
-				
-//				TestQuestionEditActivity.this.letterDispenser = new ItemLetterDispenser();
-//				
-//				for (Option option : TestQuestionEditActivity.this.course.getLearningObjectList().get(TestQuestionEditActivity.this.learningObjectIndex)
-//						.getTestQuestionList().get(TestQuestionEditActivity.this.testQuestionIndex).getOptionList()) {
-//					option.setItem(String.valueOf(TestQuestionEditActivity.this.letterDispenser.getNextItem()));
-//					
-//				}
-				
 			}
 		});
 		
-//		//TextView
-//		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-//		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-//		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
-//		params.addRule(RelativeLayout.ALIGN_RIGHT, imageView.getId());
-//		
-//		relativeLayout.addView(textView, params);
-
 		//EditText
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
@@ -337,28 +362,26 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 		relativeLayout.addView(editText, params);
 		
 		MyRadioButton radioButton = new MyRadioButton(this, position);
+		
+		radioButton.setChecked(option.isCorrect());
+		
 		this.radioButtonList.add(radioButton);
-//		rb.setText(option.getItem() + getResources().getString(R.string.item_separator) + option.getStatement());
 		radioButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				for (RadioButton auxRb : TestQuestionEditActivity.this.radioButtonList) {
+				for (MyRadioButton auxRb : TestQuestionEditActivity.this.radioButtonList) {
 					if (auxRb.getId() == v.getId()) {
-						auxRb.setSelected(true);
+						auxRb.setChecked(true);
+						
+					} else {
+						auxRb.setChecked(false);
 					}
 				}				
 			}
 		});
 
-		//RadioGroup
-//		params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-//		params.addRule(RelativeLayout.LEFT_OF, editText.getId());
-//		params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
-//		params.setMargins(20, 0, 50, 0);
-		
 		radioGroup.addView(radioButton);
-//		relativeLayout.addView(radioButton, params);
 		
 		//ImageView
 		params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -367,10 +390,11 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 		
 		relativeLayout.addView(imageView, params);
 		
-		View[] viewArray = new View[3];
+		Object[] viewArray = new Object[4];
 		viewArray[LAYOUT_VIEW] = relativeLayout;
 		viewArray[NAME_VIEW] = editText;
 		viewArray[RADIO_BUTTON] = radioButton;
+		viewArray[OBJECT_ITEM] = option;
 		
 		TestQuestionEditActivity.this.optionsLayoutMapping.put(imageView, viewArray);
 		

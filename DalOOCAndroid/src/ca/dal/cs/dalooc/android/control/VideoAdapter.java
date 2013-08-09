@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,10 +52,12 @@ public class VideoAdapter extends BaseAdapter {
 		TextView txtVideoName = (TextView)view.findViewById(R.id.txtVideoName);
  		txtVideoName.setText(video.getName());
 		
-		new DownloadImageTask((ImageView)view.findViewById(R.id.ivVideoThumbnail))
-			.execute(this.inflater.getContext().getResources().getString(R.string.host_file_server)
-					+ this.inflater.getContext().getResources().getString(R.string.videos_folder)
-					+ "/thumb/" + video.getContentFileName().replace("mp4", "jpg"));
+ 		if (!TextUtils.isEmpty(video.getContentFileName())) {
+			new DownloadImageTask((ImageView)view.findViewById(R.id.ivVideoThumbnail))
+				.execute(this.inflater.getContext().getResources().getString(R.string.host_file_server)
+						+ this.inflater.getContext().getResources().getString(R.string.videos_folder)
+						+ "/thumb/" + video.getContentFileName().replace("mp4", "jpg"));
+ 		}
 		
 		return view;
 	}

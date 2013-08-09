@@ -228,7 +228,7 @@ public class CourseSectionFragment extends Fragment {
 						learningObjectIntent.putExtra(LoginActivity.ARG_USER, CourseSectionFragment.this.user);
 						learningObjectIntent.putExtra(CourseSectionFragment.ARG_COURSE, CourseSectionFragment.this.course);
 
-						startActivity(learningObjectIntent);
+						startActivityForResult(learningObjectIntent, CourseActivity.LEARNING_OBJECT_ACTIVITY_CALL);
 					}
 				}
 			});
@@ -240,5 +240,23 @@ public class CourseSectionFragment extends Fragment {
 			
 		}
 		return rootView;
+	}
+	
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == CourseActivity.LEARNING_OBJECT_ACTIVITY_CALL) {
+			if (data != null) {
+				Bundle extras = data.getExtras();
+				if (extras != null) {
+					Course returnCourse = (Course)extras.get(CourseSectionFragment.ARG_COURSE);
+					if (returnCourse != null) {
+						this.course = returnCourse;
+						CourseActivity.setCourse(returnCourse);
+						CourseActivity.contentUpdated = true;
+					}
+				}
+			}
+		}
 	}
 }

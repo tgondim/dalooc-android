@@ -1,5 +1,7 @@
 package ca.dal.cs.dalooc.android.gui;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -25,12 +27,19 @@ import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
+import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
+import ca.dal.cs.dalooc.model.Document;
 import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.Syllabus;
+import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
+import ca.dal.cs.dalooc.model.Video;
 
-public class CourseEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener {
+public class CourseEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener, OnUpdateCourseCallDoneListener {
 
 	public static final int EDIT_LEARNING_OBJECT_REQUEST_CODE = 100;
 
@@ -64,6 +73,8 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	private User user;
 	
 	private View lastClickedView;
+	
+	private Intent resultIntent;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -196,7 +207,18 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 			Object[] object = this.prerequisitesLayoutMapping.get(iterator.next());
 			this.course.getSyllabus().getPrerequisites().add(((EditText)object[NAME_VIEW]).getText().toString());
 		}
-
+		
+		Comparator<String> stringComparator = new Comparator<String>() {
+											@Override
+											public int compare(final String object1, final String object2) {
+												return object1.compareTo(object2);
+											}
+										};
+		
+		if (this.course.getSyllabus().getPrerequisites().size() > 0) {
+			Collections.sort(this.course.getSyllabus().getPrerequisites(), stringComparator);
+		}
+		
 		iterator = this.referencesLayoutMapping.keySet().iterator();
 		this.course.getSyllabus().getReferences().clear();
 		
@@ -204,20 +226,23 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 			Object[] object = this.referencesLayoutMapping.get(iterator.next());
 			this.course.getSyllabus().getReferences().add(((EditText)object[NAME_VIEW]).getText().toString());
 		}
+		
+		if (this.course.getSyllabus().getReferences().size() > 0) {
+			Collections.sort(this.course.getSyllabus().getReferences(), stringComparator);
+		}
 		//the learningObjects fetch is made when returning from edit activity
 	}
 	
 	private void finishSaving() {
 		fetchData();
-		Intent resultIntent = new Intent();
-		resultIntent.putExtra(CourseActivity.ARG_COURSE, CourseEditActivity.this.course);
+		getResultIntent().putExtra(CourseActivity.ARG_COURSE, CourseEditActivity.this.course);
 //		resultIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, CourseEditActivity.this.learningObjectIndex);
-		setResult(Activity.RESULT_OK, resultIntent);
+		setResult(Activity.RESULT_OK, getResultIntent());
 		finish();
 	}
 
 	private void finishWithoutSaving() {
-		setResult(Activity.RESULT_CANCELED, new Intent());
+		setResult(Activity.RESULT_CANCELED, getResultIntent());
 		finish();
 	}
 
@@ -236,18 +261,58 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 				viewArray[OBJECT_ITEM] = returnedLearningObject;
 				
 				CourseEditActivity.this.lastClickedView = null;
+				
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, returnedLearningObject);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, learningObjectIndex);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
-				//do nothing
+				if (data.getExtras() != null) {
+					CourseEditActivity.checkAndUpdateLearningObjectChilds(data, (LearningObject)CourseEditActivity.this.learningObjectsLayoutMapping.get(CourseEditActivity.this.lastClickedView)[OBJECT_ITEM]);
+				}
 			}
 		} else if (requestCode == CourseEditActivity.NEW_LEARNING_OBJECT_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				LearningObject learningObject = (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
 				createLearningObjectEntry(learningObject);
 				this.course.getLearningObjectList().add(learningObject);
+				
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, learningObject);
+				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, -1);
+				
+				fireUpdateCourseThread();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
 		}
+	}
+	
+	@Override
+	public String getUrlWebService(int serviceCode) {
+		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
+		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
+		}
+		return null;
+	}
+	
+	@Override
+	public void returnServiceResponse(int serviceCode) {
+//		callBackHandler.sendEmptyMessage(0);		
+	}
+	
+	private Intent getResultIntent() {
+		if (this.resultIntent == null) {
+			this.resultIntent = new Intent();
+		}
+		return this.resultIntent;
+	}
+	
+	private void fireUpdateCourseThread() {
+		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
+		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		new Thread(updateCourseCall).start();
 	}
 	
 	private void showConfirmDialog() {
@@ -289,7 +354,9 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		editText.setHint(R.string.prerequisite_edit_text_hint);
 		editText.setEms(16);
 		
-		if (!TextUtils.isEmpty(prerequisite)) {
+		if (TextUtils.isEmpty(prerequisite)) {
+			editText.requestFocus();
+		} else {
 			editText.setText(prerequisite);
 		}
 		
@@ -348,7 +415,9 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		editText.setHint(R.string.reference_edit_text_hint);
 		editText.setEms(16);
 		
-		if (!TextUtils.isEmpty(reference)) {
+		if (TextUtils.isEmpty(reference)) {
+			editText.requestFocus();
+		} else {
 			editText.setText(reference);
 		}
 		
@@ -468,5 +537,59 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 				0);
 		llParams.setMargins(0, 10, 0, 0);
 		CourseEditActivity.this.llLearningObject.addView(relativeLayout, llParams);
+	}
+	
+	public static boolean checkAndUpdateLearningObjectChilds(Intent data, LearningObject learningObject) {
+		int index;
+		boolean anyUpdateMade = false;
+		Video videoResult = (Video)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO);
+		
+		if (videoResult != null) {
+			index = (Integer)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO_INDEX);
+			if (index >= 0) {
+				learningObject.getVideoList().set(index, videoResult);
+			} else {
+				learningObject.getVideoList().add(videoResult);
+			}
+			anyUpdateMade = true;
+		}
+		
+		Audio audioResult = (Audio)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO);
+		
+		if (audioResult != null) {
+			index = (Integer)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO_INDEX);
+			if (index >= 0) {
+				learningObject.getAudioList().set(index, audioResult);
+			} else {
+				learningObject.getAudioList().add(audioResult);
+			}
+			anyUpdateMade = true;
+		}
+		
+		Document documentResult = (Document)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT);
+		
+		if (documentResult != null) {
+			index = (Integer)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX);
+			if (index >= 0) {
+				learningObject.getDocumentList().set(index, documentResult);
+			} else {
+				learningObject.getDocumentList().add(documentResult);
+			}
+			anyUpdateMade = true;
+		}
+		
+		TestQuestion testQuestionResult = (TestQuestion)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION);
+		
+		if (testQuestionResult != null) {
+			index = (Integer)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX);
+			if (index >= 0) {
+				learningObject.getTestQuestionList().set(index, testQuestionResult);
+			} else {
+				learningObject.getTestQuestionList().add(testQuestionResult);
+			}
+			anyUpdateMade = true;
+		}
+		
+		return anyUpdateMade;
 	}
 }

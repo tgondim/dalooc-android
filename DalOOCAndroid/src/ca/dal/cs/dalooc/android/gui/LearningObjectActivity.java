@@ -9,23 +9,45 @@ import android.view.Menu;
 import android.view.MenuItem;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.LearningObjectSectionsPagerAdapter;
+import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
+import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
+import ca.dal.cs.dalooc.model.Document;
 import ca.dal.cs.dalooc.model.LearningObject;
+import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
+import ca.dal.cs.dalooc.model.Video;
 
-public class LearningObjectActivity extends FragmentActivity {
+public class LearningObjectActivity extends FragmentActivity implements OnUpdateCourseCallDoneListener {
 
+	public static final int DETAIL_ACTIVITY_CALL = 200;
+
+	public static boolean contentUpdated;
+	
 	private LearningObjectSectionsPagerAdapter mSectionsPagerAdapter;
 	
 	private User user;
 	
 	private LearningObject learningObject; 
 	
-	private Course course;
+	private static Course course;
 	
 	private int learningObjectIndex;
 
-	ViewPager mViewPager;
+	private ViewPager mViewPager;
+	
+	private Intent resultIntent;
+	
+//	private Toast toast;
+	
+//	@SuppressLint("HandlerLeak")
+//	private Handler callBackHandler = new Handler() {
+//		public void handleMessage(android.os.Message msg) {
+//			//TODO implement what to do when persisting is done
+//		}
+//	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -33,15 +55,16 @@ public class LearningObjectActivity extends FragmentActivity {
 		setContentView(R.layout.activity_learning_object);
 
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
-		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
+		LearningObjectActivity.setCourse((Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE));
 		this.learningObjectIndex = getIntent().getIntExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, -1);
+
+		LearningObjectActivity.contentUpdated = false;
 		
 		loadData();
-
 	}
 
 	private void loadData() {
-		this.learningObject = this.course.getLearningObjectList().get(this.learningObjectIndex);
+		this.learningObject = LearningObjectActivity.getCourse().getLearningObjectList().get(this.learningObjectIndex);
 
 		setTitle(this.learningObject.getName());
 		
@@ -70,7 +93,7 @@ public class LearningObjectActivity extends FragmentActivity {
 		case 200:
 			intent = new Intent(this, LearningObjectEditActivity.class);
 			intent.putExtra(LoginActivity.ARG_USER, this.user);
-			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			intent.putExtra(CourseActivity.ARG_COURSE, LearningObjectActivity.getCourse());
 			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
 			
 			startActivityForResult(intent, CourseEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE);
@@ -79,41 +102,41 @@ public class LearningObjectActivity extends FragmentActivity {
 		case 300:
 			intent = new Intent(this, VideoEditActivity.class);
 			intent.putExtra(LoginActivity.ARG_USER, this.user);
-			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			intent.putExtra(CourseActivity.ARG_COURSE, LearningObjectActivity.getCourse());
 			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
 			intent.putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, -1);
 			
-			startActivity(intent);
+			startActivityForResult(intent, LearningObjectEditActivity.NEW_VIDEO_REQUEST_CODE);
 			break;
 			
 		case 400:
 			intent = new Intent(this, AudioEditActivity.class);
 			intent.putExtra(LoginActivity.ARG_USER, this.user);
-			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			intent.putExtra(CourseActivity.ARG_COURSE, LearningObjectActivity.getCourse());
 			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
 			intent.putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, -1);
 			
-			startActivity(intent);
+			startActivityForResult(intent, LearningObjectEditActivity.NEW_AUDIO_REQUEST_CODE);
 			break;
 			
 		case 500:
 			intent = new Intent(this, DocumentEditActivity.class);
 			intent.putExtra(LoginActivity.ARG_USER, this.user);
-			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			intent.putExtra(CourseActivity.ARG_COURSE, LearningObjectActivity.getCourse());
 			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
 			intent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, -1);
 			
-			startActivity(intent);
+			startActivityForResult(intent, LearningObjectEditActivity.NEW_DOCUMENT_REQUEST_CODE);
 			break;
 			
 		case 600:
 			intent = new Intent(this, TestQuestionEditActivity.class);
 			intent.putExtra(LoginActivity.ARG_USER, this.user);
-			intent.putExtra(CourseActivity.ARG_COURSE, this.course);
+			intent.putExtra(CourseActivity.ARG_COURSE, LearningObjectActivity.getCourse());
 			intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
 			intent.putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, -1);
 			
-			startActivity(intent);
+			startActivityForResult(intent, LearningObjectEditActivity.NEW_TEST_QUESTION_REQUEST_CODE);
 			break;
 		}
 		return super.onMenuItemSelected(featureId, item);
@@ -124,28 +147,117 @@ public class LearningObjectActivity extends FragmentActivity {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == CourseEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
-				this.course.getLearningObjectList().set(this.learningObjectIndex, (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT));
+				LearningObjectActivity.getCourse().getLearningObjectList().set(this.learningObjectIndex, (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT));
+				fireUpdateCourseThread();
 				loadData();
-				//TODO implement here a web service call to update the course
 			} else if (resultCode == Activity.RESULT_CANCELED) {
+				if (data.getExtras() != null) {
+					if (CourseEditActivity.checkAndUpdateLearningObjectChilds(data, LearningObjectActivity.getCourse().getLearningObjectList().get(this.learningObjectIndex))) {
+						loadData();
+					}
+				}
+			}
+		} else if (requestCode == LearningObjectEditActivity.NEW_VIDEO_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				Video videoReturned = (Video)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO);
+				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getVideoList().add(videoReturned);
+				fireUpdateCourseThread(); 
+				loadData();
+			}  else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
-		} else if (requestCode == CourseEditActivity.NEW_LEARNING_OBJECT_REQUEST_CODE) {
-			LearningObject learningObject = (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
-			this.course.getLearningObjectList().add(learningObject);
-			loadData();
-			//TODO implement here a web service call to update the course
-		}
+		} else if (requestCode == LearningObjectEditActivity.NEW_AUDIO_REQUEST_CODE) { 
+			if (resultCode == Activity.RESULT_OK) {
+				Audio audioReturned = (Audio)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO);
+				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getAudioList().add(audioReturned);
+				fireUpdateCourseThread(); 
+				loadData();
+			}  else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
+		} else if (requestCode == LearningObjectEditActivity.NEW_DOCUMENT_REQUEST_CODE) { 
+			if (resultCode == Activity.RESULT_OK) {
+				Document documentReturned = (Document)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT);
+				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getDocumentList().add(documentReturned);
+				fireUpdateCourseThread(); 
+				loadData();
+			}  else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
+		} else if (requestCode == LearningObjectEditActivity.NEW_TEST_QUESTION_REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				TestQuestion testQuestionReturned = (TestQuestion)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION);
+				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getTestQuestionList().add(testQuestionReturned);
+				fireUpdateCourseThread(); 
+				loadData();
+			}  else if (resultCode == Activity.RESULT_CANCELED) {
+				//do nothing
+			}
+//		} else if (requestCode == LearningObjectActivity.DETAIL_ACTIVITY_CALL) {
+//			if (data != null) {
+//				Bundle extras = data.getExtras();
+//				if (extras != null) {
+//					Course returnCourse = (Course)extras.get(CourseSectionFragment.ARG_COURSE);
+//					if (returnCourse != null) {
+//						LearningObjectActivity.setCourse(returnCourse);
+//						LearningObjectActivity.contentUpdated = true;
+//					}
+//				}
+//			}
+		} 
 	}
+
+	@Override
+	public void onBackPressed() {
+		if (LearningObjectActivity.contentUpdated) {
+			getResultIntent().putExtra(CourseActivity.ARG_COURSE, LearningObjectActivity.getCourse());
+			setResult(CourseActivity.LEARNING_OBJECT_ACTIVITY_CALL, getResultIntent());
+			LearningObjectActivity.contentUpdated = false;
+		}
+		finish();
+	}
+	
+	@Override
+	public String getUrlWebService(int serviceCode) {
+		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
+		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
+		}
+		return null;
+	}
+	
+	@Override
+	public void returnServiceResponse(int serviceCode) {
+//		callBackHandler.sendEmptyMessage(0);		
+	}
+	
+	private void fireUpdateCourseThread() {
+		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(LearningObjectActivity.getCourse(), this);
+		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		new Thread(updateCourseCall).start();
+	}
+	
 	public int getLearningObjectIndex() {
 		return this.learningObjectIndex;
 	}
-
+	
+	private Intent getResultIntent() {
+		if (this.resultIntent == null) {
+			this.resultIntent = new Intent();
+		}
+		return this.resultIntent;
+	}
+	
 	public User getUser() {
 		return this.user;
 	}
 	
-	public Course getCourse() {
-		return this.course;
+	public static Course getCourse() {
+		return LearningObjectActivity.course;
+	}
+	
+	public static void setCourse(Course course) {
+		LearningObjectActivity.course = course;
 	}
 }

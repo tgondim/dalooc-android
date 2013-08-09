@@ -122,7 +122,19 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 			rb = new MyRadioButton(this, i);
 			this.radioButtonList.add(rb);
 			rb.setText(option.getItem() + getResources().getString(R.string.item_separator) + option.getStatement());
-			rb.setOnClickListener(this);
+			rb.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					for (RadioButton auxRb : TestQuestionDetailActivity.this.radioButtonList) {
+						if (auxRb.getId() == v.getId()) {
+							auxRb.setChecked(true);
+						} else {
+							auxRb.setChecked(false);
+						}
+					}
+				}
+			});
 			radioGroup.addView(rb);
 		}
 		llRadioGroup.addView(radioGroup);
@@ -148,13 +160,7 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 
 	@Override
 	public void onClick(View v) {
-		if (v instanceof RadioButton) {
-			for (RadioButton auxRb : this.radioButtonList) {
-				if (auxRb.getId() == v.getId()) {
-					auxRb.setSelected(true);
-				}
-			}
-		} else if (v instanceof Button) { 
+		if (v instanceof Button) { 
 			Option option;
 			for (MyRadioButton radioButton : this.radioButtonList) {
 				if (radioButton.isChecked()) {

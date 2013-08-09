@@ -24,5 +24,8 @@ public class ItemLetterDispenser {
 	public int getLastItemNumberTaken() {
 		return this.lastItemTaken;
 	}
-	
+
+	public static char getLetterInPosition(int position) {
+		return items[position];
+	}
 }

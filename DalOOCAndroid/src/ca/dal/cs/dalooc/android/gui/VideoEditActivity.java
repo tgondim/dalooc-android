@@ -84,7 +84,9 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 			case UploadFileTask.UPLOAD_DONE:
 				showProgress(false, "");
 				showToast((String)msg.obj);
-				downloadVideoIcon(1500);
+				if (!TextUtils.isEmpty(VideoEditActivity.this.video.getContentFileName())) {
+					downloadVideoIcon(1500);
+				}
 				break;
 			}
 		}
@@ -234,7 +236,10 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	private void loadData() {
 		this.etName.setText(this.video.getName());
 		this.etDescription.setText(this.video.getDescription());
-		downloadVideoIcon(0);
+		
+		if (!TextUtils.isEmpty(this.video.getContentFileName())) {
+			downloadVideoIcon(0);
+		}
 	}
 
 	private void fetchData() {

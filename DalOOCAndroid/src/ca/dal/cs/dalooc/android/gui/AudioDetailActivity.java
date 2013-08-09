@@ -27,6 +27,7 @@ import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -50,11 +51,14 @@ import ca.dal.cs.dalooc.android.gui.listener.OnRecordingBlinkListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
+import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
+import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 
-public class AudioDetailActivity extends FragmentActivity implements OnRecordingBlinkListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener {
+public class AudioDetailActivity extends FragmentActivity implements OnRecordingBlinkListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener, OnUpdateCourseCallDoneListener {
 	
 	private static final String LOG_TAG = "AudioDetailActivity";
 	
@@ -103,6 +107,10 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	private long enqueue;
 	
 	private BroadcastReceiver receiver;
+	
+	private Intent resultIntent;
+	
+	private boolean contentUpdated; 
 	
 	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
@@ -157,11 +165,16 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 			
 			@Override
 			public void onToggleImageButtonClick(boolean isMediaRecording) {
-				if (isMediaRecording) {
-					startPlaying();
+				if (!TextUtils.isEmpty(AudioDetailActivity.this.audio.getContentFileName())) {
+					if (isMediaRecording) {
+						startPlaying();
+					} else {
+						stopPlaying();
+					}				
 				} else {
-					stopPlaying();
-				}				
+					showToast(getResources().getString(R.string.no_file_to_open));
+					AudioDetailActivity.this.ibAudioPlay.toggleButton();
+				}
 			}
 		});
 
@@ -217,14 +230,18 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 			
 			@Override
 			public void onClick(View v) {
-				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + AudioDetailActivity.this.audio.getContentFileName());
-				AudioDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-				Request request = new Request(Uri.parse(AudioDetailActivity.this.getResources().getString(R.string.host_file_server) 
-						+ AudioDetailActivity.this.getResources().getString(R.string.audio_folder)
-						+ "/" + AudioDetailActivity.this.audio.getContentFileName()));
-				request.setDestinationUri(Uri.fromFile(destDocFile));
-				enqueue = dm.enqueue(request);		
-				showToast(getResources().getString(R.string.download_file_in_progress));
+				if (!TextUtils.isEmpty(AudioDetailActivity.this.audio.getContentFileName())) {
+					File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + AudioDetailActivity.this.audio.getContentFileName());
+					AudioDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+					Request request = new Request(Uri.parse(AudioDetailActivity.this.getResources().getString(R.string.host_file_server) 
+							+ AudioDetailActivity.this.getResources().getString(R.string.audio_folder)
+							+ "/" + AudioDetailActivity.this.audio.getContentFileName()));
+					request.setDestinationUri(Uri.fromFile(destDocFile));
+					enqueue = dm.enqueue(request);		
+					showToast(getResources().getString(R.string.download_file_in_progress));
+				} else {
+					showToast(getResources().getString(R.string.no_file_to_open));
+				}
 			}
 		});
 		
@@ -316,7 +333,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	public boolean onTouchEvent(MotionEvent event) {
 		  if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
               if (llDownloadPreviewStatus.getVisibility() != View.VISIBLE) {
-            	  finish();               
+            	  onBackPressed();
               }
               return true;
           }
@@ -333,6 +350,24 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 			this.mediaRecorder.release();
 		}
 		unregisterReceiver(this.receiver);
+	}
+	
+	@Override
+	public void onBackPressed() {
+		if (this.contentUpdated) {
+			this.course.getLearningObjectList().get(this.learningObjectIndex).getAudioList().set(this.audioIndex, this.audio);
+			
+			getResultIntent().putExtra(CourseActivity.ARG_COURSE, this.course);
+			setResult(LearningObjectActivity.DETAIL_ACTIVITY_CALL, getResultIntent());
+		}
+		finish();
+	}
+	
+	private Intent getResultIntent() {
+		if (this.resultIntent == null) {
+			this.resultIntent = new Intent();
+		}
+		return this.resultIntent;
 	}
 	
 	private void stopPlaying() {
@@ -492,11 +527,33 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 			this.newFileName = General.getIdFileName(this.newFileName, this.audio.getId());
 			this.audio.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
 			msg.obj = getResources().getString(R.string.successfull_upload);
-			//TODO save the document modification
+			this.contentUpdated = true;
+			fireUpdateCourseThread();
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
 		callBackHandler.sendMessage(msg);
 		this.newFileName = "";
+	}
+	
+	private void fireUpdateCourseThread() {
+		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
+		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		new Thread(updateCourseCall).start();
+	}
+
+	@Override
+	public String getUrlWebService(int serviceCode) {
+		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
+		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
+		}
+		return null;
+	}
+	
+	@Override
+	public void returnServiceResponse(int serviceCode) {
+//		callBackHandler.sendEmptyMessage(0);		
 	}
 }

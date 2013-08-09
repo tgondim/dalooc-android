@@ -203,7 +203,12 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 	private void fetchData() {
 		this.document.setName(this.etName.getText().toString());
 		this.document.setDescription(this.etDescription.getText().toString());
-		this.document.setType(Document.getDocumentType(this.document.getContentFileName().substring(this.document.getContentFileName().lastIndexOf(".") + 1)));
+
+		if (!TextUtils.isEmpty(this.document.getContentFileName())) {
+			this.document.setType(Document.getDocumentType(this.document.getContentFileName().substring(this.document.getContentFileName().lastIndexOf(".") + 1)));			
+		} else {
+			this.document.setType(Document.DocumentType.UNKNOWN);
+		}
 	}
 
 	private void finishSaving() {
@@ -238,9 +243,7 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 	            showConfirmDialog(getResources().getString(R.string.document_overwrite_confirm), ACTION_CONFIRM_DOCUMENT_UPLOAD);
 	        } else if (resultCode == RESULT_CANCELED) {
 	            // User cancelled the document file selection
-	        } else {
-	            //  document file selection failed
-	        }
+	        } 
 	    }
 	}
 	

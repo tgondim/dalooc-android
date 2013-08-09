@@ -159,7 +159,7 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 			videoDetailIntent.putExtra(ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
 			videoDetailIntent.putExtra(ARG_VIDEO_INDEX, position);
 			
-			startActivity(videoDetailIntent);
+			startActivityForResult(videoDetailIntent, LearningObjectActivity.DETAIL_ACTIVITY_CALL);
 			break;
 		
 		case 2: 
@@ -169,7 +169,7 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 			audioDetailIntent.putExtra(ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
 			audioDetailIntent.putExtra(ARG_AUDIO_INDEX, position);
 			
-			startActivity(audioDetailIntent);
+			startActivityForResult(audioDetailIntent, LearningObjectActivity.DETAIL_ACTIVITY_CALL);
 			break;
 		
 		case 3: 
@@ -179,7 +179,7 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 			documentDetailIntent.putExtra(ARG_LEARNING_OBJECT_INDEX, this.learningObjectIndex);
 			documentDetailIntent.putExtra(ARG_DOCUMENT_INDEX, position);
 			
-			startActivity(documentDetailIntent);
+			startActivityForResult(documentDetailIntent, LearningObjectActivity.DETAIL_ACTIVITY_CALL);
 			break;
 
 		case 4: 
@@ -228,7 +228,19 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 			} else {
 				//till now, do nothing
 			}
-		}
+		} else if (requestCode == LearningObjectActivity.DETAIL_ACTIVITY_CALL) {
+			if (data != null) {
+				Bundle extras = data.getExtras();
+				if (extras != null) {
+					Course returnCourse = (Course)extras.get(CourseSectionFragment.ARG_COURSE);
+					if (returnCourse != null) {
+						this.course = returnCourse;
+						LearningObjectActivity.setCourse(returnCourse);
+						LearningObjectActivity.contentUpdated = true;
+					}
+				}
+			}
+		} 
 	}
 	
 }

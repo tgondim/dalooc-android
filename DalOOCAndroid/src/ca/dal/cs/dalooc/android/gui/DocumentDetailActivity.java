@@ -22,6 +22,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,12 +41,15 @@ import ca.dal.cs.dalooc.android.util.DownloadDocumentTask;
 import ca.dal.cs.dalooc.android.util.General;
 import ca.dal.cs.dalooc.android.util.UploadFileTask;
 import ca.dal.cs.dalooc.android.util.listener.OnDownloadDocumentDoneListener;
+import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
+import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
 import ca.dal.cs.dalooc.model.User;
 
 
-public class DocumentDetailActivity extends FragmentActivity implements OnDownloadDocumentDoneListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener {
+public class DocumentDetailActivity extends FragmentActivity implements OnDownloadDocumentDoneListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener, OnUpdateCourseCallDoneListener {
 	 
 	public static final int GET_DOCUMENT_FILE_ACTIVITY_REQUEST_CODE = 300;
 	
@@ -82,6 +86,10 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	private Toast toast;
 	
 	private ConfirmDialog confirmDialog;
+	
+	private Intent resultIntent;
+	
+	private boolean contentUpdated;
 	
 	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
@@ -129,12 +137,16 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 			
 			@Override
 			public void onClick(View v) {
-				showProgress(true, getResources().getString(R.string.download_preview_in_progress));
-				DownloadDocumentTask downloadDocTask = new DownloadDocumentTask();
-				downloadDocTask.setOnDownloadDocumentDoneListener(DocumentDetailActivity.this);
-				downloadDocTask.execute(DocumentDetailActivity.this.getResources().getString(R.string.host_file_server) 
-						+ DocumentDetailActivity.this.getResources().getString(R.string.documents_folder)
-						+ "/" + DocumentDetailActivity.this.document.getContentFileName());;
+				if (!TextUtils.isEmpty(DocumentDetailActivity.this.document.getContentFileName())) {
+					showProgress(true, getResources().getString(R.string.download_preview_in_progress));
+					DownloadDocumentTask downloadDocTask = new DownloadDocumentTask();
+					downloadDocTask.setOnDownloadDocumentDoneListener(DocumentDetailActivity.this);
+					downloadDocTask.execute(DocumentDetailActivity.this.getResources().getString(R.string.host_file_server) 
+							+ DocumentDetailActivity.this.getResources().getString(R.string.documents_folder)
+							+ "/" + DocumentDetailActivity.this.document.getContentFileName());
+				} else {
+					showToast(getResources().getString(R.string.no_file_to_open));
+				}
 			}
 		});
 		
@@ -244,7 +256,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	public boolean onTouchEvent(MotionEvent event) {
 		  if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
               if (llDownloadPreviewStatus.getVisibility() != View.VISIBLE) {
-            	  finish();               
+            	  onBackPressed();
               }
               return true;
           }
@@ -339,6 +351,24 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 		}
 	}
 
+	@Override
+	public void onBackPressed() {
+		if (this.contentUpdated) {
+			this.course.getLearningObjectList().get(this.learningObjectIndex).getDocumentList().set(this.documentIndex, this.document);
+			
+			getResultIntent().putExtra(CourseActivity.ARG_COURSE, this.course);
+			setResult(LearningObjectActivity.DETAIL_ACTIVITY_CALL, getResultIntent());
+		}
+		finish();
+	}
+	
+	private Intent getResultIntent() {
+		if (this.resultIntent == null) {
+			this.resultIntent = new Intent();
+		}
+		return this.resultIntent;
+	}
+	
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
 		UploadFileTask uploadFileTask = new UploadFileTask();
@@ -357,11 +387,33 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			this.newFileName = General.getIdFileName(this.newFileName, this.document.getId());
 			this.document.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
-			//TODO save the document modification
+			this.contentUpdated = true;
+			fireUpdateCourseThread();
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
 		this.newFileName = "";
 		callBackHandler.sendMessage(msg);
+	}
+	
+	private void fireUpdateCourseThread() {
+		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
+		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		new Thread(updateCourseCall).start();
+	}
+
+	@Override
+	public String getUrlWebService(int serviceCode) {
+		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
+		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
+		}
+		return null;
+	}
+	
+	@Override
+	public void returnServiceResponse(int serviceCode) {
+//		callBackHandler.sendEmptyMessage(0);		
 	}
 }
