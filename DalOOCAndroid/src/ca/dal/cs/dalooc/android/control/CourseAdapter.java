@@ -63,4 +63,8 @@ public class CourseAdapter extends BaseAdapter {
 	public void insert(Course course) {
 		this.courseList.add(course);
 	}
+	
+	public void removeAllItems() {
+		this.courseList.clear();
+	}
 }

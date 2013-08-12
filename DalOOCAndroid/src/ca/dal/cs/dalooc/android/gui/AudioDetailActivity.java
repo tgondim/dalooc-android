@@ -43,22 +43,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
-import ca.dal.cs.dalooc.android.gui.components.ToggleImageButton;
 import ca.dal.cs.dalooc.android.gui.components.RecordingBlinkImageView;
+import ca.dal.cs.dalooc.android.gui.components.ToggleImageButton;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
-import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnRecordingBlinkListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.General;
-import ca.dal.cs.dalooc.android.util.UploadFileTask;
-import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.UploadFileTask;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 
-public class AudioDetailActivity extends FragmentActivity implements OnRecordingBlinkListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener, OnUpdateCourseCallDoneListener {
+public class AudioDetailActivity extends FragmentActivity implements OnRecordingBlinkListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener, OnWebServiceCallDoneListener {
 	
 	private static final String LOG_TAG = "AudioDetailActivity";
 	
@@ -538,7 +538,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	
 	private void fireUpdateCourseThread() {
 		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		updateCourseCall.setOnWebServiceCallDoneListener(this);
 		new Thread(updateCourseCall).start();
 	}
 
@@ -553,7 +553,8 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	}
 	
 	@Override
-	public void returnServiceResponse(int serviceCode) {
+	public void returnServiceResponse(int serviceCode, boolean resultOk) {
 //		callBackHandler.sendEmptyMessage(0);		
+		//TODO implement webservice response treatment
 	}
 }

@@ -39,17 +39,17 @@ import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.DownloadDocumentTask;
 import ca.dal.cs.dalooc.android.util.General;
-import ca.dal.cs.dalooc.android.util.UploadFileTask;
 import ca.dal.cs.dalooc.android.util.listener.OnDownloadDocumentDoneListener;
-import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.UploadFileTask;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
 import ca.dal.cs.dalooc.model.User;
 
 
-public class DocumentDetailActivity extends FragmentActivity implements OnDownloadDocumentDoneListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener, OnUpdateCourseCallDoneListener {
+public class DocumentDetailActivity extends FragmentActivity implements OnDownloadDocumentDoneListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener, OnWebServiceCallDoneListener {
 	 
 	public static final int GET_DOCUMENT_FILE_ACTIVITY_REQUEST_CODE = 300;
 	
@@ -398,7 +398,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	
 	private void fireUpdateCourseThread() {
 		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		updateCourseCall.setOnWebServiceCallDoneListener(this);
 		new Thread(updateCourseCall).start();
 	}
 
@@ -413,7 +413,8 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	}
 	
 	@Override
-	public void returnServiceResponse(int serviceCode) {
+	public void returnServiceResponse(int serviceCode, boolean resultOk) {
 //		callBackHandler.sendEmptyMessage(0);		
+		//TODO implement webservice response treatment
 	}
 }

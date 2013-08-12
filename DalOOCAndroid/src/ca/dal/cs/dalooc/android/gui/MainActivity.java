@@ -28,9 +28,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.CourseAdapter;
-import ca.dal.cs.dalooc.android.webservices.GetAllCoursesCallBack;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservices.OnSaveCourseCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.webservice.util.Parser;
@@ -39,9 +38,11 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.util.JSON;
 
-public class MainActivity extends Activity implements OnItemClickListener, GetAllCoursesCallBack, OnSaveCourseCallDoneListener {
+public class MainActivity extends Activity implements OnItemClickListener, OnWebServiceCallDoneListener {
 
-	public static final int COURSE_ACTIVITY_CALL = 300;
+	public static final int COURSE_ACTIVITY_CALL = 900;
+
+	public static final String ARG_REFRESH_COURSE_LIST = "arg_refresh_course_list";
 	
 	private ListView listViewCourse;
 	
@@ -86,11 +87,11 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 	
-		courseAdapter = new CourseAdapter(LayoutInflater.from(this));
+		this.courseAdapter = new CourseAdapter(LayoutInflater.from(this));
 		
 		this.listViewCourse = (ListView)findViewById(R.id.listViewCourse);
 		this.listViewCourse.setDividerHeight(0);
-		this.listViewCourse.setAdapter(courseAdapter);
+		this.listViewCourse.setAdapter(this.courseAdapter);
 		this.listViewCourse.setOnItemClickListener(this);
 		
 		this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
@@ -102,13 +103,6 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 
 	private void getCourses() {
 		new Thread(new GetAllCoursesCall()).start();
-	}
-	
-	@Override
-	protected void onRestart() {
-		super.onRestart();
-//		this.listViewCourse.removeAllViews();
-//		getCourses();
 	}
 	
 	@Override
@@ -146,6 +140,11 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 			startActivityForResult(intent, CourseActivity.NEW_COURSE_REQUEST_CODE);
 			break;
 
+		case 777:
+			
+			refreshCourseList();
+			break;
+			
 		case 888:
 			intent = new Intent(this, SettingsActivity.class);
 			intent.putExtra(LoginActivity.ARG_USER, this.user);
@@ -163,6 +162,11 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 		
 		}
 		return super.onMenuItemSelected(featureId, item);
+	}
+
+	private void refreshCourseList() {
+		this.courseAdapter.removeAllItems();
+		getCourses();
 	}
 	
 	@Override
@@ -223,13 +227,17 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 					if (returnCourse != null) {
 						this.courseAdapter.getCourseList().set(this.lastPositionClicked, returnCourse);
 					}
+					boolean refreshCourseList = (Boolean)extras.get(ARG_REFRESH_COURSE_LIST);
+					if (refreshCourseList) {
+						refreshCourseList();
+					}
 				}
 			}
 		}
 	}
 	
 	@Override
-	public void returnServiceResponse(int serviceCode) {
+	public void returnServiceResponse(int serviceCode, boolean resultOk) {
 		callBackHandler.sendEmptyMessage(0);
 	}
 	
@@ -281,7 +289,7 @@ public class MainActivity extends Activity implements OnItemClickListener, GetAl
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			MainActivity.this.returnServiceResponse(GetAllCoursesCall.GET_ALL_COURSES_WEB_SERVICE);
+			MainActivity.this.returnServiceResponse(GetAllCoursesCall.GET_ALL_COURSES_WEB_SERVICE, true);
 		}
 
 	}

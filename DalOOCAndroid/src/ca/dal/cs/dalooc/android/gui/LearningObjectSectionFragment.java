@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import ca.dal.cs.dalooc.android.control.AudioAdapter;
 import ca.dal.cs.dalooc.android.control.DocumentAdapter;
 import ca.dal.cs.dalooc.android.control.TestQuestionAdapter;
 import ca.dal.cs.dalooc.android.control.VideoAdapter;
+import ca.dal.cs.dalooc.android.util.DownloadImageTask;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.TestAnswer;
@@ -237,6 +239,17 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 						this.course = returnCourse;
 						LearningObjectActivity.setCourse(returnCourse);
 						LearningObjectActivity.contentUpdated = true;
+						if (this.videoAdapter != null) {
+							this.videoAdapter.notifyDataSetChanged();
+//							View view = this.videoAdapter.getView(this.lastSelectedItemPosition, null, null);
+//							Video video = this.videoAdapter.getVideoList().get(this.lastSelectedItemPosition);
+//							if (!TextUtils.isEmpty(video.getContentFileName())) {
+//								new DownloadImageTask((ImageView)view.findViewById(R.id.ivVideoThumbnail))
+//									.execute(view.getContext().getResources().getString(R.string.host_file_server)
+//											+ view.getContext().getResources().getString(R.string.videos_folder)
+//											+ "/thumb/" + video.getContentFileName().replace("mp4", "jpg"));
+//					 		}
+						}
 					}
 				}
 			}

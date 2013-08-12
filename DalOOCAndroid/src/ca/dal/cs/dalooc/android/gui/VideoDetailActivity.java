@@ -42,15 +42,15 @@ import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.DownloadImageTask;
 import ca.dal.cs.dalooc.android.util.General;
-import ca.dal.cs.dalooc.android.util.UploadFileTask;
-import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.UploadFileTask;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
-public class VideoDetailActivity extends FragmentActivity implements OnUploadFileTaskDoneListener, OnConfirmDialogReturnListener, OnUpdateCourseCallDoneListener {
+public class VideoDetailActivity extends FragmentActivity implements OnUploadFileTaskDoneListener, OnConfirmDialogReturnListener, OnWebServiceCallDoneListener {
 	 
 	public static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
 	
@@ -430,7 +430,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	
 	private void fireUpdateCourseThread() {
 		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		updateCourseCall.setOnWebServiceCallDoneListener(this);
 		new Thread(updateCourseCall).start();
 	}
 
@@ -445,7 +445,8 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	}
 	
 	@Override
-	public void returnServiceResponse(int serviceCode) {
+	public void returnServiceResponse(int serviceCode, boolean resultOk) {
 //		callBackHandler.sendEmptyMessage(0);		
+		//TODO implement webservice response treatment
 	}
 }

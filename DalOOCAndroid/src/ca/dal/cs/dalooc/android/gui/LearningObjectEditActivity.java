@@ -23,9 +23,8 @@ import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
-import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -34,7 +33,7 @@ import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
-public class LearningObjectEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener, OnUpdateCourseCallDoneListener {
+public class LearningObjectEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener, OnWebServiceCallDoneListener {
 
 	private static final int LAYOUT_VIEW = 0;
 	private static final int NAME_VIEW = 1;
@@ -76,7 +75,10 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	private ConfirmDialog confirmDialog;
 	
 	private EditText etName;
+	
 	private EditText etDescription;
+	
+	private EditText etOrder;
 	
 	private LinearLayout llVideos;
 
@@ -97,6 +99,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		
 		this.etName = (EditText)findViewById(R.id.etName);
 		this.etDescription = (EditText)findViewById(R.id.etDescription);
+		this.etOrder = (EditText)findViewById(R.id.etOrder);
 		
 		this.videosLayoutMapping = new HashMap<View, Object[]>();
 		this.audioLayoutMapping = new HashMap<View, Object[]>();
@@ -209,6 +212,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	private void loadData() {
 		this.etName.setText(this.learningObject.getName());
 		this.etDescription.setText(this.learningObject.getDescription());
+		this.etOrder.setText(String.valueOf(this.learningObject.getOrder()));
 		
 		for (Video video : this.learningObject.getVideoList()) {
 			createVideoEntry(video);
@@ -230,6 +234,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	private void fetchData() {
 		this.learningObject.setName(this.etName.getText().toString());
 		this.learningObject.setDescription(this.etDescription.getText().toString());
+		this.learningObject.setOrder(Integer.valueOf(this.etOrder.getText().toString()));
 		//videos, audio, documents and test questions fetch is made when returning from respective edit activities
 	}
 	
@@ -391,22 +396,21 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
-			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
-		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+		if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}
 		return null;
 	}
 	
 	@Override
-	public void returnServiceResponse(int serviceCode) {
-//		callBackHandler.sendEmptyMessage(0);		
+	public void returnServiceResponse(int serviceCode, boolean resultOk) {
+//		callBackHandler.sendEmptyMessage(0);	
+		//TODO implement webservice response treatment
 	}
 	
 	private void fireUpdateCourseThread() {
 		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		updateCourseCall.setOnWebServiceCallDoneListener(this);
 		new Thread(updateCourseCall).start();
 	}
 	
@@ -432,7 +436,6 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 
 	@Override
 	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
-//		Intent resultIntent = new Intent();
 		this.confirmDialog.dismiss();
 		
 		if (confirm) {
@@ -440,7 +443,6 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		} else {
 			finishWithoutSaving();
 		}
-//		finish();
 	}
 	
 	@Override

@@ -1,4 +1,4 @@
-package ca.dal.cs.dalooc.android.webservices;
+package ca.dal.cs.dalooc.android.webservice;
 
 import org.ksoap2.SoapEnvelope;
 import org.ksoap2.serialization.SoapObject;
@@ -11,20 +11,20 @@ import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.webservice.util.Parser;
 
-public class SaveCourseCallRunnable implements Runnable {
+public class UpdateCourseCallRunnable implements Runnable {
 
-	private static final String LOG_TAG = "SaveCourseCallRunnable";
+	private static final String LOG_TAG = "UpdateCourseCallRunnable";
 	
-	public static final int SAVE_COURSE_WEB_SERVICE = 100;
+	public static final int UPDATE_COURSE_WEB_SERVICE = 500;
 	
 	private Course course;
-	private OnSaveCourseCallDoneListener onSaveCourseCallDoneListener;
+	private OnWebServiceCallDoneListener onWebServiceCallDoneListener;
 	private Context context;
 	
 	private boolean isLoading;
 //	private boolean saveCourseWebServiceResponseOk;
 	
-	public SaveCourseCallRunnable(Course course, Context context) {
+	public UpdateCourseCallRunnable(Course course, Context context) {
 		super();
 		this.course = course;
 		this.context = context;
@@ -35,19 +35,20 @@ public class SaveCourseCallRunnable implements Runnable {
 		
 		this.isLoading = true;
 		SoapObject soap = new SoapObject(this.context.getResources().getString(R.string.namespace_webservice), 
-			 							this.context.getResources().getString(R.string.save_course_webservice_operation));
+			 							this.context.getResources().getString(R.string.update_course_webservice_operation));
 		
 //		soap.addProperty("chave", ((Activity)this.callBack).getResources().getString(R.string.chave_dalooc_webservice));
 		
 		String courseString = Parser.getCourseDBObject(this.course).toString();
+		soap.addProperty("courseId", this.course.getId());
 		soap.addProperty("courseString", courseString);
 		
 		SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
 		
 		envelope.setOutputSoapObject(soap);
-		Log.d(SaveCourseCallRunnable.LOG_TAG, "Calling DalOOCWebServices.saveCourse");
+		Log.d(UpdateCourseCallRunnable.LOG_TAG, "Calling DalOOCWebServices.updateCourse");
 		
-		HttpTransportSE httpTransport = new HttpTransportSE(this.onSaveCourseCallDoneListener.getUrlWebService(SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE));
+		HttpTransportSE httpTransport = new HttpTransportSE(this.onWebServiceCallDoneListener.getUrlWebService(UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE));
 		
 		try {
 //			this.saveCourseWebServiceResponseOk = false;
@@ -64,17 +65,17 @@ public class SaveCourseCallRunnable implements Runnable {
 		}
 		
 		this.isLoading = false;
-		fireOnSaveCourseCallDoneEvent();
+		fireOnUpdateCourseCallDoneEvent(true);
 	}
 	
-	private void fireOnSaveCourseCallDoneEvent() {
-		if (this.onSaveCourseCallDoneListener != null) {
-			this.onSaveCourseCallDoneListener.returnServiceResponse(SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE);
+	private void fireOnUpdateCourseCallDoneEvent(boolean resultOk) {
+		if (this.onWebServiceCallDoneListener != null) {
+			this.onWebServiceCallDoneListener.returnServiceResponse(UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE, resultOk);
 		}
 	}
 	
-	public void setOnSaveCourseCallDoneListener(OnSaveCourseCallDoneListener onSaveCourseCallDoneListener) {
-		this.onSaveCourseCallDoneListener = onSaveCourseCallDoneListener;
+	public void setOnWebServiceCallDoneListener(OnWebServiceCallDoneListener onWebServiceCallDoneListener) {
+		this.onWebServiceCallDoneListener = onWebServiceCallDoneListener;
 	}
 	
 	public boolean isLoading() {

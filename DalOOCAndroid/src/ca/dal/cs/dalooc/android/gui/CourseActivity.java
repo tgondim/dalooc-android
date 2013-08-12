@@ -4,31 +4,42 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.CourseSectionsPagerAdapter;
-import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.android.webservice.HasAnsweredCorrectCallTask;
+import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.RemoveCourseCallTask;
+import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.User;
 
-public class CourseActivity extends FragmentActivity implements OnUpdateCourseCallDoneListener {
+public class CourseActivity extends FragmentActivity implements OnWebServiceCallDoneListener, OnConfirmDialogReturnListener {
 
 	public static final String ARG_COURSE =  "course";
 	
 	public static final int EDIT_COURSE_REQUEST_CODE = 100;
 
-	public static final int NEW_COURSE_REQUEST_CODE = 200;
+	public static final int REMOVE_COURSE_REQUEST_CODE = 200;
+
+	public static final int NEW_COURSE_REQUEST_CODE = 300;
 	
-	public static final int LEARNING_OBJECT_ACTIVITY_CALL = 300;
+	public static final int LEARNING_OBJECT_ACTIVITY_CALL = 400;
+	
+	public static final int ACTION_CONFIRM_COURSE_REMOVE = 500;
 	
 	private CourseSectionsPagerAdapter mSectionsPagerAdapter;
 	
-	ViewPager mViewPager;
+	private ViewPager mViewPager;
+	
+	private ConfirmDialog confirmDialog;
 	
 	private User user;
 	
@@ -92,6 +103,10 @@ public class CourseActivity extends FragmentActivity implements OnUpdateCourseCa
 			break;
 
 		case 300:
+			showConfirmDialog(getResources().getString(R.string.course_remove_confirm), ACTION_CONFIRM_COURSE_REMOVE);
+			break;
+
+		case 400:
 			intent = new Intent(this, LearningObjectEditActivity.class);
 			intent.putExtra(LoginActivity.ARG_USER, this.user);
 			intent.putExtra(CourseActivity.ARG_COURSE, CourseActivity.getCourse());
@@ -148,23 +163,60 @@ public class CourseActivity extends FragmentActivity implements OnUpdateCourseCa
 
 	private void fireUpdateCourseThread() {
 		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(CourseActivity.getCourse(), this);
-		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		updateCourseCall.setOnWebServiceCallDoneListener(this);
 		new Thread(updateCourseCall).start();
 	}
 	
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
-			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
-		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
-			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
+		if (serviceCode == RemoveCourseCallTask.REMOVE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.remove_course_webservice_operation); 
 		}
 		return null;
 	}
 	
 	@Override
-	public void returnServiceResponse(int serviceCode) {
-//		callBackHandler.sendEmptyMessage(0);		
+	public void returnServiceResponse(int serviceCode, boolean resultOk) {
+		switch (serviceCode) {
+		case RemoveCourseCallTask.REMOVE_COURSE_WEB_SERVICE:
+			if (resultOk) {
+				Intent intent = new Intent();
+				intent.putExtra(MainActivity.ARG_REFRESH_COURSE_LIST, true);
+				setResult(MainActivity.COURSE_ACTIVITY_CALL, intent);
+				finish();
+			} else {
+				//TODO warn user removing wasn't possible
+			}
+			break;
+			
+		default:
+				
+			break;
+		}
+	}
+	
+	@Override
+	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
+		this.confirmDialog.dismiss();
+		switch (returnCode) {
+		case ACTION_CONFIRM_COURSE_REMOVE:
+			if (confirm) {
+				
+				RemoveCourseCallTask removeCourseCall = new RemoveCourseCallTask();
+				removeCourseCall.setOnWebServiceCallDoneListener(CourseActivity.this);
+				removeCourseCall.execute(getUrlWebService(RemoveCourseCallTask.REMOVE_COURSE_WEB_SERVICE),
+						getResources().getString(R.string.namespace_webservice),
+						getResources().getString(R.string.remove_course_webservice_operation),
+						CourseActivity.course.getId()); 
+			} else {
+				//do nothing
+			}
+			
+			break;
+
+		default:
+			break;
+		}
 	}
 	
 	private Intent getResultIntent() {
@@ -173,6 +225,21 @@ public class CourseActivity extends FragmentActivity implements OnUpdateCourseCa
 		}
 		return this.resultIntent;
 	}
+	
+	private void showConfirmDialog(String message, int returnCode) {
+        FragmentManager fm = getSupportFragmentManager();
+        
+        Bundle args = new Bundle();
+        args.putString(ConfirmDialog.ARG_TITLE, getResources().getString(R.string.warning));
+        args.putString(ConfirmDialog.ARG_MESSAGE, message);
+        args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
+        args.putInt(ConfirmDialog.ARG_RETURN_CODE, returnCode);
+        
+        confirmDialog = new ConfirmDialog();
+        confirmDialog.setArguments(args);
+        confirmDialog.setOnConfirmDialogResultListener(this);
+        confirmDialog.show(fm, "fragment_edit_name");
+    }
 	
 	public static Course getCourse() {
 		return CourseActivity.course;

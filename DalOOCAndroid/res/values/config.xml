@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="url_webservice">http://192.168.0.2:8080/DalOOCServices/services</string>
-    <string name="host_file_server">http://192.168.0.2:8080/DalOOC</string>
+    <string name="host_file_server">http://192.168.0.2:8080/DalOOCFiles</string>
     <string name="url_upload_file_servlet">http://192.168.0.2:8080/DalOOCServices/UploadFileServlet</string>
 <!--     <string name="url_webservice">http://yen.cs.dal.ca/DalOOCServices/services</string> -->
-<!--     <string name="host_file_server">http://yen.cs.dal.ca/DalOOC</string> -->
+<!--     <string name="host_file_server">http://yen.cs.dal.ca/DalOOCFiles</string> -->
 <!--     <string name="url_upload_file_servlet">http://yen.cs.dal.ca/DalOOCServices/UploadFileServlet</string> -->
+    
     <string name="course_repository">CourseRepository</string>
     <string name="user_repository">UserRepository</string>
+    <string name="test_answer_repository">TestAnswerRepository</string>
+    
     <string name="namespace_webservice">http://webservice.dalooc.cs.dal.ca</string>
+    
     <string name="get_all_courses_webservice_operation">getAllCourses</string>
     <string name="save_course_webservice_operation">saveCourse</string>
     <string name="update_course_webservice_operation">updateCourse</string>
     <string name="get_user_webservice_operation">getUser</string>
     <string name="register_user_webservice_operation">registerUser</string>
     <string name="validate_user_webservice_operation">validateUser</string>
+    <string name="save_test_answer_webservice_operation">saveTestAnswer</string>
+    <string name="has_answered_correct_webservice_operation">hasAnsweredCorrect</string>
+    <string name="remove_course_webservice_operation">removeCourse</string>
+    
     <string name="videos_folder">/videos</string>
     <string name="audio_folder">/audio</string>
     <string name="documents_folder">/documents</string>
+    
     <string name="item_separator">) </string>
 </resources>

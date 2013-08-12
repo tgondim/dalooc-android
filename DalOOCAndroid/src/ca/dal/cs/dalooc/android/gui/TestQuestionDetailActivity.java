@@ -3,9 +3,9 @@ package ca.dal.cs.dalooc.android.gui;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -16,6 +16,9 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.MyRadioButton;
+import ca.dal.cs.dalooc.android.webservice.HasAnsweredCorrectCallTask;
+import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.SaveTestAnswerCallRunnable;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -26,7 +29,7 @@ import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
-public class TestQuestionDetailActivity extends Activity implements OnClickListener {
+public class TestQuestionDetailActivity extends FragmentActivity implements OnWebServiceCallDoneListener {
 	
 	public static final String CHOOSE_CORRECT_ARG = "choose_correct";
 	public static final String TEST_ANSWER_ARG = "test_answer";
@@ -70,7 +73,47 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 		this.radioButtonList = new ArrayList<MyRadioButton>();
 		
 		this.btnSubmit = (Button)findViewById(R.id.btnSubmit);
-		this.btnSubmit.setOnClickListener(this);
+		this.btnSubmit.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if (v instanceof Button) { 
+					Option option;
+
+					TestQuestionDetailActivity.this.testAnswer = new TestAnswer();
+					TestQuestionDetailActivity.this.testAnswer.setUserId(TestQuestionDetailActivity.this.user.getId());
+					TestQuestionDetailActivity.this.testAnswer.setCourseId(TestQuestionDetailActivity.this.course.getId());
+					TestQuestionDetailActivity.this.testAnswer.setLearningObjectId(TestQuestionDetailActivity.this.course.getLearningObjectList().get(TestQuestionDetailActivity.this.learningObjectIndex).getId());
+					TestQuestionDetailActivity.this.testAnswer.setTestQuestionId(TestQuestionDetailActivity.this.testQuestion.getId());
+					
+					for (MyRadioButton radioButton : TestQuestionDetailActivity.this.radioButtonList) {
+						if (radioButton.isChecked()) {
+							option = TestQuestionDetailActivity.this.testQuestion.getOptionList().get(radioButton.getIndex());
+
+							TestQuestionDetailActivity.this.testAnswer.setOptionId(option.getId());
+							
+							TestQuestionDetailActivity.this.chooseCorrect = option.isCorrect();
+							if (TestQuestionDetailActivity.this.chooseCorrect) {
+								TestQuestionDetailActivity.this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_correct));
+								TestQuestionDetailActivity.this.ivTestQuestionRelatedContentThumbnail.setVisibility(View.VISIBLE);
+								
+								TestQuestionDetailActivity.this.testAnswer.setCorrect(true);
+								//TODO LearningObjectId and CourseId are missing
+							} else {
+								TestQuestionDetailActivity.this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_incorrect));
+								
+								TestQuestionDetailActivity.this.testAnswer.setCorrect(false);
+							}
+							TestQuestionDetailActivity.this.btnSubmit.setEnabled(false);
+
+							SaveTestAnswerCallRunnable saveTestQuestionCall = new SaveTestAnswerCallRunnable(TestQuestionDetailActivity.this.testAnswer, TestQuestionDetailActivity.this);
+							saveTestQuestionCall.setOnWebServiceCallDoneListener(TestQuestionDetailActivity.this);
+							new Thread(saveTestQuestionCall).start();
+						}
+					}
+				}				
+			}
+		});
 		
 		this.ivTestQuestionDetailThumbnail = (ImageView)findViewById(R.id.ivTestQuestionAnswerThumbnail);
 		
@@ -138,8 +181,23 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 			radioGroup.addView(rb);
 		}
 		llRadioGroup.addView(radioGroup);
+		
+		checkIfHasAnsweredCorrect();
 	}
 	
+	private void checkIfHasAnsweredCorrect() {
+		HasAnsweredCorrectCallTask hasAnsweredCorrectCall = new HasAnsweredCorrectCallTask();
+		hasAnsweredCorrectCall.setOnWebServiceCallDoneListener(TestQuestionDetailActivity.this);
+		hasAnsweredCorrectCall.execute(getUrlWebService(HasAnsweredCorrectCallTask.HAS_ANSWERED_CORRECT_WEB_SERVICE),
+				getResources().getString(R.string.namespace_webservice),
+				getResources().getString(R.string.has_answered_correct_webservice_operation),
+				this.user.getId(), 
+				this.course.getId(), 
+				this.course.getLearningObjectList().get(this.learningObjectIndex).getId(), 
+				this.testQuestion.getId(),
+				this.testQuestion.getCorrectOption().getId());
+	}
+
 	@Override
 	public void onBackPressed() {
 		setResultParameters();
@@ -159,32 +217,29 @@ public class TestQuestionDetailActivity extends Activity implements OnClickListe
 	}
 
 	@Override
-	public void onClick(View v) {
-		if (v instanceof Button) { 
-			Option option;
-			for (MyRadioButton radioButton : this.radioButtonList) {
-				if (radioButton.isChecked()) {
-					option = this.testQuestion.getOptionList().get(radioButton.getIndex());
-					this.chooseCorrect = option.isCorrect();
-					if (this.chooseCorrect) {
-						this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_correct));
-						this.testAnswer = new TestAnswer();
-						this.testAnswer.setUserId(this.user.getId());
-						this.testAnswer.setTestQuestionId(this.testQuestion.getId());
-						this.testAnswer.setOptionId(option.getId());
-						this.ivTestQuestionRelatedContentThumbnail.setVisibility(View.VISIBLE);
-						//TODO LearningObjectId and CourseId are missing
-					} else {
-						//TODO wrong answer!
-						this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_incorrect));
-						this.testAnswer = null;
-					}
-					this.btnSubmit.setEnabled(false);
-					for (RadioButton rb : this.radioButtonList) {
-						rb.setEnabled(false);
-					}
-				}
+	public String getUrlWebService(int serviceCode) {
+		if (serviceCode == SaveTestAnswerCallRunnable.SAVE_TEST_ANSWER_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.test_answer_repository) + "/" + getResources().getString(R.string.save_test_answer_webservice_operation);
+		} else if (serviceCode == HasAnsweredCorrectCallTask.HAS_ANSWERED_CORRECT_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.test_answer_repository) + "/" + getResources().getString(R.string.has_answered_correct_webservice_operation);
+		}
+		return null;
+	}
+	
+	@Override
+	public void returnServiceResponse(int serviceCode, boolean resultOk) {
+		if (serviceCode == HasAnsweredCorrectCallTask.HAS_ANSWERED_CORRECT_WEB_SERVICE) {
+			if (resultOk) {
+				this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_correct));
+				this.ivTestQuestionRelatedContentThumbnail.setVisibility(View.VISIBLE);
+				this.btnSubmit.setEnabled(false);
+				int index = this.testQuestion.getOptionList().indexOf(this.testQuestion.getCorrectOption());
+				this.radioButtonList.get(index).setChecked(true);
+			} else {
+				//do nothing
 			}
+		} else if (serviceCode == SaveTestAnswerCallRunnable.SAVE_TEST_ANSWER_WEB_SERVICE) {
+			//TODO implement webservice response treatment
 		}
 	}
 	

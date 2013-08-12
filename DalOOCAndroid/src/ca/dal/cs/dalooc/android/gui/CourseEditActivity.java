@@ -27,9 +27,9 @@ import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
-import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -39,7 +39,7 @@ import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
-public class CourseEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener, OnUpdateCourseCallDoneListener {
+public class CourseEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener, OnWebServiceCallDoneListener {
 
 	public static final int EDIT_LEARNING_OBJECT_REQUEST_CODE = 100;
 
@@ -230,6 +230,18 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		if (this.course.getSyllabus().getReferences().size() > 0) {
 			Collections.sort(this.course.getSyllabus().getReferences(), stringComparator);
 		}
+		
+		Comparator<LearningObject> learningObjectComparator = new Comparator<LearningObject>() {
+			@Override
+			public int compare(final LearningObject object1, final LearningObject object2) {
+				return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+			}
+		};
+
+		if (this.course.getLearningObjectList().size() > 0) {
+			Collections.sort(this.course.getLearningObjectList(), learningObjectComparator);
+		}
+		
 		//the learningObjects fetch is made when returning from edit activity
 	}
 	
@@ -298,8 +310,9 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	}
 	
 	@Override
-	public void returnServiceResponse(int serviceCode) {
-//		callBackHandler.sendEmptyMessage(0);		
+	public void returnServiceResponse(int serviceCode, boolean resultOk) {
+//		callBackHandler.sendEmptyMessage(0);	
+		//TODO implement webservice response treatment
 	}
 	
 	private Intent getResultIntent() {
@@ -311,7 +324,7 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	
 	private void fireUpdateCourseThread() {
 		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		updateCourseCall.setOnWebServiceCallDoneListener(this);
 		new Thread(updateCourseCall).start();
 	}
 	
@@ -322,10 +335,10 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
         args.putString(ConfirmDialog.ARG_TITLE, getResources().getString(R.string.dialog_title_course));
         args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.confirm_changes));
         
-        confirmDialog = new ConfirmDialog();
-        confirmDialog.setArguments(args);
-        confirmDialog.setOnConfirmDialogResultListener(this);
-        confirmDialog.show(fm, "fragment_edit_name");
+        this.confirmDialog = new ConfirmDialog();
+        this.confirmDialog.setArguments(args);
+        this.confirmDialog.setOnConfirmDialogResultListener(this);
+        this.confirmDialog.show(fm, "fragment_edit_name");
     }
 
 	@Override

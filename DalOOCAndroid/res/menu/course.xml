@@ -13,8 +13,14 @@
         android:title="@string/action_edit_course"/>
 
     <item
-        android:id="@+id/action_new_learning_object"
+        android:id="@+id/action_remove_course"
         android:orderInCategory="300"
+        android:showAsAction="never"
+        android:title="@string/action_remove_course"/>
+
+    <item
+        android:id="@+id/action_new_learning_object"
+        android:orderInCategory="400"
         android:showAsAction="never"
         android:title="@string/action_new_learning_object"/>
 </menu>

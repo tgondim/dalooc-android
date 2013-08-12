@@ -9,9 +9,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.LearningObjectSectionsPagerAdapter;
-import ca.dal.cs.dalooc.android.webservices.OnUpdateCourseCallDoneListener;
-import ca.dal.cs.dalooc.android.webservices.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservices.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -20,7 +19,7 @@ import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
-public class LearningObjectActivity extends FragmentActivity implements OnUpdateCourseCallDoneListener {
+public class LearningObjectActivity extends FragmentActivity implements OnWebServiceCallDoneListener {
 
 	public static final int DETAIL_ACTIVITY_CALL = 200;
 
@@ -219,22 +218,21 @@ public class LearningObjectActivity extends FragmentActivity implements OnUpdate
 	
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
-			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
-		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+		if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}
 		return null;
 	}
 	
 	@Override
-	public void returnServiceResponse(int serviceCode) {
-//		callBackHandler.sendEmptyMessage(0);		
+	public void returnServiceResponse(int serviceCode, boolean resultOk) {
+//		callBackHandler.sendEmptyMessage(0);	
+		//TODO implement webservice response treatment
 	}
 	
 	private void fireUpdateCourseThread() {
 		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(LearningObjectActivity.getCourse(), this);
-		updateCourseCall.setOnUpdateCourseCallDoneListener(this);
+		updateCourseCall.setOnWebServiceCallDoneListener(this);
 		new Thread(updateCourseCall).start();
 	}
 	

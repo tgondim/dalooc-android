@@ -37,7 +37,7 @@ import ca.dal.cs.dalooc.android.gui.listener.OnRecordingBlinkListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.General;
-import ca.dal.cs.dalooc.android.util.UploadFileTask;
+import ca.dal.cs.dalooc.android.webservice.UploadFileTask;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
@@ -302,8 +302,6 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	
 	@Override
 	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
-		Intent resultIntent = new Intent();
-		
 		switch (returnCode) {
 		case ACTION_CONFIRM_AUDIO_CHANGES:
 			this.confirmDialog.dismiss();
@@ -312,7 +310,6 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 			} else {
 				finishWithoutSaving();
 			}
-//			finish();
 			
 			break;
 			
@@ -322,6 +319,7 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	     	} else {
 	     		this.newFileName = "";
 	     	}
+			
 			break;
 		}
 	}

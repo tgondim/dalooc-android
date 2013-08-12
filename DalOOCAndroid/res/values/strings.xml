@@ -3,9 +3,11 @@
 
     <string name="app_name">DalOOC</string>
     <string name="action_settings">Settings</string>
+    <string name="action_refresh">Refresh</string>
     <string name="action_edit_course">Edit Course</string>
     <string name="action_edit_learning_object">Edit Learning Object</string>
     <string name="action_new_course">New Course</string>
+    <string name="action_remove_course">Remove Course</string>
     <string name="action_new_learning_object">New Learning Object</string>
     <string name="action_new_video">New Video</string>
     <string name="action_new_audio">New Audio</string>
@@ -24,6 +26,7 @@
     <string name="name">Name</string>
     <string name="question">Question</string>
     <string name="description">Description</string>
+    <string name="order">Order</string>
     <string name="related_content">Related content</string>
     <string name="video_thumbnail">Video Thumbnail</string>
     <string name="references">References</string>
@@ -51,6 +54,7 @@
     <string name="no_document_added">No document was added to this learning object</string>
     <string name="no_video_added">No video was added to this learning object</string>
     <string name="no_audio_added">No audio was added to this learning object</string>
+    <string name="course_remove_confirm">Do you really want to remove this course?</string>
     <string name="video_overwrite_confirm">Do you really want to replace the old video file?</string>
     <string name="audio_overwrite_confirm">Do you really want to replace the old audio file?</string>
     <string name="want_to_do_registration">No user was found with this email. Do you want to register a new user?</string>
@@ -99,6 +103,7 @@
     <string name="prompt_first_name">First Name</string>
     <string name="prompt_last_name">Last Name</string>
     <string name="prompt_user_type">User Type</string>
+    <string name="warning">Warning</string>
     <string name="action_sign_in_register"><b>Sign in</b> or register</string>
     <string name="action_register"><b>Send Registration</b></string>
     <string name="action_sign_in_short">Sign in</string>

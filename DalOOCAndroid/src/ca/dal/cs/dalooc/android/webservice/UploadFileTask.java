@@ -1,4 +1,4 @@
-package ca.dal.cs.dalooc.android.util;
+package ca.dal.cs.dalooc.android.webservice;
 
 import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
@@ -12,6 +12,7 @@ import java.util.List;
 import android.os.AsyncTask;
 import android.util.Log;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
+import ca.dal.cs.dalooc.android.util.General;
 
 
 public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
