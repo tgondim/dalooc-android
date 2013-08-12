@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
@@ -22,20 +23,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnDownloadDocumentDoneListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
-import ca.dal.cs.dalooc.android.util.DownloadDocumentTask;
+import ca.dal.cs.dalooc.android.task.DownloadDocumentTask;
+import ca.dal.cs.dalooc.android.task.UploadFileTask;
 import ca.dal.cs.dalooc.android.util.General;
-import ca.dal.cs.dalooc.android.util.listener.OnDownloadDocumentDoneListener;
-import ca.dal.cs.dalooc.android.webservice.UploadFileTask;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
-import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.User;
 
 public class DocumentEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener, OnDownloadDocumentDoneListener {
@@ -44,6 +43,10 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 	
 	public static final int ACTION_CONFIRM_DOCUMENT_UPLOAD = 300;
 
+	private DownloadDocumentTask downloadDocumentTask;
+	
+	private UploadFileTask uploadFileTask;
+	
 	private Document document;
 	
 	private User user;
@@ -109,9 +112,9 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 			public void onClick(View v) {
 				if (!TextUtils.isEmpty(DocumentEditActivity.this.document.getContentFileName())) {
 					showProgress(true, getResources().getString(R.string.download_preview_in_progress));
-					DownloadDocumentTask downloadDocTask = new DownloadDocumentTask();
-					downloadDocTask.setOnDownloadDocumentDoneListener(DocumentEditActivity.this);
-					downloadDocTask.execute(DocumentEditActivity.this.getResources().getString(R.string.host_file_server) 
+					DocumentEditActivity.this.downloadDocumentTask = new DownloadDocumentTask();
+					DocumentEditActivity.this.downloadDocumentTask.setOnDownloadDocumentDoneListener(DocumentEditActivity.this);
+					DocumentEditActivity.this.downloadDocumentTask.execute(DocumentEditActivity.this.getResources().getString(R.string.host_file_server) 
 							+ DocumentEditActivity.this.getResources().getString(R.string.documents_folder)
 							+ "/" + DocumentEditActivity.this.document.getContentFileName());
 				} else {
@@ -257,6 +260,7 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 	@Override
 	public void onDownloadDocumentDone(File file) {
 		showProgress(false, "");
+		DocumentEditActivity.this.downloadDocumentTask = null;
 		if (file != null) {
 			openDocument(file);		
 		} else {
@@ -292,6 +296,7 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 	
 	@Override
 	public void onUploadFileTaskDone(int returnCode) {
+		
 		Message msg = new Message();
 		msg.what = UploadFileTask.UPLOAD_DONE;
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
@@ -302,7 +307,9 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
+		
 		this.newFileName = "";
+		this.uploadFileTask = null;
 		callBackHandler.sendMessage(msg);
 	}
 	
@@ -327,9 +334,9 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 	
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		UploadFileTask uploadFileTask = new UploadFileTask();
-		uploadFileTask.setOnUploadFileTaskDoneListener(this);
-		uploadFileTask.execute(this.newFileName, 
+		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
+		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.documents_folder),
 				this.document.getId(),
 				getResources().getString(R.string.url_upload_file_servlet));
@@ -357,9 +364,10 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
         args.putString(ConfirmDialog.ARG_MESSAGE, message);
         args.putInt(ConfirmDialog.ARG_RETURN_CODE, returnCode);
         
-        confirmDialog = new ConfirmDialog();
-        confirmDialog.setArguments(args);
-        confirmDialog.setOnConfirmDialogResultListener(this);
-        confirmDialog.show(fm, "fragment_edit_name");
+        this.confirmDialog = new ConfirmDialog();
+        this.confirmDialog.setArguments(args);
+        this.confirmDialog.setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Dialog);
+        this.confirmDialog.setOnConfirmDialogResultListener(this);
+        this.confirmDialog.show(fm, "fragment_edit_name");
     }
 }

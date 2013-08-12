@@ -64,6 +64,7 @@
     <string name="problems_downloading_file">We are unable to load the preview now. Please try again later.</string>
     <string name="download_preview_in_progress">Loading preview file</string>
     <string name="no_file_to_open">There is no file to open</string>
+    <string name="no_file_to_download">There is no file to download</string>
     <string name="download_file_in_progress">Download started</string>
     <string name="upload_file_in_progress">Uploading file&#8230;</string>
     <string name="successfull_upload">Your file was uploaded</string>
@@ -118,6 +119,12 @@
     <string name="error_email_not_validated">Email address not confirmed yet. Check your email inbox.</string>
     <string name="error_email_unavailable">This email address it\'s already being used. Please select another address.</string>
     <string name="error_server_not_responding">Server is not responding. Please try again later.</string>
+    <string name="error_unable_to_save_course">We\'re unable to save this course now. Please try again later.</string>
+    <string name="error_unable_to_update_course">We\'re unable to update this course now. Please try again later.</string>
+    <string name="error_unable_to_remove_course">We\'re unable to remove this course now. Please try again later.</string>
+    <string name="error_unable_to_process_login_request_course">We\'re unable to process your login request now. Please try again later.</string>
+    <string name="error_unable_to_process_auto_login_for">We\'re unable to process auto login for</string>
+    <string name="error_unable_to_save_test_answer">We\'re unable to save your answer now. Please try again later.</string>
     <string name="error_field_required">This field is required</string>
 
 </resources>

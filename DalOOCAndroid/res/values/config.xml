@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="url_webservice">http://192.168.0.2:8080/DalOOCServices/services</string>
-    <string name="host_file_server">http://192.168.0.2:8080/DalOOCFiles</string>
-    <string name="url_upload_file_servlet">http://192.168.0.2:8080/DalOOCServices/UploadFileServlet</string>
-<!--     <string name="url_webservice">http://yen.cs.dal.ca/DalOOCServices/services</string> -->
-<!--     <string name="host_file_server">http://yen.cs.dal.ca/DalOOCFiles</string> -->
-<!--     <string name="url_upload_file_servlet">http://yen.cs.dal.ca/DalOOCServices/UploadFileServlet</string> -->
+<!--     <string name="url_webservice">http://192.168.0.2:8080/DalOOCServices/services</string> -->
+<!--     <string name="host_file_server">http://192.168.0.2:8080/DalOOCFiles</string> -->
+<!--     <string name="url_upload_file_servlet">http://192.168.0.2:8080/DalOOCServices/UploadFileServlet</string> -->
+    <string name="url_webservice">http://yen.cs.dal.ca/DalOOCServices/services</string>
+    <string name="host_file_server">http://yen.cs.dal.ca/DalOOCFiles</string>
+    <string name="url_upload_file_servlet">http://yen.cs.dal.ca/DalOOCServices/UploadFileServlet</string>
     
     <string name="course_repository">CourseRepository</string>
     <string name="user_repository">UserRepository</string>

@@ -7,10 +7,11 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.LearningObjectSectionsPagerAdapter;
-import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.task.UpdateCourseCallTask;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -25,6 +26,8 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 
 	public static boolean contentUpdated;
 	
+	private UpdateCourseCallTask updateCourseCallTask;
+	
 	private LearningObjectSectionsPagerAdapter mSectionsPagerAdapter;
 	
 	private User user;
@@ -36,6 +39,8 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 	private int learningObjectIndex;
 
 	private ViewPager mViewPager;
+	
+	private Toast toast;
 	
 	private Intent resultIntent;
 	
@@ -147,7 +152,7 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 		if (requestCode == CourseEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				LearningObjectActivity.getCourse().getLearningObjectList().set(this.learningObjectIndex, (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT));
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 				loadData();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				if (data.getExtras() != null) {
@@ -160,7 +165,7 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 			if (resultCode == Activity.RESULT_OK) {
 				Video videoReturned = (Video)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO);
 				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getVideoList().add(videoReturned);
-				fireUpdateCourseThread(); 
+				fireUpdateCourseTask(); 
 				loadData();
 			}  else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
@@ -169,7 +174,7 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 			if (resultCode == Activity.RESULT_OK) {
 				Audio audioReturned = (Audio)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO);
 				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getAudioList().add(audioReturned);
-				fireUpdateCourseThread(); 
+				fireUpdateCourseTask(); 
 				loadData();
 			}  else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
@@ -178,7 +183,7 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 			if (resultCode == Activity.RESULT_OK) {
 				Document documentReturned = (Document)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT);
 				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getDocumentList().add(documentReturned);
-				fireUpdateCourseThread(); 
+				fireUpdateCourseTask(); 
 				loadData();
 			}  else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
@@ -187,7 +192,7 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 			if (resultCode == Activity.RESULT_OK) {
 				TestQuestion testQuestionReturned = (TestQuestion)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION);
 				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getTestQuestionList().add(testQuestionReturned);
-				fireUpdateCourseThread(); 
+				fireUpdateCourseTask(); 
 				loadData();
 			}  else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
@@ -218,7 +223,7 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 	
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}
 		return null;
@@ -226,14 +231,27 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 	
 	@Override
 	public void returnServiceResponse(int serviceCode, boolean resultOk) {
-//		callBackHandler.sendEmptyMessage(0);	
-		//TODO implement webservice response treatment
+		switch (serviceCode) {
+		case UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE:
+			if (!resultOk) {
+				showToast(getResources().getString(R.string.error_unable_to_update_course));
+			}
+			this.updateCourseCallTask = null;
+		
+			break;
+			
+		default:
+				
+				break;
+	    }
 	}
 	
-	private void fireUpdateCourseThread() {
-		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(LearningObjectActivity.getCourse(), this);
-		updateCourseCall.setOnWebServiceCallDoneListener(this);
-		new Thread(updateCourseCall).start();
+	private void fireUpdateCourseTask() {
+		this.updateCourseCallTask = new UpdateCourseCallTask(LearningObjectActivity.getCourse());
+		this.updateCourseCallTask.setOnWebServiceCallDoneListener(this);
+		this.updateCourseCallTask.execute(getUrlWebService(UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE),
+				getResources().getString(R.string.namespace_webservice),
+				getResources().getString(R.string.update_course_webservice_operation));
 	}
 	
 	public int getLearningObjectIndex() {
@@ -245,6 +263,14 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 			this.resultIntent = new Intent();
 		}
 		return this.resultIntent;
+	}
+	
+	private void showToast(String msg) {
+		if (this.toast == null) {
+			this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
+		}
+		this.toast.setText(msg);
+		this.toast.show();
 	}
 	
 	public User getUser() {

@@ -8,15 +8,14 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.CourseSectionsPagerAdapter;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
-import ca.dal.cs.dalooc.android.webservice.HasAnsweredCorrectCallTask;
-import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.webservice.RemoveCourseCallTask;
-import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.task.RemoveCourseCallTask;
+import ca.dal.cs.dalooc.android.task.UpdateCourseCallTask;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
 import ca.dal.cs.dalooc.model.User;
@@ -35,9 +34,15 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 	
 	public static final int ACTION_CONFIRM_COURSE_REMOVE = 500;
 	
+	private RemoveCourseCallTask removeCourseCallTask;
+	
+	private UpdateCourseCallTask updateCourseCallTask;
+	
 	private CourseSectionsPagerAdapter mSectionsPagerAdapter;
 	
 	private ViewPager mViewPager;
+	
+	private Toast toast;
 	
 	private ConfirmDialog confirmDialog;
 	
@@ -48,14 +53,6 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 	public static boolean contentUpdated;
 	
 	private Intent resultIntent;
-//	private Toast toast;
-	
-//	@SuppressLint("HandlerLeak")
-//	private Handler callBackHandler = new Handler() {
-//		public void handleMessage(android.os.Message msg) {
-//			//TODO implement what to do when persisting is done
-//		}
-//	};
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -136,7 +133,7 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 				Bundle extras = data.getExtras();
 				if (extras != null) {
 					CourseActivity.setCourse((Course)extras.get(ARG_COURSE));
-					fireUpdateCourseThread();
+					fireUpdateCourseTask();
 					loadData();
 				}
 			} else if (resultCode == Activity.RESULT_CANCELED) {
@@ -152,7 +149,7 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 				if (extras != null) {
 					LearningObject learningObject = (LearningObject)extras.get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
 					CourseActivity.getCourse().getLearningObjectList().add(learningObject);
-					fireUpdateCourseThread();
+					fireUpdateCourseTask();
 					loadData();
 				}
 			} else if (resultCode == Activity.RESULT_CANCELED) {
@@ -161,16 +158,20 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 		} 
 	}
 
-	private void fireUpdateCourseThread() {
-		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(CourseActivity.getCourse(), this);
-		updateCourseCall.setOnWebServiceCallDoneListener(this);
-		new Thread(updateCourseCall).start();
+	private void fireUpdateCourseTask() {
+		this.updateCourseCallTask = new UpdateCourseCallTask(CourseActivity.getCourse());
+		this.updateCourseCallTask.setOnWebServiceCallDoneListener(this);
+		this.updateCourseCallTask.execute(getUrlWebService(UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE),
+				getResources().getString(R.string.namespace_webservice),
+				getResources().getString(R.string.update_course_webservice_operation));
 	}
 	
 	@Override
 	public String getUrlWebService(int serviceCode) {
 		if (serviceCode == RemoveCourseCallTask.REMOVE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.remove_course_webservice_operation); 
+		} else if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation); 
 		}
 		return null;
 	}
@@ -185,8 +186,20 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 				setResult(MainActivity.COURSE_ACTIVITY_CALL, intent);
 				finish();
 			} else {
-				//TODO warn user removing wasn't possible
+				showToast(getResources().getString(R.string.error_unable_to_remove_course));
 			}
+			
+			this.removeCourseCallTask = null;
+			
+			break;
+			
+		case UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE:
+			if (!resultOk) {
+				showToast(getResources().getString(R.string.error_unable_to_update_course));
+			}
+			
+			this.updateCourseCallTask = null;
+			
 			break;
 			
 		default:
@@ -202,9 +215,9 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 		case ACTION_CONFIRM_COURSE_REMOVE:
 			if (confirm) {
 				
-				RemoveCourseCallTask removeCourseCall = new RemoveCourseCallTask();
-				removeCourseCall.setOnWebServiceCallDoneListener(CourseActivity.this);
-				removeCourseCall.execute(getUrlWebService(RemoveCourseCallTask.REMOVE_COURSE_WEB_SERVICE),
+				this.removeCourseCallTask = new RemoveCourseCallTask();
+				this.removeCourseCallTask.setOnWebServiceCallDoneListener(CourseActivity.this);
+				this.removeCourseCallTask.execute(getUrlWebService(RemoveCourseCallTask.REMOVE_COURSE_WEB_SERVICE),
 						getResources().getString(R.string.namespace_webservice),
 						getResources().getString(R.string.remove_course_webservice_operation),
 						CourseActivity.course.getId()); 
@@ -251,6 +264,14 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 	
 	public User getUser() {
 		return this.user;
+	}
+	
+	private void showToast(String msg) {
+		if (this.toast == null) {
+			this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
+		}
+		this.toast.setText(msg);
+		this.toast.show();
 	}
 	
 	private boolean checkAndUpdateCourseChilds(Intent data) {

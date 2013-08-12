@@ -9,6 +9,7 @@ import java.util.Map;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.text.InputType;
@@ -24,12 +25,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
-import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.task.UpdateCourseCallTask;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -48,6 +49,8 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	private static final int LAYOUT_VIEW = 0;
 	private static final int NAME_VIEW = 1;
 	private static final int OBJECT_ITEM = 2;
+	
+	private UpdateCourseCallTask updateCourseCallTask;
 	
 	private ImageView ivAddPrerequisite;
 	private ImageView ivAddReference;
@@ -73,6 +76,8 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	private User user;
 	
 	private View lastClickedView;
+	
+	private Toast toast;
 	
 	private Intent resultIntent;
 
@@ -277,7 +282,7 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, returnedLearningObject);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, learningObjectIndex);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				if (data.getExtras() != null) {
 					CourseEditActivity.checkAndUpdateLearningObjectChilds(data, (LearningObject)CourseEditActivity.this.learningObjectsLayoutMapping.get(CourseEditActivity.this.lastClickedView)[OBJECT_ITEM]);
@@ -292,7 +297,7 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, learningObject);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, -1);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -301,9 +306,7 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
-			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
-		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}
 		return null;
@@ -311,8 +314,20 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	
 	@Override
 	public void returnServiceResponse(int serviceCode, boolean resultOk) {
-//		callBackHandler.sendEmptyMessage(0);	
-		//TODO implement webservice response treatment
+		switch (serviceCode) {
+		case UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE:
+			if (!resultOk) {
+				showToast(getResources().getString(R.string.error_unable_to_update_course));
+			}
+			
+			this.updateCourseCallTask = null;
+		
+			break;
+			
+		default:
+				
+				break;
+	    }
 	}
 	
 	private Intent getResultIntent() {
@@ -322,10 +337,12 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		return this.resultIntent;
 	}
 	
-	private void fireUpdateCourseThread() {
-		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnWebServiceCallDoneListener(this);
-		new Thread(updateCourseCall).start();
+	private void fireUpdateCourseTask() {
+		this.updateCourseCallTask = new UpdateCourseCallTask(this.course);
+		this.updateCourseCallTask.setOnWebServiceCallDoneListener(this);
+		this.updateCourseCallTask.execute(getUrlWebService(UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE),
+				getResources().getString(R.string.namespace_webservice),
+				getResources().getString(R.string.update_course_webservice_operation));
 	}
 	
 	private void showConfirmDialog() {
@@ -337,13 +354,13 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
         
         this.confirmDialog = new ConfirmDialog();
         this.confirmDialog.setArguments(args);
+        this.confirmDialog.setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Dialog);
         this.confirmDialog.setOnConfirmDialogResultListener(this);
         this.confirmDialog.show(fm, "fragment_edit_name");
     }
 
 	@Override
 	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
-//		Intent resultIntent = new Intent();
 		this.confirmDialog.dismiss();
 		
 		if (confirm) {
@@ -351,13 +368,20 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		} else {
 			finishWithoutSaving();
 		}
-//		finish();
 	}
 	
 	@Override
 	public void onBackPressed() {
 		showConfirmDialog();
-	}	
+	}
+	
+	private void showToast(String msg) {
+		if (this.toast == null) {
+			this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
+		}
+		this.toast.setText(msg);
+		this.toast.show();
+	}
 
 	protected View createPrerequisiteEntry(String prerequisite) {
 		RelativeLayout relativeLayout = new RelativeLayout(CourseEditActivity.this);
@@ -384,7 +408,10 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 				((RelativeLayout)viewToRemove).removeAllViews();
 				CourseEditActivity.this.llPrerequesites.removeViewInLayout(viewToRemove);
 				CourseEditActivity.this.prerequisitesLayoutMapping.remove(v);
-				CourseEditActivity.this.course.getSyllabus().getPrerequisites().remove(prerequisiteToRemove);
+				
+				if (CourseEditActivity.this.course.getSyllabus() != null) {
+					CourseEditActivity.this.course.getSyllabus().getPrerequisites().remove(prerequisiteToRemove);
+				}
 			}
 		});
 		
@@ -445,7 +472,9 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 				((RelativeLayout)viewToRemove).removeAllViews();
 				CourseEditActivity.this.llReferences.removeViewInLayout(viewToRemove);
 				CourseEditActivity.this.referencesLayoutMapping.remove(v);
-				CourseEditActivity.this.course.getSyllabus().getReferences().remove(referenceToRemove);
+				if (CourseEditActivity.this.course.getSyllabus() != null) {
+					CourseEditActivity.this.course.getSyllabus().getReferences().remove(referenceToRemove);
+				}
 			}
 		});
 		

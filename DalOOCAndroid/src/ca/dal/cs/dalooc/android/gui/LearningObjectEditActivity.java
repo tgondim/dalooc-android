@@ -7,6 +7,7 @@ import java.util.Map;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.view.Menu;
@@ -20,11 +21,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
-import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.task.UpdateCourseCallTask;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -47,6 +49,8 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	public static final int NEW_AUDIO_REQUEST_CODE = 700;
 	public static final int NEW_DOCUMENT_REQUEST_CODE = 800;
 	public static final int NEW_TEST_QUESTION_REQUEST_CODE = 900;
+	
+	private UpdateCourseCallTask updateCourseCallTask;
 	
 	private ImageView ivAddVideo;
 	
@@ -89,6 +93,8 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	private LinearLayout llTestQuestions;
 	
 	private View lastClickedView;
+	
+	private Toast toast;
 	
 	private Intent resultIntent;
 	
@@ -278,7 +284,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO, returnedVideo);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, videoIndex);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -297,7 +303,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO, returnedAudio);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, audioIndex);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -316,7 +322,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT, returnedDocument);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, documentIndex);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -335,7 +341,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION, returnedTestQuestion);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, testQuestionIndex);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -348,7 +354,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO, video);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, -1);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -361,7 +367,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO, audio);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, -1);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -374,7 +380,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT, document);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, -1);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -387,7 +393,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION, testQuestion);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, -1);
 				
-				fireUpdateCourseThread();
+				fireUpdateCourseTask();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -396,7 +402,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}
 		return null;
@@ -404,14 +410,27 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	
 	@Override
 	public void returnServiceResponse(int serviceCode, boolean resultOk) {
-//		callBackHandler.sendEmptyMessage(0);	
-		//TODO implement webservice response treatment
+		switch (serviceCode) {
+		case UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE:
+			if (!resultOk) {
+				showToast(getResources().getString(R.string.error_unable_to_update_course));
+			}
+			this.updateCourseCallTask = null;
+		
+			break;
+			
+		default:
+				
+				break;
+	    }
 	}
 	
-	private void fireUpdateCourseThread() {
-		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnWebServiceCallDoneListener(this);
-		new Thread(updateCourseCall).start();
+	private void fireUpdateCourseTask() {
+		this.updateCourseCallTask = new UpdateCourseCallTask(this.course);
+		this.updateCourseCallTask.setOnWebServiceCallDoneListener(this);
+		this.updateCourseCallTask.execute(getUrlWebService(UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE),
+				getResources().getString(R.string.namespace_webservice),
+				getResources().getString(R.string.update_course_webservice_operation));
 	}
 	
 	private Intent getResultIntent() {
@@ -428,10 +447,11 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
         args.putString(ConfirmDialog.ARG_TITLE, getResources().getString(R.string.dialog_title_learning_object));
         args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.confirm_changes));
         
-        confirmDialog = new ConfirmDialog();
-        confirmDialog.setArguments(args);
-        confirmDialog.setOnConfirmDialogResultListener(this);
-        confirmDialog.show(fm, "fragment_edit_name");
+        this.confirmDialog = new ConfirmDialog();
+        this.confirmDialog.setArguments(args);
+        this.confirmDialog.setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Dialog);
+        this.confirmDialog.setOnConfirmDialogResultListener(this);
+        this.confirmDialog.show(fm, "fragment_edit_name");
     }
 
 	@Override
@@ -447,10 +467,17 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	
 	@Override
 	public void onBackPressed() {
-//		fetchData();
 		showConfirmDialog();
 	}
 
+	private void showToast(String msg) {
+		if (this.toast == null) {
+			this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
+		}
+		this.toast.setText(msg);
+		this.toast.show();
+	}
+	
 	private void createVideoEntry(Video video) {
 		RelativeLayout relativeLayout = new RelativeLayout(LearningObjectEditActivity.this);
 		

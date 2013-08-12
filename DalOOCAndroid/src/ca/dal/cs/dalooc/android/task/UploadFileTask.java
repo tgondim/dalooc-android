@@ -1,4 +1,4 @@
-package ca.dal.cs.dalooc.android.webservice;
+package ca.dal.cs.dalooc.android.task;
 
 import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
@@ -17,8 +17,12 @@ import ca.dal.cs.dalooc.android.util.General;
 
 public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
 	
+	private final static String LOG_TAG = "UploadFileTask";
+	
 	public final static int FILE_UPLOADED_SUCCESSFULY = 1;
+	
 	public final static int FILE_NOT_UPLOADED = 2;
+	
 	public static final int UPLOAD_DONE = 3;
 	
 	private List<OnUploadFileTaskDoneListener> onUploadFileTaskDoneListeners = new ArrayList<OnUploadFileTaskDoneListener>();
@@ -95,12 +99,12 @@ public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
 			outputStream.close();
 		} catch (Exception ex) {
 			//Exception handling
-			Log.e("UploadFileTask.java", ex.getMessage());
+			Log.e(LOG_TAG, ex.getStackTrace().toString());
 			fireOnUploadFileTaskDoneEvent(FILE_NOT_UPLOADED);
 			return false;
 		}
 		if (serverResponseCode != 200) {
-			Log.e("UploadFileTask.java", serverResponseMessage);
+			Log.e(LOG_TAG, serverResponseMessage);
 			fireOnUploadFileTaskDoneEvent(FILE_NOT_UPLOADED);
 			return false;
 		}

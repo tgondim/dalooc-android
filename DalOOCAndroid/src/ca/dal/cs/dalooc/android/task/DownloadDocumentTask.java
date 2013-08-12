@@ -1,4 +1,4 @@
-package ca.dal.cs.dalooc.android.util;
+package ca.dal.cs.dalooc.android.task;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,7 +13,7 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
-import ca.dal.cs.dalooc.android.util.listener.OnDownloadDocumentDoneListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnDownloadDocumentDoneListener;
 
 public class DownloadDocumentTask extends AsyncTask<String, Void, File> {
 	

@@ -21,6 +21,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
@@ -40,12 +41,11 @@ import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
-import ca.dal.cs.dalooc.android.util.DownloadImageTask;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.task.DownloadImageTask;
+import ca.dal.cs.dalooc.android.task.UpdateCourseCallTask;
+import ca.dal.cs.dalooc.android.task.UploadFileTask;
 import ca.dal.cs.dalooc.android.util.General;
-import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservice.UploadFileTask;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
@@ -55,6 +55,10 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	public static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 200;
 	
 	public static final int GET_VIDEO_FILE_ACTIVITY_REQUEST_CODE = 400;
+	
+	private UpdateCourseCallTask updateCourseCallTask;
+	
+	private UploadFileTask uploadFileTask;
 	
 	private Video video;
 	
@@ -244,7 +248,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 					enqueue = dm.enqueue(request);	
 					showToast(getResources().getString(R.string.download_file_in_progress));
 				} else {
-					showToast(getResources().getString(R.string.no_file_to_open));
+					showToast(getResources().getString(R.string.no_file_to_download));
 				}
 			}
 		});
@@ -335,16 +339,7 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	        if (resultCode == RESULT_OK) {
 	        	this.newFileName = data.getDataString().replace("file://", "");
 
-	        	FragmentManager fm = getSupportFragmentManager();
-	            
-	            Bundle args = new Bundle();
-	            args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.video_overwrite_confirm));
-	            args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
-	            
-	            this.confirmDialog = new ConfirmDialog();
-	            this.confirmDialog.setArguments(args);
-	            this.confirmDialog.setOnConfirmDialogResultListener(this);
-	            this.confirmDialog.show(fm, "fragment_edit_name");
+	        	showConfirmDialog(getResources().getString(R.string.audio_overwrite_confirm), 0);
 	        } else if (resultCode == RESULT_CANCELED) {
 	            // User cancelled the video capture
 	        } else {
@@ -353,6 +348,21 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	        }
 	    }
 	}
+	
+	private void showConfirmDialog(String message, int returnCode) {
+        FragmentManager fm = getSupportFragmentManager();
+        
+        Bundle args = new Bundle();
+        args.putString(ConfirmDialog.ARG_TITLE, getResources().getString(R.string.dialog_title_audio));
+        args.putString(ConfirmDialog.ARG_MESSAGE, message);
+        args.putInt(ConfirmDialog.ARG_RETURN_CODE, returnCode);
+        
+        this.confirmDialog = new ConfirmDialog();
+        this.confirmDialog.setArguments(args);
+        this.confirmDialog.setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Light_Dialog);
+        this.confirmDialog.setOnConfirmDialogResultListener(this);
+        this.confirmDialog.show(fm, "fragment_edit_name");
+    }
 	
 	private void showToast(String msg) {
 		if (this.toast == null) {
@@ -403,9 +413,9 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		UploadFileTask uploadFileTask = new UploadFileTask();
-		uploadFileTask.setOnUploadFileTaskDoneListener(this);
-		uploadFileTask.execute(this.newFileName, 
+		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
+		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.videos_folder),
 				this.video.getId(),
 				getResources().getString(R.string.url_upload_file_servlet));
@@ -419,26 +429,27 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			this.newFileName = General.getIdFileName(this.newFileName, this.video.getId());
 			this.video.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
-			fireUpdateCourseThread();
+			fireUpdateCourseTask();
 			this.contentUpdated = true;
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
 		this.newFileName = "";
+		this.uploadFileTask = null;
 		callBackHandler.sendMessage(msg);
 	}
 	
-	private void fireUpdateCourseThread() {
-		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnWebServiceCallDoneListener(this);
-		new Thread(updateCourseCall).start();
+	private void fireUpdateCourseTask() {
+		this.updateCourseCallTask = new UpdateCourseCallTask(this.course);
+		this.updateCourseCallTask.setOnWebServiceCallDoneListener(this);
+		this.updateCourseCallTask.execute(getUrlWebService(UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE),
+				getResources().getString(R.string.namespace_webservice),
+				getResources().getString(R.string.update_course_webservice_operation));
 	}
 
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
-			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
-		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}
 		return null;
@@ -446,7 +457,18 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 	
 	@Override
 	public void returnServiceResponse(int serviceCode, boolean resultOk) {
-//		callBackHandler.sendEmptyMessage(0);		
-		//TODO implement webservice response treatment
+		switch (serviceCode) {
+		case UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE:
+			if (!resultOk) {
+				showToast(getResources().getString(R.string.error_unable_to_update_course));
+			}
+			this.updateCourseCallTask = null;
+			
+			break;
+			
+		default:
+				
+				break;
+	    }
 	}
 }

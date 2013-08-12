@@ -14,11 +14,12 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.MyRadioButton;
-import ca.dal.cs.dalooc.android.webservice.HasAnsweredCorrectCallTask;
-import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.webservice.SaveTestAnswerCallRunnable;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.task.HasAnsweredCorrectCallTask;
+import ca.dal.cs.dalooc.android.task.SaveTestAnswerCallTask;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
@@ -33,6 +34,10 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 	
 	public static final String CHOOSE_CORRECT_ARG = "choose_correct";
 	public static final String TEST_ANSWER_ARG = "test_answer";
+	
+	private HasAnsweredCorrectCallTask hasAnsweredCorrectCallTask;
+	
+	private SaveTestAnswerCallTask saveTestAnswerCallTask;
 	
 	private User user;
 	
@@ -53,6 +58,8 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 	private List<MyRadioButton> radioButtonList;
 	
 	private Button btnSubmit;
+	
+	private Toast toast;
 	
 	private ImageView ivTestQuestionDetailThumbnail;
 
@@ -106,9 +113,11 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 							}
 							TestQuestionDetailActivity.this.btnSubmit.setEnabled(false);
 
-							SaveTestAnswerCallRunnable saveTestQuestionCall = new SaveTestAnswerCallRunnable(TestQuestionDetailActivity.this.testAnswer, TestQuestionDetailActivity.this);
-							saveTestQuestionCall.setOnWebServiceCallDoneListener(TestQuestionDetailActivity.this);
-							new Thread(saveTestQuestionCall).start();
+							TestQuestionDetailActivity.this.saveTestAnswerCallTask = new SaveTestAnswerCallTask(TestQuestionDetailActivity.this.testAnswer);
+							TestQuestionDetailActivity.this.saveTestAnswerCallTask.setOnWebServiceCallDoneListener(TestQuestionDetailActivity.this);
+							TestQuestionDetailActivity.this.saveTestAnswerCallTask.execute(getUrlWebService(SaveTestAnswerCallTask.SAVE_TEST_ANSWER_WEB_SERVICE),
+									getResources().getString(R.string.namespace_webservice),
+									getResources().getString(R.string.save_test_answer_webservice_operation));
 						}
 					}
 				}				
@@ -186,9 +195,9 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 	}
 	
 	private void checkIfHasAnsweredCorrect() {
-		HasAnsweredCorrectCallTask hasAnsweredCorrectCall = new HasAnsweredCorrectCallTask();
-		hasAnsweredCorrectCall.setOnWebServiceCallDoneListener(TestQuestionDetailActivity.this);
-		hasAnsweredCorrectCall.execute(getUrlWebService(HasAnsweredCorrectCallTask.HAS_ANSWERED_CORRECT_WEB_SERVICE),
+		this.hasAnsweredCorrectCallTask = new HasAnsweredCorrectCallTask();
+		this.hasAnsweredCorrectCallTask.setOnWebServiceCallDoneListener(TestQuestionDetailActivity.this);
+		this.hasAnsweredCorrectCallTask.execute(getUrlWebService(HasAnsweredCorrectCallTask.HAS_ANSWERED_CORRECT_WEB_SERVICE),
 				getResources().getString(R.string.namespace_webservice),
 				getResources().getString(R.string.has_answered_correct_webservice_operation),
 				this.user.getId(), 
@@ -218,7 +227,7 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == SaveTestAnswerCallRunnable.SAVE_TEST_ANSWER_WEB_SERVICE) {
+		if (serviceCode == SaveTestAnswerCallTask.SAVE_TEST_ANSWER_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.test_answer_repository) + "/" + getResources().getString(R.string.save_test_answer_webservice_operation);
 		} else if (serviceCode == HasAnsweredCorrectCallTask.HAS_ANSWERED_CORRECT_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.test_answer_repository) + "/" + getResources().getString(R.string.has_answered_correct_webservice_operation);
@@ -238,8 +247,12 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 			} else {
 				//do nothing
 			}
-		} else if (serviceCode == SaveTestAnswerCallRunnable.SAVE_TEST_ANSWER_WEB_SERVICE) {
-			//TODO implement webservice response treatment
+			this.hasAnsweredCorrectCallTask = null;
+		} else if (serviceCode == SaveTestAnswerCallTask.SAVE_TEST_ANSWER_WEB_SERVICE) {
+			if (!resultOk) {
+				showToast(getResources().getString(R.string.error_unable_to_save_test_answer));
+			}
+			TestQuestionDetailActivity.this.saveTestAnswerCallTask = null;
 		}
 	}
 	
@@ -277,5 +290,11 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 		}
 		
 		return null;
+	}
+	
+	private void showToast(String msg) {
+		this.toast.setText(msg);
+		this.toast.cancel();
+		this.toast.show();
 	}
 }

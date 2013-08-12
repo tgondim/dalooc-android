@@ -1,4 +1,4 @@
-package ca.dal.cs.dalooc.android.webservice;
+package ca.dal.cs.dalooc.android.gui.listener;
 
 public interface OnWebServiceCallDoneListener {
 

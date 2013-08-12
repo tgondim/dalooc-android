@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
@@ -31,9 +32,9 @@ import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
-import ca.dal.cs.dalooc.android.util.DownloadImageTask;
+import ca.dal.cs.dalooc.android.task.DownloadImageTask;
+import ca.dal.cs.dalooc.android.task.UploadFileTask;
 import ca.dal.cs.dalooc.android.util.General;
-import ca.dal.cs.dalooc.android.webservice.UploadFileTask;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
@@ -44,6 +45,8 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	
 	public static final int ACTION_CONFIRM_VIDEO_UPLOAD = 300;
 
+	private UploadFileTask uploadFileTask; 
+	
 	private Video video;
 	
 	private User user;
@@ -300,8 +303,6 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	
 	@Override
 	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
-		Intent resultIntent = new Intent();
-		
 		switch (returnCode) {
 		case ACTION_CONFIRM_VIDEO_CHANGES:
 			this.confirmDialog.dismiss();
@@ -310,7 +311,6 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 			} else {
 				finishWithoutSaving();
 			}
-//			finish();
 
 			break;
 			
@@ -320,6 +320,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	     	} else {
 	     		this.newFileName = "";
 	     	}
+			
 			break;
 		}
 	}
@@ -337,6 +338,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
 		this.newFileName = "";
+		this.uploadFileTask = null;
 		callBackHandler.sendMessage(msg);
 	}
 	
@@ -352,9 +354,9 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		UploadFileTask uploadFileTask = new UploadFileTask();
-		uploadFileTask.setOnUploadFileTaskDoneListener(this);
-		uploadFileTask.execute(this.newFileName, 
+		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
+		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.videos_folder),
 				this.video.getId(),
 				getResources().getString(R.string.url_upload_file_servlet));
@@ -382,9 +384,10 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
         args.putString(ConfirmDialog.ARG_MESSAGE, message);
         args.putInt(ConfirmDialog.ARG_RETURN_CODE, returnCode);
         
-        confirmDialog = new ConfirmDialog();
-        confirmDialog.setArguments(args);
-        confirmDialog.setOnConfirmDialogResultListener(this);
-        confirmDialog.show(fm, "fragment_edit_name");
+        this.confirmDialog = new ConfirmDialog();
+        this.confirmDialog.setArguments(args);
+        this.confirmDialog.setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Dialog);
+        this.confirmDialog.setOnConfirmDialogResultListener(this);
+        this.confirmDialog.show(fm, "fragment_edit_name");
     }
 }

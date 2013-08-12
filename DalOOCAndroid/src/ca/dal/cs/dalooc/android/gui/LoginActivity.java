@@ -1,5 +1,7 @@
 package ca.dal.cs.dalooc.android.gui;
 
+import java.util.Locale;
+
 import org.ksoap2.SoapEnvelope;
 import org.ksoap2.SoapFault;
 import org.ksoap2.serialization.SoapObject;
@@ -28,6 +30,7 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
@@ -44,6 +47,8 @@ import com.mongodb.util.JSON;
 public class LoginActivity extends FragmentActivity implements OnConfirmDialogReturnListener {
 	
 	public static final String ARG_USER =  "user";
+	
+	private Toast toast;
 	
 	/**
 	 * Keep track of the login task to ensure we can cancel it if requested.
@@ -71,6 +76,27 @@ public class LoginActivity extends FragmentActivity implements OnConfirmDialogRe
 				resetFieldErrors();
 				showProgress(false);
 				getConfirmDialog().show(getSupportFragmentManager(), "fragment_edit_name");
+
+				break;
+			
+			case UserLoginTask.SERVER_NOT_RESPONDING:
+				resetFieldErrors();
+				showProgress(false);
+				showToast((String)msg.obj);
+				
+				break;
+
+			case UserLoginTask.AUTO_LOGIN_FAILED:
+				resetFieldErrors();
+				showProgress(false);
+
+				if (msg.obj != null) {
+					showToast(getResources().getString(R.string.error_unable_to_process_auto_login_for) + " " + (String)msg.obj);
+				} else {
+					SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+					pref.edit().putBoolean("pref_sign_in_automatically", false).commit();
+				}
+				
 				break;
 			}
 		}
@@ -155,7 +181,7 @@ public class LoginActivity extends FragmentActivity implements OnConfirmDialogRe
 		resetFieldErrors();
 
 		// Store values at the time of the login attempt.
-		mEmail = mEmailView.getText().toString();
+		mEmail = mEmailView.getText().toString().toLowerCase(Locale.getDefault());
 		mPassword = mPasswordView.getText().toString();
 
 		boolean cancel = false;
@@ -265,18 +291,34 @@ public class LoginActivity extends FragmentActivity implements OnConfirmDialogRe
 			startActivity(createUserIntent);
 		}
 	}
+	
+	private void showToast(String msg) {
+		if (this.toast == null) {
+			this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
+		}
+		this.toast.setText(msg);
+		this.toast.show();
+	}
 
 	/**
 	 * Represents an asynchronous login/registration task used to authenticate
 	 * the user.
 	 */
-	public class UserLoginTask extends AsyncTask<String, Void, User> {
+	public class UserLoginTask extends AsyncTask<String, Void, Message> {
+		
+		public static final String LOG_TAG = "UserLoginTask";
 		
 		public static final String AUTOMATICALLY_LOGIN_USER = "get_user";
 
 		public static final String VALIDATE_USER = "validate_user";
 		
 		public static final int USER_NOT_REGISTERED = 1;
+		
+		public static final int USER_FOUND = 2;
+		
+		public static final int SERVER_NOT_RESPONDING = 3;
+
+		public static final int AUTO_LOGIN_FAILED = 4;
 		
 		private User user;
 		
@@ -289,14 +331,13 @@ public class LoginActivity extends FragmentActivity implements OnConfirmDialogRe
 		private String requestType;
 		
 		@Override
-		protected User doInBackground(String... params) {
+		protected Message doInBackground(String... params) {
 			
 			this.requestType = params[0];
 			
 			SoapObject soap = null;
 
-			// soap.addProperty("chave",
-			// ((Activity)this.callBack).getResources().getString(R.string.chave_dalooc_webservice));
+			// soap.addProperty("chave", ((Activity)this.callBack).getResources().getString(R.string.chave_dalooc_webservice));
 
 			if (this.requestType.equals(VALIDATE_USER)) {
 				this.email = params[1];
@@ -316,10 +357,11 @@ public class LoginActivity extends FragmentActivity implements OnConfirmDialogRe
 
 			envelope.setOutputSoapObject(soap);
 			String urlWebService = getUrlWebService(this.requestType);
-			Log.d("UserLoginTask", "Calling DalOOCWebServices.validateUser at: " + urlWebService);
+			Log.d(LOG_TAG, "Calling DalOOCWebServices.validateUser at: " + urlWebService);
 
 			HttpTransportSE httpTransport = new HttpTransportSE(urlWebService);
 			this.user = null;
+			Message msg = new Message();
 
 			try {
 				httpTransport.call("", envelope);
@@ -330,59 +372,96 @@ public class LoginActivity extends FragmentActivity implements OnConfirmDialogRe
 						SoapPrimitive sp = (SoapPrimitive)results.getProperty(0);
 						if (!sp.toString().equals("{}")) {
 							this.user = Parser.getUserObject((BasicDBObject)JSON.parse(sp.toString()));
+							msg.what = USER_FOUND;
+						} else {
+							if (this.requestType.equals(VALIDATE_USER)) {
+								msg.what = USER_NOT_REGISTERED;
+							} else if (this.requestType.equals(AUTOMATICALLY_LOGIN_USER)) {
+								msg.what = AUTO_LOGIN_FAILED;
+							}
 						}
 					}
 				} else if (envelope.bodyIn instanceof SoapFault) {
 					SoapFault results = (SoapFault) envelope.bodyIn;
-					Log.e("UserLoginTask", results.getLocalizedMessage());
-					//TODO deal when validation webservice is not available
+					Log.e(LOG_TAG, results.toString());
+					msg.what = SERVER_NOT_RESPONDING;
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				Log.e(LOG_TAG, e.getStackTrace().toString());
+				msg.what = SERVER_NOT_RESPONDING;
 			}
 
-			return this.user;
+			msg.obj = this.user;
+			return msg;
 		}
 
 		@Override
-		protected void onPostExecute(final User user) {
+		protected void onPostExecute(final Message msg) {
 			mAuthTask = null;
+
+			User user = (User)msg.obj;
+			Message callbackMsg = new Message();
 			
 			if (this.requestType.equals(VALIDATE_USER)) {
-				boolean success = false;
+				callbackMsg.what = msg.what;
 				
-				if (user != null) {
-					if (String.valueOf(user.getPassword()).equals(this.password)) {
-						success = true;
-					}
-				} else {
-					Message msg = new Message();
-					msg.what = UserLoginTask.USER_NOT_REGISTERED;
-					msg.obj = this.email;
+				switch (msg.what) {
+				case USER_NOT_REGISTERED :
+					callbackMsg.obj = this.email;
 					callBackHandler.sendMessage(msg);
-					return;
-				}
-				
-				showProgress(false);
-	
-				if (success) {
-					this.user = user;
-					if (this.user.isEmailValid()) {
-						callMainActivity();
-					} else {
-						LoginActivity.this.mEmailView.setError(getString(R.string.error_email_not_validated));
-						LoginActivity.this.mEmailView.requestFocus();
-					}
-				} else {
-					mPasswordView.setError(getString(R.string.error_incorrect_password));
-					mPasswordView.requestFocus();
-				}
-			} else if (this.requestType.equals(AUTOMATICALLY_LOGIN_USER)) {
-				if (user != null) {
-					this.user = user;
-					callMainActivity();
-				} else {
 					showProgress(false);
+
+					break;
+				case SERVER_NOT_RESPONDING:
+					msg.obj = getResources().getString(R.string.error_unable_to_process_login_request_course);
+					callBackHandler.sendMessage(msg);
+					showProgress(false);
+					
+					break;
+					
+				case USER_FOUND:
+					if (user != null) {
+						if (String.valueOf(user.getPassword()).equals(this.password)) {
+							this.user = user;
+							if (this.user.isEmailValid()) {
+								callMainActivity();
+							} else {
+								LoginActivity.this.mEmailView.setError(getString(R.string.error_email_not_validated));
+								LoginActivity.this.mEmailView.requestFocus();
+							}
+						} else {
+							mPasswordView.setError(getString(R.string.error_incorrect_password));
+							mPasswordView.requestFocus();
+						}
+					}
+					showProgress(false);
+					
+					break;
+				}
+	
+			} else if (this.requestType.equals(AUTOMATICALLY_LOGIN_USER)) {
+				switch (msg.what) {
+				case USER_FOUND:
+					if (user != null) {
+						this.user = user;
+						callMainActivity();
+					}
+					
+					break;
+					
+				case AUTO_LOGIN_FAILED:
+					callbackMsg.obj = this.email;
+					callBackHandler.sendMessage(msg);
+					showProgress(false);
+					
+					break;
+
+				case SERVER_NOT_RESPONDING:
+					msg.obj = (getResources().getString(R.string.error_unable_to_process_login_request_course));
+					callBackHandler.sendMessage(msg);
+					showProgress(false);
+					
+					break;
 				}
 			}
 		}

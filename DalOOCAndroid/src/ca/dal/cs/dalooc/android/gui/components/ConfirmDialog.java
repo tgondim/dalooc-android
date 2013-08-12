@@ -31,8 +31,8 @@ public class ConfirmDialog extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.dialog_learning_object, container);
- 
+        View view = inflater.inflate(R.layout.dialog_confirm, container);
+        
         this.title = getArguments().getString(ARG_TITLE);
 		this.message = getArguments().getString(ARG_MESSAGE);
 		this.returnCode = getArguments().getInt(ARG_RETURN_CODE);

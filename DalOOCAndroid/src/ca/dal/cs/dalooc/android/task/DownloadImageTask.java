@@ -1,4 +1,4 @@
-package ca.dal.cs.dalooc.android.util;
+package ca.dal.cs.dalooc.android.task;
 
 import java.io.InputStream;
 

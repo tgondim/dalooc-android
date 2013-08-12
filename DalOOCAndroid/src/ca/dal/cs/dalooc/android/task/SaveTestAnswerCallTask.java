@@ -1,4 +1,4 @@
-package ca.dal.cs.dalooc.android.webservice;
+package ca.dal.cs.dalooc.android.task;
 
 import org.ksoap2.SoapEnvelope;
 import org.ksoap2.serialization.SoapObject;
@@ -8,31 +8,40 @@ import org.ksoap2.transport.HttpTransportSE;
 
 import android.os.AsyncTask;
 import android.util.Log;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.model.TestAnswer;
+import ca.dal.cs.dalooc.webservice.util.Parser;
 
-public class RemoveCourseCallTask extends AsyncTask<String, Void, Boolean> {
+public class SaveTestAnswerCallTask extends AsyncTask<String, Void, Boolean> {
 	
-	public static final int REMOVE_COURSE_WEB_SERVICE = 400;
+	private static final String LOG_TAG = "SaveTestAnswerCallTask";
+	
+	public static final int SAVE_TEST_ANSWER_WEB_SERVICE = 596;
 	
 	private OnWebServiceCallDoneListener onWebServiceCallDoneListener;
+
+	private TestAnswer testAswer;
 	
-	private static final String LOG_TAG = "RemoveCourseCallTask";
+	public SaveTestAnswerCallTask(TestAnswer testAswer) {
+		this.testAswer = testAswer;
+	}
 	
     protected Boolean doInBackground(String... urls) {
     	String webServiceUrl = urls[0];
         String webServiceNameSpace = urls[1];
         String webServiceOperation = urls[2];
-        String courseId = urls[3];
 
         SoapObject soap = new SoapObject(webServiceNameSpace, webServiceOperation);
 
 		//soap.addProperty("chave", ((Activity)this.callBack).getResources().getString(R.string.chave_dalooc_webservice));
 		
-		soap.addProperty("courseId", courseId);
+        String testAnswerString = Parser.getTestAnswerDBObject(this.testAswer).toString();
+		soap.addProperty("testAnswerString", testAnswerString);
 		
 		SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
 		
 		envelope.setOutputSoapObject(soap);
-		Log.d(LOG_TAG, "Calling DalOOCServices/CourseRepository/removeCourse");
+		Log.d(LOG_TAG, "Calling DalOOCServices/TestAnswerRepository/saveTestAnswer");
 		
 		HttpTransportSE httpTransport = new HttpTransportSE(webServiceUrl);
 		
@@ -46,7 +55,7 @@ public class RemoveCourseCallTask extends AsyncTask<String, Void, Boolean> {
 				}
 			} 
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e(LOG_TAG, e.getStackTrace().toString());
 		}
         
         return false;
@@ -63,7 +72,7 @@ public class RemoveCourseCallTask extends AsyncTask<String, Void, Boolean> {
     
     private void fireOnWebServiceCallDoneEvent(boolean resultOk) {
 		if (this.onWebServiceCallDoneListener != null) {
-			this.onWebServiceCallDoneListener.returnServiceResponse(REMOVE_COURSE_WEB_SERVICE, resultOk);
+			this.onWebServiceCallDoneListener.returnServiceResponse(SAVE_TEST_ANSWER_WEB_SERVICE, resultOk);
 		}
 	}
 }

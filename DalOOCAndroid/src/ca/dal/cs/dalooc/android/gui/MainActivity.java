@@ -14,6 +14,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,8 +29,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.CourseAdapter;
-import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.task.SaveCourseCallTask;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.webservice.util.Parser;
@@ -44,9 +45,12 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 
 	public static final String ARG_REFRESH_COURSE_LIST = "arg_refresh_course_list";
 	
+	private SaveCourseCallTask saveCourseCallTask;
+	
 	private ListView listViewCourse;
 	
 	private boolean getAllCoursesWebServiceResponseOk;
+	
 	private boolean inicioConsulta;
 	
 	private User user;
@@ -62,21 +66,25 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
-			if (MainActivity.this.getAllCoursesWebServiceResponseOk) {				
-				loadCourseList(MainActivity.this.getAllCoursesWebServiceResponseOk);
-				MainActivity.this.getAllCoursesWebServiceResponseOk = false;
-			}
-			
-			if ((MainActivity.this.courseAdapter == null) || (MainActivity.this.courseAdapter.getCount() == 0)){
-				
-				LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-				if (MainActivity.this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-					lp.weight = 1.3f;						
-				} else {
-					lp.weight = 4.3f;			
+			if (msg.what == GetAllCoursesCall.GET_ALL_COURSES_WEB_SERVICE) {
+				if (MainActivity.this.getAllCoursesWebServiceResponseOk) {				
+					loadCourseList(MainActivity.this.getAllCoursesWebServiceResponseOk);
+					MainActivity.this.getAllCoursesWebServiceResponseOk = false;
 				}
 				
-				MainActivity.this.inicioConsulta = true;
+				if ((MainActivity.this.courseAdapter == null) || (MainActivity.this.courseAdapter.getCount() == 0)){
+					
+					LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+					if (MainActivity.this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+						lp.weight = 1.3f;						
+					} else {
+						lp.weight = 4.3f;			
+					}
+					
+					MainActivity.this.inicioConsulta = true;
+				}
+			} else if (msg.what == SaveCourseCallTask.SAVE_COURSE_WEB_SERVICE) {
+				MainActivity.this.courseAdapter.notifyDataSetChanged();
 			}
 		}
 	};
@@ -109,7 +117,7 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 	public String getUrlWebService(int serviceCode) {
 		if (serviceCode == GetAllCoursesCall.GET_ALL_COURSES_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.get_all_courses_webservice_operation); 
-		} else if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
+		} else if (serviceCode == SaveCourseCallTask.SAVE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
 		}
 		return null;
@@ -215,7 +223,7 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 				Course course = (Course)data.getExtras().get(CourseActivity.ARG_COURSE);
 				this.courseAdapter.getCourseList().add(course);
 				this.courseAdapter.notifyDataSetChanged();
-				//TODO implement here a web service call to update the course
+				fireSaveCourseTask(course);
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				//do nothing
 			}
@@ -227,9 +235,11 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 					if (returnCourse != null) {
 						this.courseAdapter.getCourseList().set(this.lastPositionClicked, returnCourse);
 					}
-					boolean refreshCourseList = (Boolean)extras.get(ARG_REFRESH_COURSE_LIST);
-					if (refreshCourseList) {
-						refreshCourseList();
+					Object refreshCourseList = extras.get(ARG_REFRESH_COURSE_LIST);
+					if (refreshCourseList != null) {
+						if ((Boolean)refreshCourseList) {
+							refreshCourseList();
+						}
 					}
 				}
 			}
@@ -238,7 +248,26 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 	
 	@Override
 	public void returnServiceResponse(int serviceCode, boolean resultOk) {
-		callBackHandler.sendEmptyMessage(0);
+		Message msg = new Message();
+		msg.what = serviceCode;
+		
+		if (serviceCode == SaveCourseCallTask.SAVE_COURSE_WEB_SERVICE) {
+			if (!resultOk) {
+				showToast(getResources().getString(R.string.error_unable_to_save_course));
+			}
+			this.saveCourseCallTask = null;
+	    } else if (serviceCode == GetAllCoursesCall.GET_ALL_COURSES_WEB_SERVICE) {
+	    	//do nothing
+		}
+		callBackHandler.sendMessage(msg);
+	}
+	
+	private void fireSaveCourseTask(Course course) {
+		this.saveCourseCallTask = new SaveCourseCallTask(course);
+		this.saveCourseCallTask.setOnWebServiceCallDoneListener(this);
+		this.saveCourseCallTask.execute(getUrlWebService(SaveCourseCallTask.SAVE_COURSE_WEB_SERVICE),
+				getResources().getString(R.string.namespace_webservice),
+				getResources().getString(R.string.save_course_webservice_operation));
 	}
 	
 	private void showToast(String msg) {

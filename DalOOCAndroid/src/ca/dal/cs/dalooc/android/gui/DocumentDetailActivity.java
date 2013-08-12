@@ -20,7 +20,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.view.MotionEvent;
@@ -36,14 +38,13 @@ import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnDownloadDocumentDoneListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
-import ca.dal.cs.dalooc.android.util.DownloadDocumentTask;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.task.DownloadDocumentTask;
+import ca.dal.cs.dalooc.android.task.UpdateCourseCallTask;
+import ca.dal.cs.dalooc.android.task.UploadFileTask;
 import ca.dal.cs.dalooc.android.util.General;
-import ca.dal.cs.dalooc.android.util.listener.OnDownloadDocumentDoneListener;
-import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservice.UploadFileTask;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.Document;
 import ca.dal.cs.dalooc.model.User;
@@ -52,6 +53,12 @@ import ca.dal.cs.dalooc.model.User;
 public class DocumentDetailActivity extends FragmentActivity implements OnDownloadDocumentDoneListener, OnConfirmDialogReturnListener, OnUploadFileTaskDoneListener, OnWebServiceCallDoneListener {
 	 
 	public static final int GET_DOCUMENT_FILE_ACTIVITY_REQUEST_CODE = 300;
+	
+	private DownloadDocumentTask downloadDocumentTask;
+	
+	private UploadFileTask uploadFileTask;
+	
+	private UpdateCourseCallTask updateCourseCallTask;
 	
 	private Document document;
 	
@@ -139,9 +146,9 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 			public void onClick(View v) {
 				if (!TextUtils.isEmpty(DocumentDetailActivity.this.document.getContentFileName())) {
 					showProgress(true, getResources().getString(R.string.download_preview_in_progress));
-					DownloadDocumentTask downloadDocTask = new DownloadDocumentTask();
-					downloadDocTask.setOnDownloadDocumentDoneListener(DocumentDetailActivity.this);
-					downloadDocTask.execute(DocumentDetailActivity.this.getResources().getString(R.string.host_file_server) 
+					DocumentDetailActivity.this.downloadDocumentTask = new DownloadDocumentTask();
+					DocumentDetailActivity.this.downloadDocumentTask.setOnDownloadDocumentDoneListener(DocumentDetailActivity.this);
+					DocumentDetailActivity.this.downloadDocumentTask.execute(DocumentDetailActivity.this.getResources().getString(R.string.host_file_server) 
 							+ DocumentDetailActivity.this.getResources().getString(R.string.documents_folder)
 							+ "/" + DocumentDetailActivity.this.document.getContentFileName());
 				} else {
@@ -192,14 +199,18 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 			
 			@Override
 			public void onClick(View v) {
-				File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + DocumentDetailActivity.this.document.getContentFileName());
-				DocumentDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-				Request request = new Request(Uri.parse(DocumentDetailActivity.this.getResources().getString(R.string.host_file_server)
-						+ DocumentDetailActivity.this.getResources().getString(R.string.documents_folder)
-						+ "/" + DocumentDetailActivity.this.document.getContentFileName()));
-				request.setDestinationUri(Uri.fromFile(destDocFile));
-				enqueue = dm.enqueue(request);		
-				showToast(getResources().getString(R.string.download_file_in_progress));
+				if (!TextUtils.isEmpty(DocumentDetailActivity.this.document.getContentFileName())) {
+					File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + DocumentDetailActivity.this.document.getContentFileName());
+					DocumentDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+					Request request = new Request(Uri.parse(DocumentDetailActivity.this.getResources().getString(R.string.host_file_server)
+							+ DocumentDetailActivity.this.getResources().getString(R.string.documents_folder)
+							+ "/" + DocumentDetailActivity.this.document.getContentFileName()));
+					request.setDestinationUri(Uri.fromFile(destDocFile));
+					enqueue = dm.enqueue(request);		
+					showToast(getResources().getString(R.string.download_file_in_progress));
+				} else {
+					showToast(getResources().getString(R.string.no_file_to_download));
+				}
 			}
 		});
 
@@ -276,32 +287,32 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	        if (resultCode == RESULT_OK) {
 	        	this.newFileName = data.getDataString().replace("file://", "");
 	            
-	            getConfirmDialog().show(getSupportFragmentManager(), "fragment_edit_name");
+	            showConfirmDialog(getResources().getString(R.string.document_overwrite_confirm), 0);
 	        } else if (resultCode == RESULT_CANCELED) {
-	            // User cancelled the video capture
-	        } else {
-	            // Video capture failed, advise user
-	        	//TODO
-	        }
+	            // User cancelled the document upload
+	        } 
 	    }
 	}
 
-	private ConfirmDialog getConfirmDialog() {
-		if (this.confirmDialog == null) {	
-			Bundle args = new Bundle();
-			args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.document_overwrite_confirm));
-			args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
-			
-			this.confirmDialog = new ConfirmDialog();
-			this.confirmDialog.setArguments(args);
-			this.confirmDialog.setOnConfirmDialogResultListener(this);
-		}
-		return this.confirmDialog;
-	}
-
+	private void showConfirmDialog(String message, int returnCode) {
+        FragmentManager fm = getSupportFragmentManager();
+        
+        Bundle args = new Bundle();
+        args.putString(ConfirmDialog.ARG_TITLE, getResources().getString(R.string.dialog_title_audio));
+        args.putString(ConfirmDialog.ARG_MESSAGE, message);
+        args.putInt(ConfirmDialog.ARG_RETURN_CODE, returnCode);
+        
+        this.confirmDialog = new ConfirmDialog();
+        this.confirmDialog.setArguments(args);
+        this.confirmDialog.setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Light_Dialog);
+        this.confirmDialog.setOnConfirmDialogResultListener(this);
+        this.confirmDialog.show(fm, "fragment_edit_name");
+    }
+	
 	@Override
 	public void onDownloadDocumentDone(File file) {
 		showProgress(false, "");
+		DocumentDetailActivity.this.downloadDocumentTask = null;
 		if (file != null) {
 			openDocument(file);		
 		} else {
@@ -371,9 +382,9 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		UploadFileTask uploadFileTask = new UploadFileTask();
-		uploadFileTask.setOnUploadFileTaskDoneListener(this);
-		uploadFileTask.execute(this.newFileName, 
+		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
+		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.documents_folder), 
 				this.document.getId(),
 				getResources().getString(R.string.url_upload_file_servlet));
@@ -388,25 +399,26 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 			this.newFileName = General.getIdFileName(this.newFileName, this.document.getId());
 			this.document.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
 			this.contentUpdated = true;
-			fireUpdateCourseThread();
+			fireUpdateCourseTask();
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
 		this.newFileName = "";
+		this.uploadFileTask = null;
 		callBackHandler.sendMessage(msg);
 	}
 	
-	private void fireUpdateCourseThread() {
-		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnWebServiceCallDoneListener(this);
-		new Thread(updateCourseCall).start();
+	private void fireUpdateCourseTask() {
+		this.updateCourseCallTask = new UpdateCourseCallTask(this.course);
+		this.updateCourseCallTask.setOnWebServiceCallDoneListener(this);
+		this.updateCourseCallTask.execute(getUrlWebService(UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE),
+				getResources().getString(R.string.namespace_webservice),
+				getResources().getString(R.string.update_course_webservice_operation));
 	}
 
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
-			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
-		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}
 		return null;
@@ -414,7 +426,19 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	
 	@Override
 	public void returnServiceResponse(int serviceCode, boolean resultOk) {
-//		callBackHandler.sendEmptyMessage(0);		
-		//TODO implement webservice response treatment
+		switch (serviceCode) {
+		case UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE:
+			if (!resultOk) {
+				showToast(getResources().getString(R.string.error_unable_to_update_course));
+			}
+			
+			this.updateCourseCallTask = null;
+		
+			break;
+			
+		default:
+				
+				break;
+	    }
 	}
 }

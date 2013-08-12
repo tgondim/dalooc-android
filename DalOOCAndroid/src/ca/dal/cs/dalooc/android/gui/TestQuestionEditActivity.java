@@ -11,6 +11,7 @@ import java.util.Map;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.text.InputType;
@@ -298,8 +299,6 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 	
 	@Override
 	public void onBackPressed() {
-//		super.onBackPressed();
-//		fetchData();
 		showConfirmDialog(getResources().getString(R.string.confirm_changes), ACTION_CONFIRM_TEST_QUESTION_CHANGES);
 	}
 	
@@ -459,9 +458,10 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
         args.putString(ConfirmDialog.ARG_MESSAGE, message);
         args.putInt(ConfirmDialog.ARG_RETURN_CODE, returnCode);
         
-        confirmDialog = new ConfirmDialog();
-        confirmDialog.setArguments(args);
-        confirmDialog.setOnConfirmDialogResultListener(this);
-        confirmDialog.show(fm, "fragment_edit_name");
+        this.confirmDialog = new ConfirmDialog();
+        this.confirmDialog.setArguments(args);
+        this.confirmDialog.setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Dialog);
+        this.confirmDialog.setOnConfirmDialogResultListener(this);
+        this.confirmDialog.show(fm, "fragment_edit_name");
     }
 }

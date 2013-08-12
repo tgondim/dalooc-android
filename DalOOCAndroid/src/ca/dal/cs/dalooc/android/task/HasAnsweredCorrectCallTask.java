@@ -1,10 +1,12 @@
-package ca.dal.cs.dalooc.android.webservice;
+package ca.dal.cs.dalooc.android.task;
 
 import org.ksoap2.SoapEnvelope;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapPrimitive;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
+
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -55,7 +57,7 @@ public class HasAnsweredCorrectCallTask extends AsyncTask<String, Void, Boolean>
 				}
 			} 
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e(LOG_TAG, e.getStackTrace().toString());
 		}
         
         return false;

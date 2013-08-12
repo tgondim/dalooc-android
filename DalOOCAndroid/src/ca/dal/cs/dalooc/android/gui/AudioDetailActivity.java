@@ -24,6 +24,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
@@ -49,11 +50,10 @@ import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnRecordingBlinkListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
+import ca.dal.cs.dalooc.android.task.UpdateCourseCallTask;
+import ca.dal.cs.dalooc.android.task.UploadFileTask;
 import ca.dal.cs.dalooc.android.util.General;
-import ca.dal.cs.dalooc.android.webservice.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.webservice.SaveCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservice.UpdateCourseCallRunnable;
-import ca.dal.cs.dalooc.android.webservice.UploadFileTask;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.User;
@@ -63,6 +63,10 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	private static final String LOG_TAG = "AudioDetailActivity";
 	
 	public static final int GET_AUDIO_FILE_ACTIVITY_REQUEST_CODE = 500;
+	
+	private UpdateCourseCallTask updateCourseCallTask;
+	
+	private UploadFileTask uploadFileTask;
 	
 	private Audio audio;
 	
@@ -240,7 +244,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 					enqueue = dm.enqueue(request);		
 					showToast(getResources().getString(R.string.download_file_in_progress));
 				} else {
-					showToast(getResources().getString(R.string.no_file_to_open));
+					showToast(getResources().getString(R.string.no_file_to_download));
 				}
 			}
 		});
@@ -424,7 +428,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 		this.ibAudioUpload.setEnabled(true);
 		this.ibAudioDownload.setEnabled(true);
 		
-        getConfirmDialog().show(getSupportFragmentManager(), "fragment_edit_name");
+        showConfirmDialog(getResources().getString(R.string.audio_overwrite_confirm), 0);
 	}
 
 	private void startRecording() {
@@ -475,30 +479,28 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	        if (resultCode == RESULT_OK) {
 	        	this.newFileName = data.getDataString().replace("file://", "");
 
-	        	FragmentManager fm = getSupportFragmentManager();
-	            getConfirmDialog().show(fm, "fragment_edit_name");
+	            showConfirmDialog(getResources().getString(R.string.audio_overwrite_confirm), 0);
 	        } else if (resultCode == RESULT_CANCELED) {
-	            // User cancelled the video capture
+	            // User cancelled the audio upload
 	        	//DO NOTHING
-	        } else {
-	            // Video capture failed, advise user
-	        	//TODO
-	        }
+	        } 
 	    }
 	}
 
-	private ConfirmDialog getConfirmDialog() {
-		if (this.confirmDialog == null) {
-			Bundle args = new Bundle();
-			args.putString(ConfirmDialog.ARG_MESSAGE, getResources().getString(R.string.audio_overwrite_confirm));
-			args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
-			
-			this.confirmDialog = new ConfirmDialog();
-			this.confirmDialog.setArguments(args);
-			this.confirmDialog.setOnConfirmDialogResultListener(this);
-		}
-		return this.confirmDialog;
-	}
+	private void showConfirmDialog(String message, int returnCode) {
+        FragmentManager fm = getSupportFragmentManager();
+        
+        Bundle args = new Bundle();
+        args.putString(ConfirmDialog.ARG_TITLE, getResources().getString(R.string.dialog_title_audio));
+        args.putString(ConfirmDialog.ARG_MESSAGE, message);
+        args.putInt(ConfirmDialog.ARG_RETURN_CODE, returnCode);
+        
+        this.confirmDialog = new ConfirmDialog();
+        this.confirmDialog.setArguments(args);
+        this.confirmDialog.setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Light_Dialog);
+        this.confirmDialog.setOnConfirmDialogResultListener(this);
+        this.confirmDialog.show(fm, "fragment_edit_name");
+    }
 	
 	@Override
 	public void onConfirmDialogReturn(boolean confirm, int returnCode) {
@@ -511,9 +513,9 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		UploadFileTask uploadFileTask = new UploadFileTask();
-		uploadFileTask.setOnUploadFileTaskDoneListener(this);
-		uploadFileTask.execute(this.newFileName, 
+		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
+		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.audio_folder), 
 				this.audio.getId(),
 				getResources().getString(R.string.url_upload_file_servlet));
@@ -523,30 +525,33 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	public void onUploadFileTaskDone(int returnCode) {
 		Message msg = new Message();
 		msg.what = UploadFileTask.UPLOAD_DONE;
+		
 		if (returnCode == UploadFileTask.FILE_UPLOADED_SUCCESSFULY) {
 			this.newFileName = General.getIdFileName(this.newFileName, this.audio.getId());
 			this.audio.setContentFileName(this.newFileName.substring(this.newFileName.lastIndexOf("/") + 1));
 			msg.obj = getResources().getString(R.string.successfull_upload);
 			this.contentUpdated = true;
-			fireUpdateCourseThread();
+			fireUpdateCourseTask();
 		} else {
 			msg.obj = getResources().getString(R.string.problems_uploading_file);
 		}
+		
+		this.uploadFileTask = null;
 		callBackHandler.sendMessage(msg);
 		this.newFileName = "";
 	}
 	
-	private void fireUpdateCourseThread() {
-		UpdateCourseCallRunnable updateCourseCall = new UpdateCourseCallRunnable(this.course, this);
-		updateCourseCall.setOnWebServiceCallDoneListener(this);
-		new Thread(updateCourseCall).start();
+	private void fireUpdateCourseTask() {
+		this.updateCourseCallTask = new UpdateCourseCallTask(this.course);
+		this.updateCourseCallTask.setOnWebServiceCallDoneListener(this);
+		this.updateCourseCallTask.execute(getUrlWebService(UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE),
+				getResources().getString(R.string.namespace_webservice),
+				getResources().getString(R.string.update_course_webservice_operation));
 	}
 
 	@Override
 	public String getUrlWebService(int serviceCode) {
-		if (serviceCode == SaveCourseCallRunnable.SAVE_COURSE_WEB_SERVICE) {
-			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.save_course_webservice_operation); 
-		} else if (serviceCode == UpdateCourseCallRunnable.UPDATE_COURSE_WEB_SERVICE) {
+		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}
 		return null;
@@ -554,7 +559,18 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	
 	@Override
 	public void returnServiceResponse(int serviceCode, boolean resultOk) {
-//		callBackHandler.sendEmptyMessage(0);		
-		//TODO implement webservice response treatment
+		switch (serviceCode) {
+		case UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE:
+			if (!resultOk) {
+				showToast(getResources().getString(R.string.error_unable_to_update_course));
+			}
+			
+			this.updateCourseCallTask = null;
+			break;
+			
+		default:
+				
+				break;
+	    }
 	}
 }

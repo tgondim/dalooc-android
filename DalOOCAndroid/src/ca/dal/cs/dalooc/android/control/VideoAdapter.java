@@ -12,7 +12,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.util.DownloadImageTask;
+import ca.dal.cs.dalooc.android.task.DownloadImageTask;
 import ca.dal.cs.dalooc.model.Video;
 
 
