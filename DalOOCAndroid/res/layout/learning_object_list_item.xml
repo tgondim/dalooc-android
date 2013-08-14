@@ -5,119 +5,132 @@
     android:layout_marginTop="10dp"
     android:layout_marginLeft="25dp" >
 	
+    <ImageView
+        android:id="@+id/ivLearningObjectStatusIcon"
+        android:src="@drawable/ic_done_black"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:visibility="invisible"/>
+    
+    <TextView
+        android:id="@+id/txtLearningObjectName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+ 		android:layout_alignTop="@id/ivLearningObjectStatusIcon"
+        android:layout_toRightOf="@id/ivLearningObjectStatusIcon"
+        android:layout_marginRight="15dp"
+        android:layout_marginLeft="5dp"
+        android:text="txtLearningObjectName"
+        android:textStyle="bold"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+   
+    <ImageView
+        android:id="@+id/ivViewLearningObject"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="5dp"
+		android:gravity="center_vertical"
+        android:src="@drawable/ic_menu_more" />
+
+  		 <RelativeLayout android:id="@+id/rlLearningObjectSummary"
+		android:layout_width="match_parent"
+    	android:layout_height="wrap_content" 
+	    android:layout_marginTop="10dp"
+	    android:layout_marginLeft="10dp"
+	    android:layout_marginRight="10dp"
+    	android:visibility="gone"
+    	android:layout_below="@id/txtLearningObjectName">
+    
 	    <TextView
-	        android:id="@+id/txtLearningObjectName"
+	        android:id="@+id/txtLearningObjectVideos"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
-	        android:layout_alignParentLeft="true"
-	        android:layout_alignParentTop="true"
-	        android:layout_marginRight="15dp"
-	        android:text="txtLearningObjectName"
-	        android:textStyle="bold"
-	        android:textAppearance="?android:attr/textAppearanceMedium" />
-    
-	    <ImageView
-	        android:id="@+id/ivViewLearningObject"
+			android:gravity="center_vertical"
+			android:layout_alignParentTop="true"
+			android:layout_alignParentLeft="true"
+			android:layout_marginTop="5dp"
+	        android:text="@string/videos"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+  		    <TextView
+	        android:id="@+id/txtLearningObjectTotalVideos"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
-	        android:layout_alignParentRight="true"
-	        android:layout_marginRight="5dp"
 			android:gravity="center_vertical"
-	        android:src="@drawable/ic_menu_more" />
-
-   		 <RelativeLayout android:id="@+id/rlLearningObjectSummary"
-			android:layout_width="match_parent"
-	    	android:layout_height="wrap_content" 
-		    android:layout_marginTop="10dp"
-		    android:layout_marginLeft="10dp"
-		    android:layout_marginRight="10dp"
-	    	android:visibility="gone"
-	    	android:layout_below="@id/txtLearningObjectName">
+			android:layout_alignBaseline="@id/txtLearningObjectVideos"
+			android:layout_alignParentRight="true"
+			android:layout_marginRight="8dp"
+			android:layout_marginTop="5dp"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />
 	    
-		    <TextView
-		        android:id="@+id/txtLearningObjectVideos"
-		        android:layout_width="match_parent"
-		        android:layout_height="wrap_content"
-				android:gravity="center_vertical"
-				android:layout_alignParentTop="true"
-				android:layout_alignParentLeft="true"
-				android:layout_marginTop="5dp"
-		        android:text="@string/videos"
-		        android:textAppearance="?android:attr/textAppearanceSmall" />
-
-   		    <TextView
-		        android:id="@+id/txtLearningObjectTotalVideos"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-				android:gravity="center_vertical"
-				android:layout_alignBaseline="@id/txtLearningObjectVideos"
-				android:layout_alignParentRight="true"
-				android:layout_marginRight="8dp"
-				android:layout_marginTop="5dp"
-		        android:textAppearance="?android:attr/textAppearanceSmall" />
-		    
-		    <TextView
-		        android:id="@+id/txtLearningObjectAudio"
-		        android:layout_width="match_parent"
-		        android:layout_height="wrap_content"
-				android:gravity="center_vertical"
-				android:layout_marginTop="5dp"
-		        android:text="@string/audio"
-		        android:layout_below="@id/txtLearningObjectVideos"
-		        android:textAppearance="?android:attr/textAppearanceSmall" />
-		    
-   		    <TextView
-		        android:id="@+id/txtLearningObjectTotalAudio"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-				android:gravity="center_vertical"
-				android:layout_alignBaseline="@id/txtLearningObjectAudio"
-				android:layout_alignParentRight="true"
-				android:layout_marginRight="8dp"
-				android:layout_marginTop="5dp"
-		        android:textAppearance="?android:attr/textAppearanceSmall" />
-		    
-		    <TextView
-		        android:id="@+id/txtLearningObjectDocuments"
-		        android:layout_width="match_parent"
-		        android:layout_height="wrap_content"
-				android:gravity="center_vertical"
-				android:layout_marginTop="5dp"
-		        android:text="@string/documents"
-		        android:layout_below="@id/txtLearningObjectAudio"
-		        android:textAppearance="?android:attr/textAppearanceSmall" />
+	    <TextView
+	        android:id="@+id/txtLearningObjectAudio"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+			android:gravity="center_vertical"
+			android:layout_marginTop="5dp"
+	        android:text="@string/audio"
+	        android:layout_below="@id/txtLearningObjectVideos"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />
 	    
-   		    <TextView
-		        android:id="@+id/txtLearningObjectTotalDocuments"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-				android:gravity="center_vertical"
-				android:layout_alignBaseline="@id/txtLearningObjectDocuments"
-				android:layout_alignParentRight="true"
-				android:layout_marginRight="8dp"
-				android:layout_marginTop="5dp"
-		        android:textAppearance="?android:attr/textAppearanceSmall" />		    
-		    
-		    <TextView
-		        android:id="@+id/txtLearningObjectTestQuestions"
-		        android:layout_width="match_parent"
-		        android:layout_height="wrap_content"
-				android:gravity="center_vertical"
-				android:layout_marginTop="5dp"
-		        android:text="@string/test_questions"
-		        android:layout_below="@id/txtLearningObjectDocuments"
-		        android:textAppearance="?android:attr/textAppearanceSmall" />
-	    	    
-   		    <TextView
-		        android:id="@+id/txtLearningObjectTotalTestQuestions"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-				android:gravity="center_vertical"
-				android:layout_alignBaseline="@id/txtLearningObjectTestQuestions"
-				android:layout_alignParentRight="true"
-				android:layout_marginRight="8dp"
-				android:layout_marginTop="5dp"
-		        android:textAppearance="?android:attr/textAppearanceSmall" />	
-	    </RelativeLayout>
+  		    <TextView
+	        android:id="@+id/txtLearningObjectTotalAudio"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+			android:gravity="center_vertical"
+			android:layout_alignBaseline="@id/txtLearningObjectAudio"
+			android:layout_alignParentRight="true"
+			android:layout_marginRight="8dp"
+			android:layout_marginTop="5dp"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />
+	    
+	    <TextView
+	        android:id="@+id/txtLearningObjectDocuments"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+			android:gravity="center_vertical"
+			android:layout_marginTop="5dp"
+	        android:text="@string/documents"
+	        android:layout_below="@id/txtLearningObjectAudio"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />
+    
+  		    <TextView
+	        android:id="@+id/txtLearningObjectTotalDocuments"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+			android:gravity="center_vertical"
+			android:layout_alignBaseline="@id/txtLearningObjectDocuments"
+			android:layout_alignParentRight="true"
+			android:layout_marginRight="8dp"
+			android:layout_marginTop="5dp"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />		    
+	    
+	    <TextView
+	        android:id="@+id/txtLearningObjectTestQuestions"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+			android:gravity="center_vertical"
+			android:layout_marginTop="5dp"
+	        android:text="@string/test_questions"
+	        android:layout_below="@id/txtLearningObjectDocuments"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />
+    	    
+  		    <TextView
+	        android:id="@+id/txtLearningObjectTotalTestQuestions"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+			android:gravity="center_vertical"
+			android:layout_alignBaseline="@id/txtLearningObjectTestQuestions"
+			android:layout_alignParentRight="true"
+			android:layout_marginRight="8dp"
+			android:layout_marginTop="5dp"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />	
+    </RelativeLayout>
 
 </RelativeLayout>

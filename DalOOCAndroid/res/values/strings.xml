@@ -15,6 +15,9 @@
     <string name="action_new_test_question">New Test Question</string>
     <string name="action_sign_out">Sign Out</string>
     <string name="title_activity_learning_object">Learning Object Name</string>
+    <string name="select_video">Select Video</string>
+    <string name="select_audio">Select Audio</string>
+    <string name="select_document">Select Document</string>
     <string name="videos">Videos</string>
     <string name="audio">Audio</string>
     <string name="documents">Documents</string>
@@ -27,6 +30,7 @@
     <string name="question">Question</string>
     <string name="description">Description</string>
     <string name="order">Order</string>
+    <string name="correct_questions_ratio">Correct Questions Ratio</string>
     <string name="related_content">Related content</string>
     <string name="video_thumbnail">Video Thumbnail</string>
     <string name="references">References</string>
@@ -39,7 +43,8 @@
     <string name="discard">Discard</string>
     <string name="prerequisite_edit_text_hint">Prerequisite</string>
     <string name="reference_edit_text_hint">Reference</string>
-    <string name="select_related_content">Select Related Content</string>
+    <string name="select_related_content">Select</string>
+    <string name="clear_related_content">Clear</string>
     <string name="title_activity_course">Course Name</string>
     <string name="title_activity_audio_detail">Audio Detail</string>
     <string name="title_activity_video_detail">Video Detail</string>
@@ -104,7 +109,6 @@
     <string name="prompt_first_name">First Name</string>
     <string name="prompt_last_name">Last Name</string>
     <string name="prompt_user_type">User Type</string>
-    <string name="warning">Warning</string>
     <string name="action_sign_in_register"><b>Sign in</b> or register</string>
     <string name="action_register"><b>Send Registration</b></string>
     <string name="action_sign_in_short">Sign in</string>
@@ -126,5 +130,7 @@
     <string name="error_unable_to_process_auto_login_for">We\'re unable to process auto login for</string>
     <string name="error_unable_to_save_test_answer">We\'re unable to save your answer now. Please try again later.</string>
     <string name="error_field_required">This field is required</string>
+    <string name="error_options_required">At least one option is required</string>
+    <string name="error_correct_answer_required">A selected correct option is required</string>
 
 </resources>

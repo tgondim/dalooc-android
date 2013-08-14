@@ -6,10 +6,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -31,25 +33,31 @@ import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
-import ca.dal.cs.dalooc.android.gui.components.MyRadioButton;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.MyRadioButton;
+import ca.dal.cs.dalooc.android.gui.component.SelectLearningObjectContentDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
+import ca.dal.cs.dalooc.android.gui.listener.OnSelectLearningObjectContentDialogReturnListener;
+import ca.dal.cs.dalooc.android.task.DownloadImageTask;
 import ca.dal.cs.dalooc.android.util.ItemLetterDispenser;
+import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
+import ca.dal.cs.dalooc.model.Document;
 import ca.dal.cs.dalooc.model.LearningObjectContent;
 import ca.dal.cs.dalooc.model.Option;
 import ca.dal.cs.dalooc.model.TestQuestion;
 import ca.dal.cs.dalooc.model.User;
+import ca.dal.cs.dalooc.model.Video;
 
-public class TestQuestionEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener {
+public class TestQuestionEditActivity extends FragmentActivity implements OnConfirmDialogReturnListener, OnSelectLearningObjectContentDialogReturnListener {
 	
 	public static final int ACTION_CONFIRM_TEST_QUESTION_CHANGES = 200;
 	
 	public static final int ACTION_CONFIRM_TEST_QUESTION_UPLOAD = 300;
 	
-	private static final int RELATED_CONTENT_INDEX = 0;
+	public static final int RELATED_CONTENT_INDEX = 0;
 	
-	private static final int RELATED_CONTENT_OBJECT = 1;
+	public static final int RELATED_CONTENT_OBJECT = 1;
 	
 	private static final int LAYOUT_VIEW = 0;
 	
@@ -70,14 +78,24 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 	private int testQuestionIndex;
 	
 	private ConfirmDialog confirmDialog;
+
+	private SelectLearningObjectContentDialog selectRelatedContentDialog;
 	
 	private EditText etQuestion;
 	
+	private EditText etTestQuestionOrder;
+	
 	private TextView tvRelatedContentName;
+	
+	private TextView txtOption;
+	
+	private ImageView ivLearningObjectContentIcon;
 	
 	private ImageView ivAddOption;
 
-	private Button ibSelectRelatedContent;
+	private Button btnSelectRelatedContent;
+	
+	private Button btnClearRelatedContent;
 	
 	private LinearLayout llOptions;
 	
@@ -98,8 +116,11 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 		
 		this.letterDispenser = new ItemLetterDispenser();
 		
+		this.txtOption = (TextView)findViewById(R.id.txtOption);
 		this.etQuestion = (EditText)findViewById(R.id.etQuestion);
+		this.etTestQuestionOrder = (EditText)findViewById(R.id.etTestQuestionOrder);
 		this.tvRelatedContentName = (TextView)findViewById(R.id.tvRelatedContentName);
+		this.ivLearningObjectContentIcon = (ImageView)findViewById(R.id.ivLearningObjectContentIcon);
 		
 		this.llOptions = (LinearLayout)findViewById(R.id.llOptions);
 		
@@ -129,6 +150,13 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 			}
 		});
 		
+		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				0);
+		
+		llTestQuestionRadioButtons.addView(this.radioGroup, params);
+
 		this.ivAddOption = (ImageView)findViewById(R.id.ivAddOption);
 		this.ivAddOption.setOnClickListener(new View.OnClickListener() {
 			
@@ -138,37 +166,15 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 			}
 		});
 		
-		ibSelectRelatedContent = new Button(this);
-		ibSelectRelatedContent.setText(getResources().getString(R.string.select_related_content));
-//		ibDocumentUpload.setOnClickListener(new View.OnClickListener() {
-//			
-//			@Override
-//			public void onClick(View v) {
-//				Intent uploadFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
-//				switch (testQuestion.getType()) {
-//				case PDF: 
-//					uploadFileIntent.setType("file/pdf");
-//					break;
-//				case DOC: 
-//					uploadFileIntent.setType("file/doc");
-//					break;
-//				case PPT: 
-//					uploadFileIntent.setType("file/pdf");
-//					break;
-//				default:
-//					uploadFileIntent.setType("file/*");
-//				}
-//				
-//				startActivityForResult(uploadFileIntent, DocumentDetailActivity.GET_DOCUMENT_FILE_ACTIVITY_REQUEST_CODE);				
-//			}
-//		});
-		
-		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.WRAP_CONTENT, 
-				ViewGroup.LayoutParams.WRAP_CONTENT, 
-				0);
-		
-		llTestQuestionRadioButtons.addView(this.radioGroup, params);
+		btnSelectRelatedContent = new Button(this);
+		btnSelectRelatedContent.setText(getResources().getString(R.string.select_related_content));
+		btnSelectRelatedContent.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				showSelectRelatedContentDialog();
+			}
+		});
 
 		params = new LinearLayout.LayoutParams(
 				ViewGroup.LayoutParams.WRAP_CONTENT, 
@@ -176,14 +182,68 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 				0);
 		params.gravity = Gravity.CENTER;
 
-		llTestQuestionEditButtons.addView(ibSelectRelatedContent, params);
+		llTestQuestionEditButtons.addView(btnSelectRelatedContent, params);
+
+		btnClearRelatedContent = new Button(this);
+		btnClearRelatedContent.setText(getResources().getString(R.string.clear_related_content));
+		btnClearRelatedContent.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				TestQuestionEditActivity.this.relatedContent = null;
+				setLearningObjectRelatedContentVisibility(View.GONE);
+			}
+
+		});
+		
+		params = new LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				ViewGroup.LayoutParams.WRAP_CONTENT, 
+				0);
+		params.gravity = Gravity.CENTER;
+		
+		llTestQuestionEditButtons.addView(btnClearRelatedContent, params);
 		
 		Button btnSave = (Button)findViewById(R.id.btnSave);
 		btnSave.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				finishSaving();
+				resetFieldErrors();
+				
+				boolean cancel = false;
+				View focusView = null;
+				
+				// Check for a valid order.
+				if (TextUtils.isEmpty(TestQuestionEditActivity.this.etTestQuestionOrder.getText().toString().replaceAll("\\s+$", ""))) {
+					TestQuestionEditActivity.this.etTestQuestionOrder.setError(getString(R.string.error_field_required));
+					focusView = TestQuestionEditActivity.this.etTestQuestionOrder;
+					cancel = true;
+				} 
+
+				// Check for a valid name.
+				if (TextUtils.isEmpty(TestQuestionEditActivity.this.etQuestion.getText().toString().replaceAll("\\s+$", ""))) {
+					TestQuestionEditActivity.this.etQuestion.setError(getString(R.string.error_field_required));
+					focusView = TestQuestionEditActivity.this.etQuestion;
+					cancel = true;
+				} 
+				
+				// Check for a correct answer.
+				if (TestQuestionEditActivity.this.radioGroup.getCheckedRadioButtonId() == -1) {
+					if ((TestQuestionEditActivity.this.radioButtonList != null) && (TestQuestionEditActivity.this.radioButtonList.size() > 0)) {
+						if (TestQuestionEditActivity.this.radioButtonList.get(0) != null) {
+							TestQuestionEditActivity.this.radioButtonList.get(0).setError(getString(R.string.error_correct_answer_required));
+							focusView = TestQuestionEditActivity.this.radioButtonList.get(0);
+							cancel = true;
+						} 
+					}
+				} 
+				
+				if (cancel) {
+					focusView.requestFocus();
+				} else {
+					finishSaving();
+				}
 			}
 		});
 		
@@ -204,7 +264,6 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 			this.testQuestionIndex = extras.getInt(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX);
 
 			if (this.learningObjectIndex >= 0) {
-//				this.learningObject = this.course.getLearningObjectList().get(this.learningObjectIndex);
 				if (this.testQuestionIndex >= 0) {
 					this.testQuestion = this.course.getLearningObjectList().get(this.learningObjectIndex).getTestQuestionList().get(testQuestionIndex);
 				}
@@ -218,9 +277,26 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 			}
 		}
 	}
+	
+	private void resetFieldErrors() {
+		this.etTestQuestionOrder.setError(null);
+		this.etQuestion.setError(null);
+		
+		if ((this.radioButtonList != null) && (this.radioButtonList.size() > 0)) {
+			if (this.radioButtonList.get(0) != null) {
+				this.radioButtonList.get(0).setError(null);
+			} 
+		}
+	}
 
+	private void setLearningObjectRelatedContentVisibility(int visibility) {
+		TestQuestionEditActivity.this.ivLearningObjectContentIcon.setVisibility(visibility);
+		TestQuestionEditActivity.this.tvRelatedContentName.setVisibility(visibility);
+	}
+	
 	private void loadData() {
 		this.etQuestion.setText(this.testQuestion.getQuestion());
+		this.etTestQuestionOrder.setText(String.valueOf(this.testQuestion.getOrder()));
 		
 		List<Option> optionsList = this.course.getLearningObjectList().get(this.learningObjectIndex).getTestQuestionList().get(testQuestionIndex).getOptionList();
 		for (int i = 0; i < optionsList.size(); i++) {
@@ -229,7 +305,8 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 		
 		if (!TextUtils.isEmpty(this.testQuestion.getRelatedContendId())) {
 			this.relatedContent = getRelatedContent(this.testQuestion.getRelatedContendId());
-			this.tvRelatedContentName.setText(((LearningObjectContent)relatedContent[1]).getName());
+			setLearningObjectContentDrawable(this.relatedContent);
+			this.tvRelatedContentName.setText(((LearningObjectContent)relatedContent[RELATED_CONTENT_OBJECT]).getName());
 			this.tvRelatedContentName.setVisibility(View.VISIBLE);
 		} else {
 			this.tvRelatedContentName.setVisibility(View.GONE);
@@ -238,8 +315,11 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 
 	private void fetchData() {
 		this.testQuestion.setQuestion(this.etQuestion.getText().toString());
+		this.testQuestion.setOrder(Integer.valueOf(this.etTestQuestionOrder.getText().toString()));
 		if (this.relatedContent != null) {
 			this.testQuestion.setRelatedContendId(((LearningObjectContent)this.relatedContent[RELATED_CONTENT_OBJECT]).getId());
+		} else {
+			this.testQuestion.setRelatedContendId("");
 		}
 		
 		Iterator<ImageView> iterator = this.optionsLayoutMapping.keySet().iterator();
@@ -248,8 +328,13 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 		while (iterator.hasNext()) {
 			Object[] object = this.optionsLayoutMapping.get(iterator.next());
 			Option option = ((Option)object[OBJECT_ITEM]);
-			option.setStatement(((EditText)object[NAME_VIEW]).getText().toString());
-			option.setStatement(((EditText)object[NAME_VIEW]).getText().toString());
+			
+			String statement = ((EditText)object[NAME_VIEW]).getText().toString();
+			option.setStatement(statement);
+			
+			if (TextUtils.isEmpty(statement)) {
+				continue;
+			}
 			
 			MyRadioButton radioButton = (MyRadioButton)object[RADIO_BUTTON];
 			
@@ -268,7 +353,7 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 					new Comparator<Option>() {
 						@Override
 						public int compare(final Option object1, final Option object2) {
-							return object1.getItem().toLowerCase().compareTo(object2.getItem().toLowerCase());
+							return object1.getItem().toLowerCase(Locale.getDefault()).compareTo(object2.getItem().toLowerCase());
 						}
 					});
 		}
@@ -401,11 +486,29 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 				ViewGroup.LayoutParams.MATCH_PARENT, 
 				ViewGroup.LayoutParams.WRAP_CONTENT, 
 				0);
-//		llParams.setMargins(0, 10, 0, 0);
 		TestQuestionEditActivity.this.llOptions.addView(relativeLayout, llParams);
 		
 	}
 	
+//	private Object[] getRelatedContent(String relatedContentId) {
+//		
+//		Object[] relatedContent = new Object[2];
+//		LearningObjectContent learningObjectContent;
+//		List<LearningObjectContent> learningObjectContentList = this.course.getLearningObjectList().get(this.learningObjectIndex).getLearningObjectContentList();
+//		
+//		for (int i = 0; i < learningObjectContentList.size(); i++) {
+//			learningObjectContent = (LearningObjectContent)learningObjectContentList.get(i);
+//			if (learningObjectContent.getId().equals(relatedContentId)) {
+//				relatedContent[RELATED_CONTENT_INDEX] = i;
+//				relatedContent[RELATED_CONTENT_OBJECT] = learningObjectContent;
+//				
+//				return relatedContent;
+//			}
+//		}
+//		
+//		return null;
+//	}
+
 	private Object[] getRelatedContent(String relatedContentId) {
 		Object[] relatedContent = getLearningObjectContent(this.course.getLearningObjectList().get(this.learningObjectIndex).getVideoList(), relatedContentId);
 		if (relatedContent != null) {
@@ -432,8 +535,8 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 		for (int i =0; i < learningObjectContentList.size(); i++) {
 			learningObjectContent = (LearningObjectContent)learningObjectContentList.get(i);
 			if (learningObjectContent.getId().equals(learningObjectContentId)) {
-				relatedContent[RELATED_CONTENT_INDEX] = i;
-				relatedContent[RELATED_CONTENT_OBJECT] = learningObjectContent;
+				relatedContent[TestQuestionEditActivity.RELATED_CONTENT_INDEX] = i;
+				relatedContent[TestQuestionEditActivity.RELATED_CONTENT_OBJECT] = learningObjectContent;
 				
 				return relatedContent;
 			}
@@ -442,13 +545,14 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
 		return null;
 	}
 	
-//	private void showToast(String msg) {
-//		if (this.toast == null) {
-//			this.toast = Toast.makeText(this, "", Toast.LENGTH_LONG);
-//		}
-//		this.toast.setText(msg);
-//		this.toast.show();
-//	}
+	private void downloadVideoIcon(Video video, ImageView ivVideoThumbnail, int waitTime) {
+		if (waitTime > 0) {
+			ivVideoThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_video_thumbnail_default));
+		}
+		new DownloadImageTask(ivVideoThumbnail).execute(getResources().getString(R.string.host_file_server)
+				+ getResources().getString(R.string.videos_folder)
+				+ "/thumb/" + video.getContentFileName().replace("mp4", "jpg"), String.valueOf(waitTime));
+	}
 	
 	private void showConfirmDialog(String message, int returnCode) {
         FragmentManager fm = getSupportFragmentManager();
@@ -464,4 +568,40 @@ public class TestQuestionEditActivity extends FragmentActivity implements OnConf
         this.confirmDialog.setOnConfirmDialogResultListener(this);
         this.confirmDialog.show(fm, "fragment_edit_name");
     }
+	
+	private void showSelectRelatedContentDialog() {
+		Bundle args = new Bundle();	
+        args.putSerializable(LearningObjectSectionFragment.ARG_LEARNING_OBJECT, this.course.getLearningObjectList().get(this.learningObjectIndex));
+        
+        this.selectRelatedContentDialog = new SelectLearningObjectContentDialog();
+        this.selectRelatedContentDialog.setArguments(args);
+        this.selectRelatedContentDialog.setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Light_Dialog);
+        this.selectRelatedContentDialog.setOnSelectLearningObjectContentDialogResultListener(this);
+        this.selectRelatedContentDialog.show(getSupportFragmentManager(), "fragment_edit_name");
+    }
+
+	@Override
+	public void onSelectRelatedContentDialogReturn(Object[] relatedContent) {
+		this.tvRelatedContentName.setText(((LearningObjectContent)relatedContent[RELATED_CONTENT_OBJECT]).getName());
+		this.testQuestion.setRelatedContendId(((LearningObjectContent)relatedContent[RELATED_CONTENT_OBJECT]).getId());
+		this.relatedContent = relatedContent;
+		setLearningObjectContentDrawable(relatedContent);
+		setLearningObjectRelatedContentVisibility(View.VISIBLE);
+	}
+
+	private void setLearningObjectContentDrawable(Object[] relatedContent) {
+		Drawable drawable = null;
+		if (relatedContent[RELATED_CONTENT_OBJECT] instanceof Video) {
+			drawable = getResources().getDrawable(R.drawable.ic_video_thumbnail_default);
+			downloadVideoIcon((Video)relatedContent[RELATED_CONTENT_OBJECT], this.ivLearningObjectContentIcon, 0);
+		} else if (relatedContent[RELATED_CONTENT_OBJECT] instanceof Audio) {
+			drawable = getResources().getDrawable(R.drawable.ic_audio_light);
+		} else if (relatedContent[RELATED_CONTENT_OBJECT] instanceof Document) {
+			drawable = getResources().getDrawable(R.drawable.ic_document_light);
+		}
+		
+		if (drawable != null) {
+			this.ivLearningObjectContentIcon.setImageDrawable(drawable);
+		}
+	}
 }

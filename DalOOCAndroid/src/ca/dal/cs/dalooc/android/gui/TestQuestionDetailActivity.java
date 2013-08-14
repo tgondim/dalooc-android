@@ -6,8 +6,10 @@ import java.util.List;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.text.TextUtils;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
+import android.view.WindowManager.LayoutParams;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -16,9 +18,9 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.MyRadioButton;
+import ca.dal.cs.dalooc.android.gui.component.MyRadioButton;
 import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
-import ca.dal.cs.dalooc.android.task.HasAnsweredCorrectCallTask;
+import ca.dal.cs.dalooc.android.task.GetAnswerStatusCallTask;
 import ca.dal.cs.dalooc.android.task.SaveTestAnswerCallTask;
 import ca.dal.cs.dalooc.model.Audio;
 import ca.dal.cs.dalooc.model.Course;
@@ -32,10 +34,9 @@ import ca.dal.cs.dalooc.model.Video;
 
 public class TestQuestionDetailActivity extends FragmentActivity implements OnWebServiceCallDoneListener {
 	
-	public static final String CHOOSE_CORRECT_ARG = "choose_correct";
-	public static final String TEST_ANSWER_ARG = "test_answer";
+	public static final String ARG_WAS_ANSWERED = "was_answered";
 	
-	private HasAnsweredCorrectCallTask hasAnsweredCorrectCallTask;
+	public static final int RELATED_CONTENT_CALL = 156;
 	
 	private SaveTestAnswerCallTask saveTestAnswerCallTask;
 	
@@ -65,16 +66,26 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 
 	private ImageView ivTestQuestionRelatedContentThumbnail;
 	
+	private boolean relatedContentActivityOpen;
+	
+	private boolean wasAnswered;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_test_question_detail);
-	
+
+		getWindow().setFlags(LayoutParams.FLAG_NOT_TOUCH_MODAL, LayoutParams.FLAG_NOT_TOUCH_MODAL);
+		getWindow().setFlags(LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
+		
+		this.wasAnswered = false;
+		this.relatedContentActivityOpen = false;
+		
 		this.user = (User)getIntent().getExtras().getSerializable(LoginActivity.ARG_USER);
 		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
 		this.learningObjectIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX);
 		this.testQuestionIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX);
-
+		
 		this.testQuestion = this.course.getLearningObjectList().get(learningObjectIndex).getTestQuestionList().get(testQuestionIndex);
 		
 		this.radioButtonList = new ArrayList<MyRadioButton>();
@@ -84,43 +95,47 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 			
 			@Override
 			public void onClick(View v) {
-				if (v instanceof Button) { 
-					Option option;
+				TestQuestionDetailActivity.this.wasAnswered = true;
+				Option option;
 
-					TestQuestionDetailActivity.this.testAnswer = new TestAnswer();
-					TestQuestionDetailActivity.this.testAnswer.setUserId(TestQuestionDetailActivity.this.user.getId());
-					TestQuestionDetailActivity.this.testAnswer.setCourseId(TestQuestionDetailActivity.this.course.getId());
-					TestQuestionDetailActivity.this.testAnswer.setLearningObjectId(TestQuestionDetailActivity.this.course.getLearningObjectList().get(TestQuestionDetailActivity.this.learningObjectIndex).getId());
-					TestQuestionDetailActivity.this.testAnswer.setTestQuestionId(TestQuestionDetailActivity.this.testQuestion.getId());
-					
-					for (MyRadioButton radioButton : TestQuestionDetailActivity.this.radioButtonList) {
-						if (radioButton.isChecked()) {
-							option = TestQuestionDetailActivity.this.testQuestion.getOptionList().get(radioButton.getIndex());
+				TestQuestionDetailActivity.this.testAnswer = new TestAnswer();
+				TestQuestionDetailActivity.this.testAnswer.setUserId(TestQuestionDetailActivity.this.user.getId());
+				TestQuestionDetailActivity.this.testAnswer.setCourseId(TestQuestionDetailActivity.this.course.getId());
+				TestQuestionDetailActivity.this.testAnswer.setLearningObjectId(TestQuestionDetailActivity.this.course.getLearningObjectList().get(TestQuestionDetailActivity.this.learningObjectIndex).getId());
+				TestQuestionDetailActivity.this.testAnswer.setTestQuestionId(TestQuestionDetailActivity.this.testQuestion.getId());
+				
+				for (MyRadioButton radioButton : TestQuestionDetailActivity.this.radioButtonList) {
+					if (radioButton.isChecked()) {
+						option = TestQuestionDetailActivity.this.testQuestion.getOptionList().get(radioButton.getIndex());
 
-							TestQuestionDetailActivity.this.testAnswer.setOptionId(option.getId());
+						TestQuestionDetailActivity.this.testAnswer.setOptionId(option.getId());
+						
+						TestQuestionDetailActivity.this.chooseCorrect = option.isCorrect();
+						if (TestQuestionDetailActivity.this.chooseCorrect) {
+							TestQuestionDetailActivity.this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_correct));
 							
-							TestQuestionDetailActivity.this.chooseCorrect = option.isCorrect();
-							if (TestQuestionDetailActivity.this.chooseCorrect) {
-								TestQuestionDetailActivity.this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_correct));
+							if (!TextUtils.isEmpty(TestQuestionDetailActivity.this.testQuestion.getRelatedContendId())) {
 								TestQuestionDetailActivity.this.ivTestQuestionRelatedContentThumbnail.setVisibility(View.VISIBLE);
-								
-								TestQuestionDetailActivity.this.testAnswer.setCorrect(true);
-								//TODO LearningObjectId and CourseId are missing
-							} else {
-								TestQuestionDetailActivity.this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_incorrect));
-								
-								TestQuestionDetailActivity.this.testAnswer.setCorrect(false);
+							} else { 
+								TestQuestionDetailActivity.this.ivTestQuestionRelatedContentThumbnail.setVisibility(View.INVISIBLE);
 							}
-							TestQuestionDetailActivity.this.btnSubmit.setEnabled(false);
-
-							TestQuestionDetailActivity.this.saveTestAnswerCallTask = new SaveTestAnswerCallTask(TestQuestionDetailActivity.this.testAnswer);
-							TestQuestionDetailActivity.this.saveTestAnswerCallTask.setOnWebServiceCallDoneListener(TestQuestionDetailActivity.this);
-							TestQuestionDetailActivity.this.saveTestAnswerCallTask.execute(getUrlWebService(SaveTestAnswerCallTask.SAVE_TEST_ANSWER_WEB_SERVICE),
-									getResources().getString(R.string.namespace_webservice),
-									getResources().getString(R.string.save_test_answer_webservice_operation));
+							
+							TestQuestionDetailActivity.this.testAnswer.setCorrect(true);
+						} else {
+							TestQuestionDetailActivity.this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_incorrect));
+							
+							TestQuestionDetailActivity.this.testAnswer.setCorrect(false);
 						}
+						TestQuestionDetailActivity.this.btnSubmit.setClickable(false);
+						setRadioGroupClickable(false);
+
+						TestQuestionDetailActivity.this.saveTestAnswerCallTask = new SaveTestAnswerCallTask(TestQuestionDetailActivity.this.testAnswer);
+						TestQuestionDetailActivity.this.saveTestAnswerCallTask.setOnWebServiceCallDoneListener(TestQuestionDetailActivity.this);
+						TestQuestionDetailActivity.this.saveTestAnswerCallTask.execute(getUrlWebService(SaveTestAnswerCallTask.SAVE_TEST_ANSWER_WEB_SERVICE),
+								getResources().getString(R.string.namespace_webservice),
+								getResources().getString(R.string.save_test_answer_webservice_operation));
 					}
-				}				
+				}
 			}
 		});
 		
@@ -135,27 +150,30 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 				if (learningObjectContent != null) {
 					Intent relatedContentDetailIntent = null;
 					
-					if (learningObjectContent[1] instanceof Video) {
+					if (learningObjectContent[TestQuestionEditActivity.RELATED_CONTENT_OBJECT] instanceof Video) {
 						relatedContentDetailIntent = new Intent("VIDEO_DETAIL_ACTIVITY");
+						relatedContentDetailIntent.putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, (Integer)learningObjectContent[TestQuestionEditActivity.RELATED_CONTENT_INDEX]);
 						
-					} else if (learningObjectContent[1] instanceof Audio) {
+					} else if (learningObjectContent[TestQuestionEditActivity.RELATED_CONTENT_OBJECT] instanceof Audio) {
 						relatedContentDetailIntent = new Intent("AUDIO_DETAIL_ACTIVITY");
+						relatedContentDetailIntent.putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, (Integer)learningObjectContent[TestQuestionEditActivity.RELATED_CONTENT_INDEX]);
 						
-					} else if (learningObjectContent[1] instanceof Document) {
+					} else if (learningObjectContent[TestQuestionEditActivity.RELATED_CONTENT_OBJECT] instanceof Document) {
 						relatedContentDetailIntent = new Intent("DOCUMENT_DETAIL_ACTIVITY");
+						relatedContentDetailIntent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, (Integer)learningObjectContent[TestQuestionEditActivity.RELATED_CONTENT_INDEX]);
 					}
 
 					if (relatedContentDetailIntent != null) {
 						relatedContentDetailIntent.putExtra(LoginActivity.ARG_USER, TestQuestionDetailActivity.this.user);
 						relatedContentDetailIntent.putExtra(CourseSectionFragment.ARG_COURSE, TestQuestionDetailActivity.this.course);
 						relatedContentDetailIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, TestQuestionDetailActivity.this.learningObjectIndex);
-						relatedContentDetailIntent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, (Integer)learningObjectContent[0]);
+						relatedContentDetailIntent.putExtra(LearningObjectSectionFragment.ARG_AS_STUDENT, true);
 						
-						startActivity(relatedContentDetailIntent);
+						TestQuestionDetailActivity.this.relatedContentActivityOpen = true;
+						
+						startActivityForResult(relatedContentDetailIntent, TestQuestionDetailActivity.RELATED_CONTENT_CALL);
 					} 
-				} else {
-					//TODO what to do when the relatedContent is not found
-				}
+				} 
 			}
 		});
 		
@@ -174,49 +192,41 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 			rb = new MyRadioButton(this, i);
 			this.radioButtonList.add(rb);
 			rb.setText(option.getItem() + getResources().getString(R.string.item_separator) + option.getStatement());
-			rb.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					for (RadioButton auxRb : TestQuestionDetailActivity.this.radioButtonList) {
-						if (auxRb.getId() == v.getId()) {
-							auxRb.setChecked(true);
-						} else {
-							auxRb.setChecked(false);
-						}
-					}
-				}
-			});
 			radioGroup.addView(rb);
 		}
 		llRadioGroup.addView(radioGroup);
 		
-		checkIfHasAnsweredCorrect();
+		if (this.testQuestion.getStatus() == TestQuestion.Status.CORRECT) {
+			this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_correct));
+			
+			if (!TextUtils.isEmpty(TestQuestionDetailActivity.this.testQuestion.getRelatedContendId())) {
+				this.ivTestQuestionRelatedContentThumbnail.setVisibility(View.VISIBLE);
+			} else { 
+				this.ivTestQuestionRelatedContentThumbnail.setVisibility(View.INVISIBLE);
+			}
+			
+			this.btnSubmit.setClickable(false);
+			setRadioGroupClickable(false);
+			int index = this.testQuestion.getOptionList().indexOf(this.testQuestion.getCorrectOption());
+			this.radioButtonList.get(index).setChecked(true);
+		}
 	}
 	
-	private void checkIfHasAnsweredCorrect() {
-		this.hasAnsweredCorrectCallTask = new HasAnsweredCorrectCallTask();
-		this.hasAnsweredCorrectCallTask.setOnWebServiceCallDoneListener(TestQuestionDetailActivity.this);
-		this.hasAnsweredCorrectCallTask.execute(getUrlWebService(HasAnsweredCorrectCallTask.HAS_ANSWERED_CORRECT_WEB_SERVICE),
-				getResources().getString(R.string.namespace_webservice),
-				getResources().getString(R.string.has_answered_correct_webservice_operation),
-				this.user.getId(), 
-				this.course.getId(), 
-				this.course.getLearningObjectList().get(this.learningObjectIndex).getId(), 
-				this.testQuestion.getId(),
-				this.testQuestion.getCorrectOption().getId());
+	private void setRadioGroupClickable(boolean clickable) {
+		for (RadioButton rb : this.radioButtonList) {
+			rb.setClickable(clickable);
+		}
 	}
 
 	@Override
 	public void onBackPressed() {
 		setResultParameters();
-		super.onBackPressed();
+		finish();
 	}
 
 	private void setResultParameters() {
 		Intent result = new Intent();
-		result.putExtra(CHOOSE_CORRECT_ARG, this.chooseCorrect);
-		result.putExtra(TEST_ANSWER_ARG, this.testAnswer);
+		result.putExtra(ARG_WAS_ANSWERED, this.wasAnswered);
 		setResult(RESULT_OK, result);
 	}
 	
@@ -225,36 +235,60 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 		super.onDestroy();
 	}
 
-	@Override
-	public String getUrlWebService(int serviceCode) {
+	private String getUrlWebService(int serviceCode) {
 		if (serviceCode == SaveTestAnswerCallTask.SAVE_TEST_ANSWER_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.test_answer_repository) + "/" + getResources().getString(R.string.save_test_answer_webservice_operation);
-		} else if (serviceCode == HasAnsweredCorrectCallTask.HAS_ANSWERED_CORRECT_WEB_SERVICE) {
-			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.test_answer_repository) + "/" + getResources().getString(R.string.has_answered_correct_webservice_operation);
+		} else if (serviceCode == GetAnswerStatusCallTask.GET_ANSWER_STATUS_WEB_SERVICE) {
+			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.test_answer_repository) + "/" + getResources().getString(R.string.get_answer_status_webservice_operation);
 		}
 		return null;
 	}
 	
 	@Override
 	public void returnServiceResponse(int serviceCode, boolean resultOk) {
-		if (serviceCode == HasAnsweredCorrectCallTask.HAS_ANSWERED_CORRECT_WEB_SERVICE) {
-			if (resultOk) {
-				this.ivTestQuestionDetailThumbnail.setImageDrawable(getResources().getDrawable(R.drawable.ic_correct));
-				this.ivTestQuestionRelatedContentThumbnail.setVisibility(View.VISIBLE);
-				this.btnSubmit.setEnabled(false);
-				int index = this.testQuestion.getOptionList().indexOf(this.testQuestion.getCorrectOption());
-				this.radioButtonList.get(index).setChecked(true);
-			} else {
-				//do nothing
-			}
-			this.hasAnsweredCorrectCallTask = null;
-		} else if (serviceCode == SaveTestAnswerCallTask.SAVE_TEST_ANSWER_WEB_SERVICE) {
+		if (serviceCode == SaveTestAnswerCallTask.SAVE_TEST_ANSWER_WEB_SERVICE) {
 			if (!resultOk) {
 				showToast(getResources().getString(R.string.error_unable_to_save_test_answer));
 			}
 			TestQuestionDetailActivity.this.saveTestAnswerCallTask = null;
 		}
 	}
+	
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		  if ((!this.relatedContentActivityOpen) &&(event.getAction() == MotionEvent.ACTION_OUTSIDE)) {
+        	  onBackPressed();
+              return true;
+          }
+          return false;
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == RELATED_CONTENT_CALL) {
+			this.relatedContentActivityOpen = false;
+		}
+	}
+	
+//	private Object[] getRelatedContent(String relatedContentId) {
+//		
+//		Object[] relatedContent = new Object[2];
+//		LearningObjectContent learningObjectContent;
+//		List<LearningObjectContent> learningObjectContentList = this.course.getLearningObjectList().get(this.learningObjectIndex).getLearningObjectContentList();
+//		
+//		for (int i = 0; i < learningObjectContentList.size(); i++) {
+//			learningObjectContent = (LearningObjectContent)learningObjectContentList.get(i);
+//			if (learningObjectContent.getId().equals(relatedContentId)) {
+//				relatedContent[TestQuestionEditActivity.RELATED_CONTENT_INDEX] = i;
+//				relatedContent[TestQuestionEditActivity.RELATED_CONTENT_OBJECT] = learningObjectContent;
+//				
+//				return relatedContent;
+//			}
+//		}
+//		
+//		return null;
+//	}
 	
 	private Object[] getRelatedContent(String relatedContentId) {
 		Object[] relatedContent = getLearningObjectContent(this.course.getLearningObjectList().get(this.learningObjectIndex).getVideoList(), relatedContentId);
@@ -282,8 +316,8 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 		for (int i =0; i < learningObjectContentList.size(); i++) {
 			learningObjectContent = (LearningObjectContent)learningObjectContentList.get(i);
 			if (learningObjectContent.getId().equals(learningObjectContentId)) {
-				relatedContent[0] = i;
-				relatedContent[1] = learningObjectContent;
+				relatedContent[TestQuestionEditActivity.RELATED_CONTENT_INDEX] = i;
+				relatedContent[TestQuestionEditActivity.RELATED_CONTENT_OBJECT] = learningObjectContent;
 				
 				return relatedContent;
 			}

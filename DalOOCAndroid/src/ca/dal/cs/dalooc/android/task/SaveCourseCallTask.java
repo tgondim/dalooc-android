@@ -56,7 +56,7 @@ private static final String LOG_TAG = "SaveCourseCallTask";
 				}
 			} 
 		} catch (Exception e) {
-			Log.e(LOG_TAG, e.getStackTrace().toString());
+			Log.e(LOG_TAG, e.toString());
 		}
         
         return false;

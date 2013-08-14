@@ -20,7 +20,8 @@
     <string name="register_user_webservice_operation">registerUser</string>
     <string name="validate_user_webservice_operation">validateUser</string>
     <string name="save_test_answer_webservice_operation">saveTestAnswer</string>
-    <string name="has_answered_correct_webservice_operation">hasAnsweredCorrect</string>
+    <string name="get_answer_status_webservice_operation">getAnswerStatus</string>
+    <string name="get_learning_object_status_webservice_operation">getLearningObjectStatus</string>
     <string name="remove_course_webservice_operation">removeCourse</string>
     
     <string name="videos_folder">/videos</string>

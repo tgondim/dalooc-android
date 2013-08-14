@@ -1,6 +1,8 @@
 package ca.dal.cs.dalooc.android.gui;
 
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +12,7 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -23,7 +26,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
 import ca.dal.cs.dalooc.android.task.UpdateCourseCallTask;
@@ -84,6 +87,8 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 	
 	private EditText etOrder;
 	
+	private EditText etCorrectQuestionsRatio;
+	
 	private LinearLayout llVideos;
 
 	private LinearLayout llAudio;
@@ -106,6 +111,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		this.etName = (EditText)findViewById(R.id.etName);
 		this.etDescription = (EditText)findViewById(R.id.etDescription);
 		this.etOrder = (EditText)findViewById(R.id.etOrder);
+		this.etCorrectQuestionsRatio = (EditText)findViewById(R.id.etCorrectQuestionsRatio);
 		
 		this.videosLayoutMapping = new HashMap<View, Object[]>();
 		this.audioLayoutMapping = new HashMap<View, Object[]>();
@@ -182,7 +188,37 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 			
 			@Override
 			public void onClick(View v) {
-				finishSaving();
+				resetFieldErrors();
+				
+				boolean cancel = false;
+				View focusView = null;
+				
+				// Check for a valid order.
+				if (TextUtils.isEmpty(LearningObjectEditActivity.this.etOrder.getText().toString().replaceAll("\\s+$", ""))) {
+					LearningObjectEditActivity.this.etOrder.setError(getString(R.string.error_field_required));
+					focusView = LearningObjectEditActivity.this.etOrder;
+					cancel = true;
+				} 
+
+				// Check for a valid ratio.
+				if (TextUtils.isEmpty(LearningObjectEditActivity.this.etCorrectQuestionsRatio.getText().toString().replaceAll("\\s+$", ""))) {
+					LearningObjectEditActivity.this.etCorrectQuestionsRatio.setError(getString(R.string.error_field_required));
+					focusView = LearningObjectEditActivity.this.etCorrectQuestionsRatio;
+					cancel = true;
+				} 
+				
+				// Check for a valid name.
+				if (TextUtils.isEmpty(LearningObjectEditActivity.this.etName.getText().toString().replaceAll("\\s+$", ""))) {
+					LearningObjectEditActivity.this.etName.setError(getString(R.string.error_field_required));
+					focusView = LearningObjectEditActivity.this.etName;
+					cancel = true;
+				} 
+				
+				if (cancel) {
+					focusView.requestFocus();
+				} else {
+					finishSaving();
+				}
 			}
 		});
 		
@@ -215,10 +251,17 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		}
 	}
 
+	private void resetFieldErrors() {
+		this.etOrder.setError(null);
+		this.etCorrectQuestionsRatio.setError(null);
+		this.etName.setError(null);
+	}
+	
 	private void loadData() {
 		this.etName.setText(this.learningObject.getName());
 		this.etDescription.setText(this.learningObject.getDescription());
 		this.etOrder.setText(String.valueOf(this.learningObject.getOrder()));
+		this.etCorrectQuestionsRatio.setText(String.valueOf(this.learningObject.getCorrectAnswersPercentage() * 100));
 		
 		for (Video video : this.learningObject.getVideoList()) {
 			createVideoEntry(video);
@@ -241,6 +284,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		this.learningObject.setName(this.etName.getText().toString());
 		this.learningObject.setDescription(this.etDescription.getText().toString());
 		this.learningObject.setOrder(Integer.valueOf(this.etOrder.getText().toString()));
+		this.learningObject.setCorrectAnswersPercentage(Double.valueOf(this.etCorrectQuestionsRatio.getText().toString()) / 100);
 		//videos, audio, documents and test questions fetch is made when returning from respective edit activities
 	}
 	
@@ -351,6 +395,17 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				createVideoEntry(video);
 				this.learningObject.getVideoList().add(video);
 				
+				Comparator<Video> videoComparator = new Comparator<Video>() {
+					@Override
+					public int compare(final Video object1, final Video object2) {
+						return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+					}
+				};
+
+				if (this.learningObject.getVideoList().size() > 0) {
+					Collections.sort(this.learningObject.getVideoList(), videoComparator);
+				}
+				
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO, video);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_VIDEO_INDEX, -1);
 				
@@ -364,6 +419,17 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				createAudioEntry(audio);
 				this.learningObject.getAudioList().add(audio);
 				
+				Comparator<Audio> audioComparator = new Comparator<Audio>() {
+					@Override
+					public int compare(final Audio object1, final Audio object2) {
+						return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+					}
+				};
+
+				if (this.learningObject.getAudioList().size() > 0) {
+					Collections.sort(this.learningObject.getAudioList(), audioComparator);
+				}
+				
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO, audio);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_AUDIO_INDEX, -1);
 				
@@ -376,6 +442,17 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				Document document = (Document)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT);
 				createDocumentEntry(document);
 				this.learningObject.getDocumentList().add(document);
+				
+				Comparator<Document> documentComparator = new Comparator<Document>() {
+					@Override
+					public int compare(final Document object1, final Document object2) {
+						return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+					}
+				};
+
+				if (this.learningObject.getDocumentList().size() > 0) {
+					Collections.sort(this.learningObject.getDocumentList(), documentComparator);
+				}
 
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT, document);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, -1);
@@ -390,6 +467,17 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				createTestQuestionEntry(testQuestion);
 				this.learningObject.getTestQuestionList().add(testQuestion);
 				
+				Comparator<TestQuestion> testQuestionComparator = new Comparator<TestQuestion>() {
+					@Override
+					public int compare(final TestQuestion object1, final TestQuestion object2) {
+						return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+					}
+				};
+
+				if (this.learningObject.getTestQuestionList().size() > 0) {
+					Collections.sort(this.learningObject.getTestQuestionList(), testQuestionComparator);
+				}
+				
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION, testQuestion);
 				getResultIntent().putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, -1);
 				
@@ -400,8 +488,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 		}
 	}
 	
-	@Override
-	public String getUrlWebService(int serviceCode) {
+	private String getUrlWebService(int serviceCode) {
 		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}
@@ -715,7 +802,7 @@ public class LearningObjectEditActivity extends FragmentActivity implements OnCo
 				intent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, LearningObjectEditActivity.this.learningObjectIndex);
 				int testQuestionIndex = LearningObjectEditActivity.this.learningObject.getTestQuestionList()
 						.indexOf(LearningObjectEditActivity.this.testQuestionsLayoutMapping.get((View)v.getParent())[OBJECT_ITEM]);
-				intent.putExtra(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX, testQuestionIndex);
+				intent.putExtra(LearningObjectSectionFragment.ARG_TEST_QUESTION_INDEX, testQuestionIndex);
 				startActivityForResult(intent, LearningObjectEditActivity.EDIT_TEST_QUESTION_REQUEST_CODE);
 			}
 		});

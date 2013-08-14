@@ -29,25 +29,37 @@
             android:textAppearance="?android:attr/textAppearanceMedium" />
     </LinearLayout>
     
-	<LinearLayout android:id="@+id/llForm"
+	<RelativeLayout android:id="@+id/rlForm"
 	   android:layout_width="match_parent"
-	   android:layout_height="match_parent"
-	   android:layout_gravity="center"
-	   android:gravity="center_horizontal"
-	   android:orientation="vertical">
+	   android:layout_height="match_parent" >
         
-		<ScrollView android:layout_width="match_parent"
-		    android:layout_height="match_parent"
-		    android:layout_weight="1" >
+		<ScrollView android:id="@+id/scrollView1" 
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent" 
+		    android:paddingBottom="50dp" >
 		
 		    <LinearLayout  android:id="@+id/llVideoEdit"
 		    	android:layout_marginTop="10dp"
-		    	android:layout_marginBottom="10dp"
+		    	android:layout_marginBottom="50dp"
 		    	android:layout_marginRight="10dp"
 		    	android:layout_marginLeft="10dp"
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
 		        android:orientation="vertical" >
+		        
+		        <TextView android:layout_width="wrap_content"
+			            android:layout_height="wrap_content"
+			            android:text="@string/order" 
+			            android:textStyle="bold"
+			            android:textAppearance="?android:attr/textAppearanceMedium"/>
+			
+		        <EditText android:id="@+id/etVideoOrder"
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content"
+		            android:ems="3"
+		            android:inputType="number">
+		            <requestFocus />
+		        </EditText>
 		
 		        <TextView  android:layout_width="wrap_content"
 		            android:layout_height="wrap_content"
@@ -59,10 +71,7 @@
 		            android:layout_width="match_parent"
 		            android:layout_height="wrap_content"
 		            android:inputType="textShortMessage"
-		            android:ems="10" >
-		
-		            <requestFocus />
-		        </EditText>
+		            android:ems="10" />
 		
 		        <TextView android:layout_width="wrap_content"
 		            android:layout_height="wrap_content"
@@ -114,10 +123,10 @@
 		
 		</ScrollView>
 		
-		 <LinearLayout android:layout_width="match_parent"
-	    	android:layout_height="match_parent"
-      		android:layout_weight="11"
+		<LinearLayout android:layout_width="match_parent"
+	    	android:layout_height="wrap_content"
       		style="?android:attr/buttonBarStyle"
+      		android:layout_alignParentBottom="true"
 		    android:orientation="horizontal" >
 		    
 			<Button android:id="@+id/btnSave"
@@ -139,5 +148,5 @@
 	      		style="?android:attr/buttonBarButtonStyle" />
 		    
 	    </LinearLayout>
-	</LinearLayout>
+	</RelativeLayout>
 </merge>

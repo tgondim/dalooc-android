@@ -23,10 +23,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnDownloadDocumentDoneListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
@@ -65,11 +66,13 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 	
 	private EditText etDescription;
 	
+	private EditText etDocumentOrder;
+	
 	private ImageButton ibDocumentPreview;
 
 	private ImageButton ibDocumentUpload;
 	
-	private LinearLayout llForm;
+	private  RelativeLayout rlForm;
 	
 	private LinearLayout llUploadPreviewStatus;
 	
@@ -95,12 +98,13 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_document_edit);
 		
-		this.llForm = (LinearLayout)findViewById(R.id.llForm);
+		this.rlForm = (RelativeLayout)findViewById(R.id.rlForm);
 		this.llUploadPreviewStatus = (LinearLayout)findViewById(R.id.llUploadPreviewStatus);
 		this.tvUploadStatusMessage = (TextView)findViewById(R.id.tvUploadStatusMessage);
 
 		this.etName = (EditText)findViewById(R.id.etName);
 		this.etDescription = (EditText)findViewById(R.id.etDescription);
+		this.etDocumentOrder = (EditText)findViewById(R.id.etDocumentOrder);
 		
 		LinearLayout llDocumentEditButtons = (LinearLayout)findViewById(R.id.llDocumentEditButtons);
 		
@@ -163,7 +167,30 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 			
 			@Override
 			public void onClick(View v) {
-				finishSaving();
+				resetFieldErrors();
+				
+				boolean cancel = false;
+				View focusView = null;
+				
+				// Check for a valid order.
+				if (TextUtils.isEmpty(DocumentEditActivity.this.etDocumentOrder.getText().toString().replaceAll("\\s+$", ""))) {
+					DocumentEditActivity.this.etDocumentOrder.setError(getString(R.string.error_field_required));
+					focusView = DocumentEditActivity.this.etDocumentOrder;
+					cancel = true;
+				} 
+
+				// Check for a valid name.
+				if (TextUtils.isEmpty(DocumentEditActivity.this.etName.getText().toString().replaceAll("\\s+$", ""))) {
+					DocumentEditActivity.this.etName.setError(getString(R.string.error_field_required));
+					focusView = DocumentEditActivity.this.etName;
+					cancel = true;
+				} 
+				
+				if (cancel) {
+					focusView.requestFocus();
+				} else {
+					finishSaving();
+				}
 			}
 		});
 		
@@ -197,15 +224,22 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 			}
 		}
 	}
+	
+	private void resetFieldErrors() {
+		this.etDocumentOrder.setError(null);
+		this.etName.setError(null);
+	}
 
 	private void loadData() {
 		this.etName.setText(this.document.getName());
 		this.etDescription.setText(this.document.getDescription());
+		this.etDocumentOrder.setText(String.valueOf(this.document.getOrder()));
 	}
 
 	private void fetchData() {
 		this.document.setName(this.etName.getText().toString());
 		this.document.setDescription(this.etDescription.getText().toString());
+		this.document.setOrder(Integer.valueOf(this.etDocumentOrder.getText().toString()));
 
 		if (!TextUtils.isEmpty(this.document.getContentFileName())) {
 			this.document.setType(Document.getDocumentType(this.document.getContentFileName().substring(this.document.getContentFileName().lastIndexOf(".") + 1)));			
@@ -334,7 +368,7 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 	
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask = new UploadFileTask(this.tvUploadStatusMessage);
 		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
 		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.documents_folder),
@@ -344,7 +378,7 @@ public class DocumentEditActivity extends FragmentActivity implements OnConfirmD
 	
 	private void showProgress(boolean show, String msg) {
 		this.llUploadPreviewStatus.setVisibility(show ? View.VISIBLE : View.GONE);
-		this.llForm.setVisibility(show ? View.GONE : View.VISIBLE);
+		this.rlForm.setVisibility(show ? View.GONE : View.VISIBLE);
 		this.tvUploadStatusMessage.setText(msg);
 	}
 	

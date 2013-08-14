@@ -6,20 +6,31 @@ import org.ksoap2.serialization.SoapPrimitive;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
 
-import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
-
 import android.os.AsyncTask;
+import android.text.TextUtils;
 import android.util.Log;
+import android.widget.ImageView;
+import ca.dal.cs.dalooc.android.gui.listener.OnGetStatusCallDoneListener;
 
-public class HasAnsweredCorrectCallTask extends AsyncTask<String, Void, Boolean> {
+public class GetAnswerStatusCallTask extends AsyncTask<String, Void, String> {
 	
-	public static final int HAS_ANSWERED_CORRECT_WEB_SERVICE = 300;
+	public static final int GET_ANSWER_STATUS_WEB_SERVICE = 300;
 	
-	private OnWebServiceCallDoneListener onWebServiceCallDoneListener;
+	private OnGetStatusCallDoneListener onGetAnswerStatusCallDoneListener;
 	
-	private static final String LOG_TAG = "HasAnsweredCorrectCallTask";
+	private int position;
 	
-    protected Boolean doInBackground(String... urls) {
+	private ImageView ivIcon;
+	
+	private static final String LOG_TAG = "GetAnswerStatusCallTask";
+	
+	
+	public GetAnswerStatusCallTask(ImageView ivIcon, int position) {
+		this.ivIcon = ivIcon;
+		this.position = position;
+	}
+	
+    protected String doInBackground(String... urls) {
     	String webServiceUrl = urls[0];
         String webServiceNameSpace = urls[1];
         String webServiceOperation = urls[2];
@@ -42,39 +53,39 @@ public class HasAnsweredCorrectCallTask extends AsyncTask<String, Void, Boolean>
 		SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
 		
 		envelope.setOutputSoapObject(soap);
-		Log.d(LOG_TAG, "Calling DalOOCServices/TestAnswerRepository/hasAnsweredCorrect");
+		Log.d(LOG_TAG, "Calling DalOOCServices/TestAnswerRepository/getAnswerStatus");
 		
 		HttpTransportSE httpTransport = new HttpTransportSE(webServiceUrl);
 		
 		try {
-			// this.saveCourseWebServiceResponseOk = false;
 			httpTransport.call("", envelope);
 			SoapObject results = (SoapObject) envelope.bodyIn;
 			int count = results.getPropertyCount();
 			if (count != 0) {
-				if (((SoapPrimitive)results.getProperty("return")).toString().equals("true")) {
-					return true;
+				String returnString = ((SoapPrimitive)results.getProperty("return")).toString();
+				if (!TextUtils.isEmpty(returnString)) {
+					return returnString;
 				}
 			} 
 		} catch (Exception e) {
-			Log.e(LOG_TAG, e.getStackTrace().toString());
+			Log.e(LOG_TAG, e.toString());
 		}
         
-        return false;
+        return "none";
     }
 
     @Override
-    protected void onPostExecute(Boolean result) {
-    	fireOnWebServiceCallDoneEvent(result);
+    protected void onPostExecute(String result) {
+    	fireOnGetAnswerStatusCallDoneEvent(result);
     }
     
-    public void setOnWebServiceCallDoneListener(OnWebServiceCallDoneListener onWebServiceCallDoneListener) {
-		this.onWebServiceCallDoneListener = onWebServiceCallDoneListener;
+    public void setOnGetAnswerStatusCallDoneListener(OnGetStatusCallDoneListener onGetAnswerStatusCallDoneListener) {
+		this.onGetAnswerStatusCallDoneListener = onGetAnswerStatusCallDoneListener;
 	}
     
-    private void fireOnWebServiceCallDoneEvent(boolean resultOk) {
-		if (this.onWebServiceCallDoneListener != null) {
-			this.onWebServiceCallDoneListener.returnServiceResponse(HAS_ANSWERED_CORRECT_WEB_SERVICE, resultOk);
+    private void fireOnGetAnswerStatusCallDoneEvent(String resultString) {
+		if (this.onGetAnswerStatusCallDoneListener != null) {
+			this.onGetAnswerStatusCallDoneListener.onGetStatusCallResponse(resultString, this.ivIcon, null, this.position);
 		}
 	}
 }

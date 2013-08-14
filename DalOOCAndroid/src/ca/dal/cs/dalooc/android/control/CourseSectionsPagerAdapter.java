@@ -6,10 +6,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.FragmentTransaction;
-import android.view.ViewGroup;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.gui.CourseActivity;
 import ca.dal.cs.dalooc.android.gui.CourseSectionFragment;
@@ -31,7 +28,7 @@ public class CourseSectionsPagerAdapter extends FragmentStatePagerAdapter {
 		Bundle args = new Bundle();		
 		args.putInt(CourseSectionFragment.ARG_SECTION_NUMBER, position + 1);
 		args.putSerializable(LoginActivity.ARG_USER, ((CourseActivity)this.context).getUser());
-		args.putSerializable(CourseSectionFragment.ARG_COURSE, ((CourseActivity)this.context).getCourse());
+		args.putSerializable(CourseSectionFragment.ARG_COURSE, CourseActivity.getCourse());
 		fragment.setArguments(args);
 		
 		return fragment;

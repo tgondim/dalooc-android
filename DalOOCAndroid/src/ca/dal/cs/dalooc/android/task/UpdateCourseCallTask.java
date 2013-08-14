@@ -59,7 +59,7 @@ public class UpdateCourseCallTask extends AsyncTask<String, Void, Boolean> {
 				}
 			} 
 		} catch (Exception e) {
-			Log.e(LOG_TAG, e.getStackTrace().toString());
+			Log.e(LOG_TAG, e.toString());
 		}
         
         return false;

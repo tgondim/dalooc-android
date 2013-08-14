@@ -43,7 +43,9 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 
 	public static final int COURSE_ACTIVITY_CALL = 900;
 
-	public static final String ARG_REFRESH_COURSE_LIST = "arg_refresh_course_list";
+	public static final String ARG_REFRESH_COURSE_LIST = "refresh_course_list";
+	
+	public static final String ARG_REMOVE_COURSE_FROM_LIST = "remove_course_from_list";
 	
 	private SaveCourseCallTask saveCourseCallTask;
 	
@@ -112,9 +114,8 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 	private void getCourses() {
 		new Thread(new GetAllCoursesCall()).start();
 	}
-	
-	@Override
-	public String getUrlWebService(int serviceCode) {
+
+	private String getUrlWebService(int serviceCode) {
 		if (serviceCode == GetAllCoursesCall.GET_ALL_COURSES_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.get_all_courses_webservice_operation); 
 		} else if (serviceCode == SaveCourseCallTask.SAVE_COURSE_WEB_SERVICE) {
@@ -235,11 +236,14 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 					if (returnCourse != null) {
 						this.courseAdapter.getCourseList().set(this.lastPositionClicked, returnCourse);
 					}
-					Object refreshCourseList = extras.get(ARG_REFRESH_COURSE_LIST);
-					if (refreshCourseList != null) {
-						if ((Boolean)refreshCourseList) {
-							refreshCourseList();
+					Boolean removeCourse = extras.getBoolean(ARG_REMOVE_COURSE_FROM_LIST, false);
+					Boolean refreshCourseList = extras.getBoolean(ARG_REFRESH_COURSE_LIST, false);
+					if (refreshCourseList) {
+						if (removeCourse) {
+							this.courseAdapter.remove(this.lastPositionClicked); 
 						}
+						this.courseAdapter.notifyDataSetChanged();
+						CourseActivity.contentUpdated = false;
 					}
 				}
 			}

@@ -57,12 +57,12 @@ public class AudioAdapter extends BaseAdapter {
 		return this.audioList;
 	}
 	
-	public void setAudioList(List<Audio> videoList) {
-		this.audioList = videoList;
+	public void setAudioList(List<Audio> audioList) {
+		this.audioList = audioList;
 	}
 	
-	public void insert(Audio video) {
-		this.audioList.add(video);
+	public void insert(Audio audio) {
+		this.audioList.add(audio);
 	}
 
 }

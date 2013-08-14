@@ -1,5 +1,9 @@
 package ca.dal.cs.dalooc.android.gui;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -46,13 +50,6 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 	
 //	private Toast toast;
 	
-//	@SuppressLint("HandlerLeak")
-//	private Handler callBackHandler = new Handler() {
-//		public void handleMessage(android.os.Message msg) {
-//			//TODO implement what to do when persisting is done
-//		}
-//	};
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -81,7 +78,8 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
+		if (this.user.getId().equals(LearningObjectActivity.course.getOwnerId()) 
+				&& this.user.getUserType().equals(User.UserType.PROFESSOR)) {
 			getMenuInflater().inflate(R.menu.learning_object, menu);
 		}
 		return true;
@@ -152,6 +150,7 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 		if (requestCode == CourseEditActivity.EDIT_LEARNING_OBJECT_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				LearningObjectActivity.getCourse().getLearningObjectList().set(this.learningObjectIndex, (LearningObject)data.getExtras().get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT));
+				LearningObjectActivity.contentUpdated = true;
 				fireUpdateCourseTask();
 				loadData();
 			} else if (resultCode == Activity.RESULT_CANCELED) {
@@ -164,7 +163,22 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 		} else if (requestCode == LearningObjectEditActivity.NEW_VIDEO_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				Video videoReturned = (Video)data.getExtras().get(LearningObjectSectionFragment.ARG_VIDEO);
-				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getVideoList().add(videoReturned);
+				
+				List<Video> videoList = LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getVideoList();
+				videoList.add(videoReturned);
+				
+				Comparator<Video> videoComparator = new Comparator<Video>() {
+					@Override
+					public int compare(final Video object1, final Video object2) {
+						return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+					}
+				};
+
+				if (videoList.size() > 0) {
+					Collections.sort(videoList, videoComparator);
+				}
+				
+				LearningObjectActivity.contentUpdated = true;
 				fireUpdateCourseTask(); 
 				loadData();
 			}  else if (resultCode == Activity.RESULT_CANCELED) {
@@ -173,7 +187,22 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 		} else if (requestCode == LearningObjectEditActivity.NEW_AUDIO_REQUEST_CODE) { 
 			if (resultCode == Activity.RESULT_OK) {
 				Audio audioReturned = (Audio)data.getExtras().get(LearningObjectSectionFragment.ARG_AUDIO);
-				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getAudioList().add(audioReturned);
+				
+				List<Audio> audioList = LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getAudioList();
+				audioList.add(audioReturned);
+				
+				Comparator<Audio> audioComparator = new Comparator<Audio>() {
+					@Override
+					public int compare(final Audio object1, final Audio object2) {
+						return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+					}
+				};
+
+				if (audioList.size() > 0) {
+					Collections.sort(audioList, audioComparator);
+				}
+				
+				LearningObjectActivity.contentUpdated = true;
 				fireUpdateCourseTask(); 
 				loadData();
 			}  else if (resultCode == Activity.RESULT_CANCELED) {
@@ -182,7 +211,22 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 		} else if (requestCode == LearningObjectEditActivity.NEW_DOCUMENT_REQUEST_CODE) { 
 			if (resultCode == Activity.RESULT_OK) {
 				Document documentReturned = (Document)data.getExtras().get(LearningObjectSectionFragment.ARG_DOCUMENT);
-				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getDocumentList().add(documentReturned);
+				
+				List<Document> documentList = LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getDocumentList();
+				documentList.add(documentReturned);
+				
+				Comparator<Document> documentComparator = new Comparator<Document>() {
+					@Override
+					public int compare(final Document object1, final Document object2) {
+						return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+					}
+				};
+
+				if (documentList.size() > 0) {
+					Collections.sort(documentList, documentComparator);
+				}
+				
+				LearningObjectActivity.contentUpdated = true;
 				fireUpdateCourseTask(); 
 				loadData();
 			}  else if (resultCode == Activity.RESULT_CANCELED) {
@@ -191,7 +235,22 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 		} else if (requestCode == LearningObjectEditActivity.NEW_TEST_QUESTION_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
 				TestQuestion testQuestionReturned = (TestQuestion)data.getExtras().get(LearningObjectSectionFragment.ARG_TEST_QUESTION);
-				LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getTestQuestionList().add(testQuestionReturned);
+				
+				List<TestQuestion> testQuestionList = LearningObjectActivity.getCourse().getLearningObjectList().get(this.getLearningObjectIndex()).getTestQuestionList();
+				testQuestionList.add(testQuestionReturned);
+				
+				Comparator<TestQuestion> testQuestionComparator = new Comparator<TestQuestion>() {
+					@Override
+					public int compare(final TestQuestion object1, final TestQuestion object2) {
+						return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+					}
+				};
+
+				if (testQuestionList.size() > 0) {
+					Collections.sort(testQuestionList, testQuestionComparator);
+				}
+				
+				LearningObjectActivity.contentUpdated = true;
 				fireUpdateCourseTask(); 
 				loadData();
 			}  else if (resultCode == Activity.RESULT_CANCELED) {
@@ -215,14 +274,15 @@ public class LearningObjectActivity extends FragmentActivity implements OnWebSer
 	public void onBackPressed() {
 		if (LearningObjectActivity.contentUpdated) {
 			getResultIntent().putExtra(CourseActivity.ARG_COURSE, LearningObjectActivity.getCourse());
+			CourseActivity.contentUpdated = true;
+			getResultIntent().putExtra(TestQuestionDetailActivity.ARG_WAS_ANSWERED, true);
 			setResult(CourseActivity.LEARNING_OBJECT_ACTIVITY_CALL, getResultIntent());
 			LearningObjectActivity.contentUpdated = false;
 		}
 		finish();
 	}
 	
-	@Override
-	public String getUrlWebService(int serviceCode) {
+	private String getUrlWebService(int serviceCode) {
 		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}

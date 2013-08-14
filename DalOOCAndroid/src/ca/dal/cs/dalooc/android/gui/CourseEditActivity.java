@@ -27,7 +27,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
 import ca.dal.cs.dalooc.android.task.UpdateCourseCallTask;
@@ -138,8 +138,26 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 			
 			@Override
 			public void onClick(View v) {
-				finishSaving();
+				
+				resetFieldErrors();
+				
+				boolean cancel = false;
+				View focusView = null;
+				
+				// Check for a valid name.
+				if (TextUtils.isEmpty(CourseEditActivity.this.etName.getText().toString().replaceAll("\\s+$", ""))) {
+					CourseEditActivity.this.etName.setError(getString(R.string.error_field_required));
+					focusView = CourseEditActivity.this.etName;
+					cancel = true;
+				} 
+				
+				if (cancel) {
+					focusView.requestFocus();
+				} else {
+					finishSaving();
+				}
 			}
+
 		});
 		
 		Button btnDiscard = (Button)findViewById(R.id.btnDiscard);
@@ -163,6 +181,11 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 			}
 		}
 	}
+	
+	private void resetFieldErrors() {
+		this.etName.setError(null);
+	}
+
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -180,12 +203,10 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		
 		for (String prerequisite : this.course.getSyllabus().getPrerequisites()) {
 			createPrerequisiteEntry(prerequisite);
-//			((EditText)this.prerequisitesLayoutMapping.get(v)[NAME_VIEW]).setText(prerequisite);
 		}
 		
 		for (String reference : this.course.getSyllabus().getReferences()) {
 			createReferenceEntry(reference);
-//			((EditText)this.referencesLayoutMapping.get(v)[NAME_VIEW]).setText(reference);
 		}
 		
 		for (LearningObject learningObject : this.course.getLearningObjectList()) {
@@ -197,6 +218,7 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		this.course.setName(this.etName.getText().toString());
 		this.course.setDescription(this.etDescription.getText().toString());
 		this.course.setName(this.etName.getText().toString());
+		this.course.setOwnerId(this.user.getId());
 		
 		if (this.course.getSyllabus() == null) {
 			this.course.setSyllabus(new Syllabus());
@@ -208,9 +230,15 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		Iterator<ImageView> iterator = this.prerequisitesLayoutMapping.keySet().iterator();
 		this.course.getSyllabus().getPrerequisites().clear();
 		
+		String prerequisite;
+		
 		while (iterator.hasNext()) {
 			Object[] object = this.prerequisitesLayoutMapping.get(iterator.next());
-			this.course.getSyllabus().getPrerequisites().add(((EditText)object[NAME_VIEW]).getText().toString());
+			prerequisite = ((EditText)object[NAME_VIEW]).getText().toString().replaceAll("\\s+$", "");
+			
+			if (!TextUtils.isEmpty(prerequisite)) {
+				this.course.getSyllabus().getPrerequisites().add(prerequisite);
+			}
 		}
 		
 		Comparator<String> stringComparator = new Comparator<String>() {
@@ -227,9 +255,15 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		iterator = this.referencesLayoutMapping.keySet().iterator();
 		this.course.getSyllabus().getReferences().clear();
 		
+		String reference;
+		
 		while (iterator.hasNext()) {
 			Object[] object = this.referencesLayoutMapping.get(iterator.next());
-			this.course.getSyllabus().getReferences().add(((EditText)object[NAME_VIEW]).getText().toString());
+			reference = ((EditText)object[NAME_VIEW]).getText().toString().replaceAll("\\s+$", "");
+			
+			if (!TextUtils.isEmpty(reference)) {
+				this.course.getSyllabus().getReferences().add(reference);
+			}
 		}
 		
 		if (this.course.getSyllabus().getReferences().size() > 0) {
@@ -252,8 +286,8 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 	
 	private void finishSaving() {
 		fetchData();
+		CourseActivity.contentUpdated = true;
 		getResultIntent().putExtra(CourseActivity.ARG_COURSE, CourseEditActivity.this.course);
-//		resultIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, CourseEditActivity.this.learningObjectIndex);
 		setResult(Activity.RESULT_OK, getResultIntent());
 		finish();
 	}
@@ -304,8 +338,7 @@ public class CourseEditActivity extends FragmentActivity implements OnConfirmDia
 		}
 	}
 	
-	@Override
-	public String getUrlWebService(int serviceCode) {
+	private String getUrlWebService(int serviceCode) {
 		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}

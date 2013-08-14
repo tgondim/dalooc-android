@@ -48,7 +48,7 @@ public class DownloadDocumentTask extends AsyncTask<String, Void, File> {
         	}
         	fos.close();
         } catch (Exception e ) {
-        	Log.e("DownloadDocumentTask", e.getMessage());
+        	Log.e("DownloadDocumentTask", e.toString());
         }
         return this.documentFile;
     }

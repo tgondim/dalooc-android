@@ -32,7 +32,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.webservice.util.Parser;
@@ -480,7 +480,7 @@ public class LoginActivity extends FragmentActivity implements OnConfirmDialogRe
 			showProgress(false);
 		}
 		
-		public String getUrlWebService(String requestType) {
+		private String getUrlWebService(String requestType) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(getResources().getString(R.string.url_webservice));
 			sb.append("/");

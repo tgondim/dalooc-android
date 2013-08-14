@@ -323,7 +323,7 @@ public class CreateUserActivity extends Activity {
 			showProgress(false);
 		}
 		
-		public String getUrlWebService() {
+		private String getUrlWebService() {
 			StringBuilder sb = new StringBuilder();
 			sb.append(getResources().getString(R.string.url_webservice));
 			sb.append("/");

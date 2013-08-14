@@ -205,7 +205,7 @@ public class CourseSectionFragment extends Fragment {
 			break;
 			
 		case 2: 
-			this.learningObjectAdapter = new LearningObjectAdapter(inflater);
+			this.learningObjectAdapter = new LearningObjectAdapter(inflater, this.user.getId(), this.course.getId());
 
 			this.listViewItem = new ListView(inflater.getContext());
 			
@@ -223,12 +223,24 @@ public class CourseSectionFragment extends Fragment {
 					LearningObject learningObject = (LearningObject)CourseSectionFragment.this.listViewItem.getAdapter().getItem(position);
 					
 					if (learningObject != null) {
-						learningObjectIntent = new Intent("LEARNING_OBJECT_ACTIVITY");
-						learningObjectIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, position);
-						learningObjectIntent.putExtra(LoginActivity.ARG_USER, CourseSectionFragment.this.user);
-						learningObjectIntent.putExtra(CourseSectionFragment.ARG_COURSE, CourseSectionFragment.this.course);
-
-						startActivityForResult(learningObjectIntent, CourseActivity.LEARNING_OBJECT_ACTIVITY_CALL);
+						
+						boolean openLearningObject = true;
+						
+						if (position > 0) {
+							LearningObject previousLearningObject = (LearningObject)CourseSectionFragment.this.listViewItem.getAdapter().getItem(position - 1);
+							openLearningObject = (previousLearningObject.getStatus() == LearningObject.Status.DONE);
+						}
+						
+						if (openLearningObject) {
+							learningObjectIntent = new Intent("LEARNING_OBJECT_ACTIVITY");
+							learningObjectIntent.putExtra(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, position);
+							learningObjectIntent.putExtra(LoginActivity.ARG_USER, CourseSectionFragment.this.user);
+							learningObjectIntent.putExtra(CourseSectionFragment.ARG_COURSE, CourseSectionFragment.this.course);
+	
+							startActivityForResult(learningObjectIntent, CourseActivity.LEARNING_OBJECT_ACTIVITY_CALL);
+						} else {
+							//TODO explain to user why the learning object is locked
+						}
 					}
 				}
 			});
@@ -249,12 +261,17 @@ public class CourseSectionFragment extends Fragment {
 			if (data != null) {
 				Bundle extras = data.getExtras();
 				if (extras != null) {
+					
 					Course returnCourse = (Course)extras.get(CourseSectionFragment.ARG_COURSE);
+					
 					if (returnCourse != null) {
 						this.course = returnCourse;
 						CourseActivity.setCourse(returnCourse);
 						CourseActivity.contentUpdated = true;
+						this.learningObjectAdapter.setLearningObjectList(this.course.getLearningObjectList());
+						this.learningObjectAdapter.notifyDataSetChanged();
 					}
+					
 				}
 			}
 		}

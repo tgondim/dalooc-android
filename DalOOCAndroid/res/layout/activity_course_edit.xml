@@ -1,14 +1,13 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:baselineAligned="false"
-    android:orientation="vertical">
+    android:layout_height="match_parent"  >
     
-	<ScrollView android:id="@+id/svCourseEdit"
-	    android:layout_width="match_parent"
-	    android:layout_height="match_parent"
-	    android:layout_weight="1" >
+	<ScrollView android:id="@+id/svCourseEdit" 
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent" 
+		    android:layout_alignParentTop="true" 
+		    android:paddingBottom="50dp">
 	
 	    <LinearLayout
 	        android:id="@+id/llCourseEdit"
@@ -156,7 +155,8 @@
 	        <RelativeLayout  android:id="@+id/rlLearningObjects"
 	            android:layout_marginTop="10dp"
 	            android:layout_width="match_parent"
-	            android:layout_height="wrap_content" >
+	            android:layout_height="wrap_content" 
+	            android:paddingBottom="10dp">
 	            
 	             <ImageView android:id="@+id/ivAddLearningObject"
 	                android:layout_width="wrap_content"
@@ -192,9 +192,9 @@
 	</ScrollView>
 	
 	<LinearLayout android:layout_width="match_parent"
-	  	android:layout_height="match_parent"
-		android:layout_weight="11"
+	  	android:layout_height="wrap_content"
 		style="?android:attr/buttonBarStyle"
+		android:layout_alignParentBottom="true"
 	    android:orientation="horizontal" >
 	   
 		<Button android:id="@+id/btnSave"
@@ -216,4 +216,4 @@
 			style="?android:attr/buttonBarButtonStyle" />
 			    
 	</LinearLayout>
-</LinearLayout>
+</RelativeLayout>

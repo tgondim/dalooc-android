@@ -1,15 +1,13 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:baselineAligned="false"
-    android:orientation="vertical"
     tools:context=".TestQuestionEditActivity">
     
 	<ScrollView android:id="@+id/svTestQuestionEdit"
 	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
-	     android:layout_weight="1">
+	    android:paddingBottom="50dp" >
 	
 	    <LinearLayout  android:id="@+id/llTestQuestionEdit"
 	    	android:layout_marginTop="10dp"
@@ -20,6 +18,20 @@
 	        android:layout_height="wrap_content"
 	        android:orientation="vertical" >
 	
+	        <TextView android:layout_width="wrap_content"
+			            android:layout_height="wrap_content"
+			            android:text="@string/order" 
+			            android:textStyle="bold"
+			            android:textAppearance="?android:attr/textAppearanceMedium"/>
+			
+	        <EditText android:id="@+id/etTestQuestionOrder"
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+	            android:ems="3"
+	            android:inputType="number">
+	            <requestFocus />
+	        </EditText>
+	        
 	        <TextView  android:layout_width="wrap_content"
 	            android:layout_height="wrap_content"
 	            android:text="@string/question" 
@@ -30,13 +42,11 @@
 	            android:layout_width="match_parent"
 	            android:layout_height="wrap_content"
 	            android:inputType="textShortMessage"
-	            android:ems="10" >
-	
-	            <requestFocus />
-	        </EditText>
+	            android:ems="10" />
 	        
 			<RelativeLayout android:layout_width="wrap_content"
-		        android:layout_height="wrap_content" >
+		        android:layout_height="wrap_content" 
+		        android:layout_marginTop="30dp">
 	            
 	            <TextView android:id="@+id/txtOption"
 	                android:layout_width="wrap_content"
@@ -87,14 +97,25 @@
 	            android:layout_marginTop="20dp"
 	            android:textAppearance="?android:attr/textAppearanceMedium"/>
 	
-	        <TextView android:id="@+id/tvRelatedContentName"
-	            android:layout_width="match_parent"
-	            android:layout_height="wrap_content"
-	            android:layout_marginTop="10dp"
-	            android:layout_marginLeft="10dp"
-	            android:ems="10"
-	            android:visibility="gone"
-	            android:textAppearance="?android:attr/textAppearanceMedium"/>
+	        <LinearLayout android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_gravity="center_vertical"
+		        android:orientation="horizontal" >
+	  	        
+	  	        <ImageView
+			        android:id="@+id/ivLearningObjectContentIcon"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"/>
+	  	        
+		        <TextView android:id="@+id/tvRelatedContentName"
+		            android:layout_width="match_parent"
+		            android:layout_height="wrap_content"
+		            android:layout_marginLeft="10dp"
+		            android:ems="10"
+		            android:visibility="visible"
+		            android:textAppearance="?android:attr/textAppearanceMedium"/>
+		        
+	        </LinearLayout>
 	        
 	        <LinearLayout  android:id="@+id/llTestQuestionEditButtons"
 		        android:layout_width="wrap_content"
@@ -107,9 +128,9 @@
 	</ScrollView>
 	
 	<LinearLayout android:layout_width="match_parent"
-	  	android:layout_height="match_parent"
-		android:layout_weight="11"
+	  	android:layout_height="wrap_content"
 		style="?android:attr/buttonBarStyle"
+		android:layout_alignParentBottom="true"
 	    android:orientation="horizontal" >
 	   
 		<Button android:id="@+id/btnSave"
@@ -132,4 +153,4 @@
 			    
 	</LinearLayout>
 	
-</LinearLayout>
+</RelativeLayout>

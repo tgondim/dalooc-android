@@ -64,6 +64,10 @@ public class CourseAdapter extends BaseAdapter {
 		this.courseList.add(course);
 	}
 	
+	public void remove(int index) {
+		this.courseList.remove(index);
+	}
+	
 	public void removeAllItems() {
 		this.courseList.clear();
 	}

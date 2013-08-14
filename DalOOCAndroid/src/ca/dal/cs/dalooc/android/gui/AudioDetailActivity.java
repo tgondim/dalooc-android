@@ -43,9 +43,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
-import ca.dal.cs.dalooc.android.gui.components.RecordingBlinkImageView;
-import ca.dal.cs.dalooc.android.gui.components.ToggleImageButton;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.RecordingBlinkImageView;
+import ca.dal.cs.dalooc.android.gui.component.ToggleImageButton;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnRecordingBlinkListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
@@ -114,7 +114,9 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	
 	private Intent resultIntent;
 	
-	private boolean contentUpdated; 
+	private boolean contentUpdated;
+	
+	private boolean asStudent;
 	
 	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
@@ -146,6 +148,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
 		this.learningObjectIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX);
 		this.audioIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_AUDIO_INDEX);
+		this.asStudent = getIntent().getExtras().getBoolean(LearningObjectSectionFragment.ARG_AS_STUDENT, false);
 		
 		this.audio = this.course.getLearningObjectList().get(this.learningObjectIndex).getAudioList().get(this.audioIndex);
 
@@ -187,7 +190,9 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 				ViewGroup.LayoutParams.WRAP_CONTENT, 
 				0));
 		
-		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
+		if (this.user.getId().equals(this.course.getOwnerId()) &&
+				this.user.getUserType().equals(User.UserType.PROFESSOR) 
+				&& !this.asStudent) {
 			this.ibAudioRecord = new ToggleImageButton(this, 
 					getResources().getDrawable(R.drawable.ic_audio_record), 
 					getResources().getDrawable(R.drawable.ic_media_stop));
@@ -235,7 +240,10 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 			@Override
 			public void onClick(View v) {
 				if (!TextUtils.isEmpty(AudioDetailActivity.this.audio.getContentFileName())) {
-					File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + AudioDetailActivity.this.audio.getContentFileName());
+					String downloadFileName = AudioDetailActivity.this.audio.getName().replaceAll("[^\\w\\.@-]", "") + 
+							AudioDetailActivity.this.audio.getContentFileName().substring(AudioDetailActivity.this.audio.getContentFileName().indexOf("."));
+					
+					File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + downloadFileName);
 					AudioDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 					Request request = new Request(Uri.parse(AudioDetailActivity.this.getResources().getString(R.string.host_file_server) 
 							+ AudioDetailActivity.this.getResources().getString(R.string.audio_folder)
@@ -336,7 +344,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		  if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
-              if (llDownloadPreviewStatus.getVisibility() != View.VISIBLE) {
+              if ((!this.asStudent) && (llDownloadPreviewStatus.getVisibility() != View.VISIBLE)) {
             	  onBackPressed();
               }
               return true;
@@ -513,7 +521,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask = new UploadFileTask(this.tvDownloadPreviewStatusMessage);
 		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
 		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.audio_folder), 
@@ -549,8 +557,7 @@ public class AudioDetailActivity extends FragmentActivity implements OnRecording
 				getResources().getString(R.string.update_course_webservice_operation));
 	}
 
-	@Override
-	public String getUrlWebService(int serviceCode) {
+	private String getUrlWebService(int serviceCode) {
 		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}

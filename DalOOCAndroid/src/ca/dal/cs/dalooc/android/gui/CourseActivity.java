@@ -1,5 +1,8 @@
 package ca.dal.cs.dalooc.android.gui;
 
+import java.util.Collections;
+import java.util.Comparator;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,7 +14,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
 import ca.dal.cs.dalooc.android.control.CourseSectionsPagerAdapter;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnWebServiceCallDoneListener;
 import ca.dal.cs.dalooc.android.task.RemoveCourseCallTask;
@@ -78,7 +81,8 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
+		if (this.user.getId().equals(CourseActivity.course.getOwnerId()) 
+				&& this.user.getUserType().equals(User.UserType.PROFESSOR)) {
 			getMenuInflater().inflate(R.menu.course, menu);
 		}
 		return true;
@@ -118,7 +122,8 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 	@Override
 	public void onBackPressed() {
 		if (CourseActivity.contentUpdated) {
-			getResultIntent().putExtra(CourseActivity.ARG_COURSE, LearningObjectActivity.getCourse());
+			getResultIntent().putExtra(CourseActivity.ARG_COURSE, CourseActivity.getCourse());
+			getResultIntent().putExtra(MainActivity.ARG_REFRESH_COURSE_LIST, true);
 			setResult(CourseActivity.LEARNING_OBJECT_ACTIVITY_CALL, getResultIntent());
 			LearningObjectActivity.contentUpdated = false;
 		}
@@ -149,6 +154,19 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 				if (extras != null) {
 					LearningObject learningObject = (LearningObject)extras.get(LearningObjectSectionFragment.ARG_LEARNING_OBJECT);
 					CourseActivity.getCourse().getLearningObjectList().add(learningObject);
+					
+					Comparator<LearningObject> learningObjectComparator = new Comparator<LearningObject>() {
+						@Override
+						public int compare(final LearningObject object1, final LearningObject object2) {
+							return ((Integer)object1.getOrder()).compareTo(object2.getOrder());
+						}
+					};
+
+					if (CourseActivity.course.getLearningObjectList().size() > 0) {
+						Collections.sort(CourseActivity.course.getLearningObjectList(), learningObjectComparator);
+					}
+					
+					CourseActivity.contentUpdated = true;
 					fireUpdateCourseTask();
 					loadData();
 				}
@@ -166,8 +184,7 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 				getResources().getString(R.string.update_course_webservice_operation));
 	}
 	
-	@Override
-	public String getUrlWebService(int serviceCode) {
+	private String getUrlWebService(int serviceCode) {
 		if (serviceCode == RemoveCourseCallTask.REMOVE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.remove_course_webservice_operation); 
 		} else if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
@@ -183,6 +200,7 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
 			if (resultOk) {
 				Intent intent = new Intent();
 				intent.putExtra(MainActivity.ARG_REFRESH_COURSE_LIST, true);
+				intent.putExtra(MainActivity.ARG_REMOVE_COURSE_FROM_LIST, true);
 				setResult(MainActivity.COURSE_ACTIVITY_CALL, intent);
 				finish();
 			} else {
@@ -243,7 +261,6 @@ public class CourseActivity extends FragmentActivity implements OnWebServiceCall
         FragmentManager fm = getSupportFragmentManager();
         
         Bundle args = new Bundle();
-        args.putString(ConfirmDialog.ARG_TITLE, getResources().getString(R.string.warning));
         args.putString(ConfirmDialog.ARG_MESSAGE, message);
         args.putBoolean(ConfirmDialog.ARG_CANCEL_BUTTON, false);
         args.putInt(ConfirmDialog.ARG_RETURN_CODE, returnCode);

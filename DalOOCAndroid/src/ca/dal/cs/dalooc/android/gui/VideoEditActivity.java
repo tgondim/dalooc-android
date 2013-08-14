@@ -26,10 +26,11 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.task.DownloadImageTask;
@@ -65,13 +66,15 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	
 	private EditText etDescription;
 	
+	private EditText etVideoOrder;
+	
 	private ImageButton ibVideoRecord;
 	
 	private ImageButton ibVideoPlay;
 
 	private ImageButton ibVideoUpload;
 	
-	private LinearLayout llForm;
+	private RelativeLayout llForm;
 	
 	private LinearLayout llUploadPreviewStatus;
 	
@@ -100,12 +103,13 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_video_edit);
 		
-		this.llForm = (LinearLayout)findViewById(R.id.llForm);
+		this.llForm = (RelativeLayout)findViewById(R.id.rlForm);
 		this.llUploadPreviewStatus = (LinearLayout)findViewById(R.id.llUploadPreviewStatus);
 		this.tvUploadStatusMessage = (TextView)findViewById(R.id.tvUploadStatusMessage);
 
 		this.etName = (EditText)findViewById(R.id.etName);
 		this.etDescription = (EditText)findViewById(R.id.etDescription);
+		this.etVideoOrder = (EditText)findViewById(R.id.etVideoOrder);
 		
 		LinearLayout llVideoEditButtons = (LinearLayout)findViewById(R.id.llVideoEditButtons);
 		
@@ -185,7 +189,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 				Intent uploadFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
 				uploadFileIntent.setType("video/*");
 				
-				startActivityForResult(uploadFileIntent, VideoDetailActivity.GET_VIDEO_FILE_ACTIVITY_REQUEST_CODE);				
+				startActivityForResult(uploadFileIntent, VideoDetailActivity.GET_VIDEO_FILE_NAME_ACTIVITY_REQUEST_CODE);				
 			}
 		});
 		
@@ -199,7 +203,30 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 			
 			@Override
 			public void onClick(View v) {
-				finishSaving();
+				resetFieldErrors();
+				
+				boolean cancel = false;
+				View focusView = null;
+				
+				// Check for a valid order.
+				if (TextUtils.isEmpty(VideoEditActivity.this.etVideoOrder.getText().toString().replaceAll("\\s+$", ""))) {
+					VideoEditActivity.this.etVideoOrder.setError(getString(R.string.error_field_required));
+					focusView = VideoEditActivity.this.etVideoOrder;
+					cancel = true;
+				} 
+
+				// Check for a valid name.
+				if (TextUtils.isEmpty(VideoEditActivity.this.etName.getText().toString().replaceAll("\\s+$", ""))) {
+					VideoEditActivity.this.etName.setError(getString(R.string.error_field_required));
+					focusView = VideoEditActivity.this.etName;
+					cancel = true;
+				} 
+				
+				if (cancel) {
+					focusView.requestFocus();
+				} else {
+					finishSaving();
+				}
 			}
 
 		});
@@ -236,9 +263,15 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 		}
 	}
 
+	private void resetFieldErrors() {
+		this.etVideoOrder.setError(null);
+		this.etName.setError(null);
+	}
+	
 	private void loadData() {
 		this.etName.setText(this.video.getName());
 		this.etDescription.setText(this.video.getDescription());
+		this.etVideoOrder.setText(String.valueOf(this.video.getOrder()));
 		
 		if (!TextUtils.isEmpty(this.video.getContentFileName())) {
 			downloadVideoIcon(0);
@@ -248,6 +281,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	private void fetchData() {
 		this.video.setName(this.etName.getText().toString());
 		this.video.setDescription(this.etDescription.getText().toString());
+		this.video.setOrder(Integer.valueOf(this.etVideoOrder.getText().toString()));
 	}
 	
 	private void finishSaving() {
@@ -284,7 +318,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	        } else {
 	            //TODO Video capture failed, warn user
 	        }
-	    } else if (requestCode == VideoDetailActivity.GET_VIDEO_FILE_ACTIVITY_REQUEST_CODE) {
+	    } else if (requestCode == VideoDetailActivity.GET_VIDEO_FILE_NAME_ACTIVITY_REQUEST_CODE) {
 	        if (resultCode == RESULT_OK) {
 	        	this.newFileName = data.getDataString().replace("file://", "");
 	        	showConfirmDialog(getResources().getString(R.string.video_overwrite_confirm), ACTION_CONFIRM_VIDEO_UPLOAD);
@@ -354,7 +388,7 @@ public class VideoEditActivity extends FragmentActivity implements OnConfirmDial
 	
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask = new UploadFileTask(this.tvUploadStatusMessage);
 		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
 		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.videos_folder),

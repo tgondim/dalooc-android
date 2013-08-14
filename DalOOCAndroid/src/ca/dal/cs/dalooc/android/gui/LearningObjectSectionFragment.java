@@ -22,14 +22,13 @@ import ca.dal.cs.dalooc.android.control.TestQuestionAdapter;
 import ca.dal.cs.dalooc.android.control.VideoAdapter;
 import ca.dal.cs.dalooc.model.Course;
 import ca.dal.cs.dalooc.model.LearningObject;
-import ca.dal.cs.dalooc.model.TestAnswer;
 import ca.dal.cs.dalooc.model.User;
 import ca.dal.cs.dalooc.model.Video;
 
 public class LearningObjectSectionFragment extends Fragment implements OnItemClickListener {
 
 	private static final int TEST_QUESTION_ANSWER_ACTIVITY_REQUEST_CODE = 600;
-	
+
 	public static final String ARG_SECTION_NUMBER = "section_number";
 	
 	public static final String ARG_LEARNING_OBJECT =  "learning_object";
@@ -47,12 +46,16 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 	public static final String ARG_VIDEO_INDEX =  "video_index";
 
 	public static final String ARG_AUDIO_INDEX =  "audio_index";
+
+	public static final String ARG_AS_STUDENT =  "as_student";
 	
 	public static final String ARG_DOCUMENT_INDEX =  "document_index";
 
 	public static final String ARG_TEST_QUESTION_INDEX =  "test_question_index";
 
 	public static final String ARG_VIDEO_THUMBNAIL =  "document";
+	
+	public static final String ARG_IS_VIDEO_ACTIVITY =  "is_video_activity";
 	
 	private int sectionNumber;
 	
@@ -128,7 +131,7 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 			break;
 			
 		case 4: 
-			this.testQuestionAdapter = new TestQuestionAdapter(inflater);
+			this.testQuestionAdapter = new TestQuestionAdapter(inflater, this.user.getId(), this.course.getId(), learningObject.getId());
 			
 			this.listViewItem.setAdapter(testQuestionAdapter);
 			this.listViewItem.setOnItemClickListener(this);
@@ -213,18 +216,18 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 	
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-//		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == TEST_QUESTION_ANSWER_ACTIVITY_REQUEST_CODE) {
 			if (resultCode == Activity.RESULT_OK) {
-				boolean chooseCorrect = data.getBooleanExtra(TestQuestionDetailActivity.CHOOSE_CORRECT_ARG, false);
-				TestAnswer answer = (TestAnswer)data.getSerializableExtra(TestQuestionDetailActivity.TEST_ANSWER_ARG);
-				
-//				((TestQuestion)this.listViewItem.getItemAtPosition(this.position)).set(R.id.ivTestQuestionThumbnail);
-//				if (chooseCorrect) {
-//					iv.setImageDrawable(getResources().getDrawable(R.drawable.correct));
-//				} else {
-//					iv.setImageDrawable(getResources().getDrawable(R.drawable.incorrect));
-//				}
+				if (data != null) {
+					Bundle extras = data.getExtras();
+					if (extras != null) {
+						boolean wasAnswered = (Boolean)extras.getBoolean(TestQuestionDetailActivity.ARG_WAS_ANSWERED, false);
+						if ((wasAnswered) && (this.testQuestionAdapter != null)) {
+							this.testQuestionAdapter.notifyDataSetChanged();
+							LearningObjectActivity.contentUpdated = true;
+						}
+					}
+				}
 			} else {
 				//till now, do nothing
 			}
@@ -233,20 +236,14 @@ public class LearningObjectSectionFragment extends Fragment implements OnItemCli
 				Bundle extras = data.getExtras();
 				if (extras != null) {
 					Course returnCourse = (Course)extras.get(CourseSectionFragment.ARG_COURSE);
+					boolean isVideoActivity = (Boolean)extras.getBoolean(ARG_IS_VIDEO_ACTIVITY, false);
 					if (returnCourse != null) {
 						this.course = returnCourse;
 						LearningObjectActivity.setCourse(returnCourse);
 						LearningObjectActivity.contentUpdated = true;
-						if (this.videoAdapter != null) {
+						
+						if ((isVideoActivity) && (this.videoAdapter != null)){
 							this.videoAdapter.notifyDataSetChanged();
-//							View view = this.videoAdapter.getView(this.lastSelectedItemPosition, null, null);
-//							Video video = this.videoAdapter.getVideoList().get(this.lastSelectedItemPosition);
-//							if (!TextUtils.isEmpty(video.getContentFileName())) {
-//								new DownloadImageTask((ImageView)view.findViewById(R.id.ivVideoThumbnail))
-//									.execute(view.getContext().getResources().getString(R.string.host_file_server)
-//											+ view.getContext().getResources().getString(R.string.videos_folder)
-//											+ "/thumb/" + video.getContentFileName().replace("mp4", "jpg"));
-//					 		}
 						}
 					}
 				}

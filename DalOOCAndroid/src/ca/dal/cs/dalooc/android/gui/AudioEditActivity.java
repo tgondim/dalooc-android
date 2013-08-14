@@ -27,12 +27,13 @@ import android.widget.Chronometer;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
-import ca.dal.cs.dalooc.android.gui.components.RecordingBlinkImageView;
-import ca.dal.cs.dalooc.android.gui.components.ToggleImageButton;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.RecordingBlinkImageView;
+import ca.dal.cs.dalooc.android.gui.component.ToggleImageButton;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnRecordingBlinkListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnToggleImageButtonListener;
@@ -71,13 +72,15 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	
 	private EditText etDescription;
 	
+	private EditText etAudioOrder;
+	
 	private ImageButton ibAudioUpload;
 	
 	private ToggleImageButton ibAudioPlay;
 	
 	private ToggleImageButton ibAudioRecord;
 	
-	private LinearLayout llForm;
+	private RelativeLayout rlForm;
 	
 	private RecordingBlinkImageView ivBlinkingImage;
 	
@@ -117,12 +120,13 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_audio_edit);
 		
-		this.llForm = (LinearLayout)findViewById(R.id.llForm);
+		this.rlForm = (RelativeLayout)findViewById(R.id.rlForm);
 		this.llUploadPreviewStatus = (LinearLayout)findViewById(R.id.llUploadPreviewStatus);
 		this.tvUploadStatusMessage = (TextView)findViewById(R.id.tvUploadStatusMessage);
 
 		this.etName = (EditText)findViewById(R.id.etName);
 		this.etDescription = (EditText)findViewById(R.id.etDescription);
+		this.etAudioOrder = (EditText)findViewById(R.id.etAudioOrder);
 		
 		LinearLayout llAudioEditButtons = (LinearLayout)findViewById(R.id.llAudioEditButtons);
 		
@@ -200,7 +204,30 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 			
 			@Override
 			public void onClick(View v) {
-				finishSaving();
+				resetFieldErrors();
+				
+				boolean cancel = false;
+				View focusView = null;
+				
+				// Check for a valid order.
+				if (TextUtils.isEmpty(AudioEditActivity.this.etAudioOrder.getText().toString().replaceAll("\\s+$", ""))) {
+					AudioEditActivity.this.etAudioOrder.setError(getString(R.string.error_field_required));
+					focusView = AudioEditActivity.this.etAudioOrder;
+					cancel = true;
+				} 
+
+				// Check for a valid name.
+				if (TextUtils.isEmpty(AudioEditActivity.this.etName.getText().toString().replaceAll("\\s+$", ""))) {
+					AudioEditActivity.this.etName.setError(getString(R.string.error_field_required));
+					focusView = AudioEditActivity.this.etName;
+					cancel = true;
+				} 
+				
+				if (cancel) {
+					focusView.requestFocus();
+				} else {
+					finishSaving();
+				}
 			}
 		});
 		
@@ -235,14 +262,21 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 		}
 	}
 
+	private void resetFieldErrors() {
+		this.etAudioOrder.setError(null);
+		this.etName.setError(null);
+	}
+	
 	private void loadData() {
 		this.etName.setText(this.audio.getName());
 		this.etDescription.setText(this.audio.getDescription());
+		this.etAudioOrder.setText(String.valueOf(this.audio.getOrder()));
 	}
 
 	private void fetchData() {
 		this.audio.setName(this.etName.getText().toString());
 		this.audio.setDescription(this.etDescription.getText().toString());
+		this.audio.setOrder(Integer.valueOf(this.etAudioOrder.getText().toString()));
 	}
 	
 	private void finishSaving() {
@@ -451,7 +485,7 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask = new UploadFileTask(this.tvUploadStatusMessage);
 		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
 		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.audio_folder),
@@ -461,7 +495,7 @@ public class AudioEditActivity extends FragmentActivity implements OnRecordingBl
 	
 	private void showProgress(boolean show, String msg) {
 		this.llUploadPreviewStatus.setVisibility(show ? View.VISIBLE : View.GONE);
-		this.llForm.setVisibility(show ? View.GONE : View.VISIBLE);
+		this.rlForm.setVisibility(show ? View.GONE : View.VISIBLE);
 		this.tvUploadStatusMessage.setText(msg);
 	}
 	

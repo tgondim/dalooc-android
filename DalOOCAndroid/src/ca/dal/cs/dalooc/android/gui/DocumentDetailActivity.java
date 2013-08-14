@@ -36,7 +36,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import ca.dal.cs.dalooc.android.R;
-import ca.dal.cs.dalooc.android.gui.components.ConfirmDialog;
+import ca.dal.cs.dalooc.android.gui.component.ConfirmDialog;
 import ca.dal.cs.dalooc.android.gui.listener.OnConfirmDialogReturnListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnDownloadDocumentDoneListener;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
@@ -98,6 +98,8 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	
 	private boolean contentUpdated;
 	
+	private boolean asStudent;
+	
 	@SuppressLint("HandlerLeak")
 	private Handler callBackHandler = new Handler() {
 		@Override
@@ -123,6 +125,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 		this.course = (Course)getIntent().getExtras().getSerializable(CourseSectionFragment.ARG_COURSE);
 		this.learningObjectIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX);
 		this.documentIndex = getIntent().getExtras().getInt(LearningObjectSectionFragment.ARG_DOCUMENT_INDEX);
+		this.asStudent = getIntent().getExtras().getBoolean(LearningObjectSectionFragment.ARG_AS_STUDENT, false);
 		
 		this.document = this.course.getLearningObjectList().get(this.learningObjectIndex).getDocumentList().get(this.documentIndex);
 
@@ -162,7 +165,9 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 				ViewGroup.LayoutParams.WRAP_CONTENT, 
 				0));
 		
-		if (this.user.getUserType().equals(User.UserType.PROFESSOR)) {
+		if (this.user.getId().equals(this.course.getOwnerId()) 
+				&& this.user.getUserType().equals(User.UserType.PROFESSOR) 
+				&& !this.asStudent) {
 			ibDocumentUpload = new ImageButton(this);
 			ibDocumentUpload.setImageDrawable(getResources().getDrawable(R.drawable.ic_upload));
 			ibDocumentUpload.setOnClickListener(new View.OnClickListener() {
@@ -171,15 +176,15 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 				public void onClick(View v) {
 					Intent uploadFileIntent = new Intent(Intent.ACTION_GET_CONTENT);
 					switch (document.getType()) {
-					case PDF: 
-						uploadFileIntent.setType("file/pdf");
-						break;
-					case DOC: 
-						uploadFileIntent.setType("file/doc");
-						break;
-					case PPT: 
-						uploadFileIntent.setType("file/pdf");
-						break;
+//					case PDF:
+//						uploadFileIntent.setType("file/pdf");
+//						break;
+//					case DOC:
+//						uploadFileIntent.setType("file/doc");
+//						break;
+//					case PPT:
+//						uploadFileIntent.setType("file/pdf");
+//						break;
 					default:
 						uploadFileIntent.setType("file/*");
 					}
@@ -200,7 +205,10 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 			@Override
 			public void onClick(View v) {
 				if (!TextUtils.isEmpty(DocumentDetailActivity.this.document.getContentFileName())) {
-					File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + DocumentDetailActivity.this.document.getContentFileName());
+					String downloadFileName = DocumentDetailActivity.this.document.getName().replaceAll("[^\\w\\.@-]", "") + 
+							DocumentDetailActivity.this.document.getContentFileName().substring(DocumentDetailActivity.this.document.getContentFileName().indexOf("."));
+					
+					File destDocFile = new File(Environment.getExternalStorageDirectory() + "/Download/" + downloadFileName);
 					DocumentDetailActivity.this.dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 					Request request = new Request(Uri.parse(DocumentDetailActivity.this.getResources().getString(R.string.host_file_server)
 							+ DocumentDetailActivity.this.getResources().getString(R.string.documents_folder)
@@ -266,7 +274,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		  if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
-              if (llDownloadPreviewStatus.getVisibility() != View.VISIBLE) {
+			  if ((!this.asStudent) && (llDownloadPreviewStatus.getVisibility() != View.VISIBLE)) {
             	  onBackPressed();
               }
               return true;
@@ -382,7 +390,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 	
 	private void uploadSelectedFile() {
 		showProgress(true, getResources().getString(R.string.upload_file_in_progress));
-		this.uploadFileTask = new UploadFileTask();
+		this.uploadFileTask = new UploadFileTask(this.tvDownloadPreviewStatusMessage);
 		this.uploadFileTask.setOnUploadFileTaskDoneListener(this);
 		this.uploadFileTask.execute(this.newFileName, 
 				getResources().getString(R.string.documents_folder), 
@@ -416,8 +424,7 @@ public class DocumentDetailActivity extends FragmentActivity implements OnDownlo
 				getResources().getString(R.string.update_course_webservice_operation));
 	}
 
-	@Override
-	public String getUrlWebService(int serviceCode) {
+	private String getUrlWebService(int serviceCode) {
 		if (serviceCode == UpdateCourseCallTask.UPDATE_COURSE_WEB_SERVICE) {
 			return getResources().getString(R.string.url_webservice) + "/" + getResources().getString(R.string.course_repository) + "/" + getResources().getString(R.string.update_course_webservice_operation);
 		}

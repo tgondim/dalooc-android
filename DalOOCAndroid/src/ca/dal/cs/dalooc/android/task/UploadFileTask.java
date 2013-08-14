@@ -11,11 +11,12 @@ import java.util.List;
 
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.TextView;
 import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.General;
 
 
-public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
+public class UploadFileTask extends AsyncTask<String, Double, Boolean> {
 	
 	private final static String LOG_TAG = "UploadFileTask";
 	
@@ -26,7 +27,13 @@ public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
 	public static final int UPLOAD_DONE = 3;
 	
 	private List<OnUploadFileTaskDoneListener> onUploadFileTaskDoneListeners = new ArrayList<OnUploadFileTaskDoneListener>();
+	
+	private TextView tvUploadStatusMessage;
 
+	public UploadFileTask(TextView tvUploadStatusMessage) {
+		this.tvUploadStatusMessage = tvUploadStatusMessage;
+	}
+	
 	@Override
 	protected Boolean doInBackground(String... params) {
 		HttpURLConnection connection = null;
@@ -85,6 +92,7 @@ public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
 				bytesAvailable = fileInputStream.available();
 				bufferSize = Math.min(bytesAvailable, maxBufferSize);
 				bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+//				publishProgress((bytesRead/(double)bytesAvailable)*100);
 			}
 	
 			outputStream.writeBytes(lineEnd);
@@ -94,12 +102,13 @@ public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
 			serverResponseCode = connection.getResponseCode();
 			serverResponseMessage = connection.getResponseMessage();
 	
+			
 			fileInputStream.close();
 			outputStream.flush();
 			outputStream.close();
 		} catch (Exception ex) {
 			//Exception handling
-			Log.e(LOG_TAG, ex.getStackTrace().toString());
+			Log.e(LOG_TAG, ex.toString());
 			fireOnUploadFileTaskDoneEvent(FILE_NOT_UPLOADED);
 			return false;
 		}
@@ -111,6 +120,11 @@ public class UploadFileTask extends AsyncTask<String, Void, Boolean> {
 		fireOnUploadFileTaskDoneEvent(FILE_UPLOADED_SUCCESSFULY);
 		return true;
 		
+	}
+	
+	@Override
+	protected void onProgressUpdate(Double... values) {
+		this.tvUploadStatusMessage.setText(String.valueOf(values[0]));
 	}
 	
 	@Override

@@ -1,4 +1,4 @@
-package ca.dal.cs.dalooc.android.gui.components;
+package ca.dal.cs.dalooc.android.gui.component;
 
 import android.content.Context;
 import android.widget.ImageView;

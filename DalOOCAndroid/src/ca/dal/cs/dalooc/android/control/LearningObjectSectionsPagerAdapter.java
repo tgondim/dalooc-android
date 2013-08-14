@@ -29,7 +29,7 @@ public class LearningObjectSectionsPagerAdapter extends FragmentStatePagerAdapte
 		Bundle args = new Bundle();		
 		args.putInt(LearningObjectSectionFragment.ARG_SECTION_NUMBER, position + 1);
 		args.putInt(LearningObjectSectionFragment.ARG_LEARNING_OBJECT_INDEX, ((LearningObjectActivity)this.context).getLearningObjectIndex());
-		args.putSerializable(CourseSectionFragment.ARG_COURSE, ((LearningObjectActivity)this.context).getCourse());
+		args.putSerializable(CourseSectionFragment.ARG_COURSE, LearningObjectActivity.getCourse());
 		args.putSerializable(LoginActivity.ARG_USER, ((LearningObjectActivity)this.context).getUser());
 		fragment.setArguments(args);
 		
