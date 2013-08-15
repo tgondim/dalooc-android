@@ -191,7 +191,7 @@ public class TestQuestionDetailActivity extends FragmentActivity implements OnWe
 			option = testQuestion.getOptionList().get(i);
 			rb = new MyRadioButton(this, i);
 			this.radioButtonList.add(rb);
-			rb.setText(option.getItem() + getResources().getString(R.string.item_separator) + option.getStatement());
+			rb.setText(option.getItem() + getResources().getString(R.string.item_separator) + " " + option.getStatement());
 			radioGroup.addView(rb);
 		}
 		llRadioGroup.addView(radioGroup);

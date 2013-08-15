@@ -30,7 +30,7 @@
     <string name="question">Question</string>
     <string name="description">Description</string>
     <string name="order">Order</string>
-    <string name="correct_questions_ratio">Correct Questions Ratio</string>
+    <string name="correct_questions_ratio">Correct Questions Ratio %</string>
     <string name="related_content">Related content</string>
     <string name="video_thumbnail">Video Thumbnail</string>
     <string name="references">References</string>
@@ -55,7 +55,7 @@
     <string name="title_activity_create_user">Create User</string>
     <string name="ib_audio_play_description">Press this button to listen to the selected audio</string>
     <string name="ib_audio_record_description">Press this button to record a new audio</string>
-    <string name="no_application_available">No Application Available to View PDF</string>
+    <string name="no_application_available">No application available</string>
     <string name="no_document_added">No document was added to this learning object</string>
     <string name="no_video_added">No video was added to this learning object</string>
     <string name="no_audio_added">No audio was added to this learning object</string>

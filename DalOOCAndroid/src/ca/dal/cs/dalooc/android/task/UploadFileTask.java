@@ -6,7 +6,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import android.os.AsyncTask;
@@ -16,7 +19,7 @@ import ca.dal.cs.dalooc.android.gui.listener.OnUploadFileTaskDoneListener;
 import ca.dal.cs.dalooc.android.util.General;
 
 
-public class UploadFileTask extends AsyncTask<String, Double, Boolean> {
+public class UploadFileTask extends AsyncTask<String, Integer, Boolean> {
 	
 	private final static String LOG_TAG = "UploadFileTask";
 	
@@ -52,11 +55,12 @@ public class UploadFileTask extends AsyncTask<String, Double, Boolean> {
 
 		int bytesRead, bytesAvailable, bufferSize;
 		byte[] buffer;
-		int maxBufferSize = 1*1024*1024;
+		int maxBufferSize = 1*1024;
+//		int maxBufferSize = 1*1024*1024;
 
 		try
 		{
-			BufferedInputStream fileInputStream = new BufferedInputStream(new FileInputStream(new File(pathToOurFile) ), 8192);
+			FileInputStream fileInputStream = new FileInputStream(new File(pathToOurFile) );
 	
 			URL url = new URL(urlServer);
 			connection = (HttpURLConnection) url.openConnection();
@@ -65,6 +69,7 @@ public class UploadFileTask extends AsyncTask<String, Double, Boolean> {
 			connection.setDoInput(true);
 			connection.setDoOutput(true);
 			connection.setUseCaches(false);
+			connection.setChunkedStreamingMode(1024);
 	
 			// Enable POST method
 			connection.setRequestMethod("POST");
@@ -84,25 +89,76 @@ public class UploadFileTask extends AsyncTask<String, Double, Boolean> {
 			buffer = new byte[bufferSize];
 	
 			// Read file
-			bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+//			bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+//	
+//			while (bytesRead > 0)
+//			{
+//				outputStream.write(buffer, 0, bufferSize);
+//				bytesAvailable = fileInputStream.available();
+//				bufferSize = Math.min(bytesAvailable, maxBufferSize);
+//				bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+////				publishProgress((bytesRead/(double)bytesAvailable)*100);
+//			}
+			
+			// Read file
+	        bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+	        int totalBytes = 0;
+	        Log.e("Image length", bytesAvailable + "");
+	        try {
+	            while (bytesRead > 0) {
+	            	totalBytes += bytesRead;
+	                try {
+	                    outputStream.write(buffer, 0, bufferSize);
+	                } catch (OutOfMemoryError e) {
+	                    e.printStackTrace();
+//	                    response = "outofmemoryerror";
+	                    fileInputStream.close();
+	    	            outputStream.flush();
+	    	            outputStream.close();
+	    	            outputStream = null;
+	                    return false;
+	                }
+	                bytesAvailable = fileInputStream.available();
+	                bufferSize = Math.min(bytesAvailable, maxBufferSize);
+	                bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+	                publishProgress((totalBytes/1024)/1024);
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+//	            response = "error";
+	            fileInputStream.close();
+	            outputStream.flush();
+	            outputStream.close();
+	            outputStream = null;
+	            return false;
+	        }
 	
-			while (bytesRead > 0)
-			{
-				outputStream.write(buffer, 0, bufferSize);
-				bytesAvailable = fileInputStream.available();
-				bufferSize = Math.min(bytesAvailable, maxBufferSize);
-				bytesRead = fileInputStream.read(buffer, 0, bufferSize);
-//				publishProgress((bytesRead/(double)bytesAvailable)*100);
-			}
-	
+//	        publishProgress(100);
 			outputStream.writeBytes(lineEnd);
 			outputStream.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 
 			// Responses from the server (code and message)
 			serverResponseCode = connection.getResponseCode();
 			serverResponseMessage = connection.getResponseMessage();
-	
 			
+			Log.i("Server Response Code ", "" + serverResponseCode);
+	        Log.i("Server Response Message", serverResponseMessage);
+
+//	        if (serverResponseCode == 200) {
+//	            response = "true";
+//	        }
+
+	        DateFormat df = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
+	        String CDate = null;
+	        Date serverTime = new Date(connection.getDate());
+	        try {
+	            CDate = df.format(serverTime);
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            Log.e("Date Exception", e.getMessage() + " Parse Exception");
+	        }
+	        Log.i("Server Response Time", CDate + "");
+
 			fileInputStream.close();
 			outputStream.flush();
 			outputStream.close();
@@ -117,20 +173,21 @@ public class UploadFileTask extends AsyncTask<String, Double, Boolean> {
 			fireOnUploadFileTaskDoneEvent(FILE_NOT_UPLOADED);
 			return false;
 		}
-		fireOnUploadFileTaskDoneEvent(FILE_UPLOADED_SUCCESSFULY);
 		return true;
 		
 	}
 	
 	@Override
-	protected void onProgressUpdate(Double... values) {
-		this.tvUploadStatusMessage.setText(String.valueOf(values[0]));
+	protected void onProgressUpdate(Integer... values) {
+		this.tvUploadStatusMessage.setText(values[0] + "Mb Uploaded");
 	}
 	
-	@Override
 	protected void onPostExecute(Boolean result) {
-		// TODO Auto-generated method stub
-		super.onPostExecute(result);
+		if (result) {
+			fireOnUploadFileTaskDoneEvent(FILE_UPLOADED_SUCCESSFULY);
+		} else {
+			fireOnUploadFileTaskDoneEvent(FILE_NOT_UPLOADED);
+		}
 	}
 	
 	public void setOnUploadFileTaskDoneListener(OnUploadFileTaskDoneListener onUploadFileTaskDoneListener) {

@@ -27,6 +27,7 @@
     <string name="videos_folder">/videos</string>
     <string name="audio_folder">/audio</string>
     <string name="documents_folder">/documents</string>
+    <string name="dalooc_files_folder">DalOOC</string>
     
     <string name="item_separator">) </string>
 </resources>

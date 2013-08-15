@@ -198,13 +198,14 @@ public class VideoDetailActivity extends FragmentActivity implements OnUploadFil
 				public void onClick(View v) {
 					Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
 					
-					File videoFolder = new File(Environment.getExternalStorageDirectory(), "DalOOC");
+					File videoFolder = new File(Environment.getExternalStorageDirectory(), getResources().getString(R.string.dalooc_files_folder));
 					videoFolder.mkdirs();
 					File videoFile = new File(videoFolder, video.getId() + ".mp4");
 					VideoDetailActivity.this.newFileName = videoFile.getAbsolutePath();
 					VideoDetailActivity.this.video.setContentFileName(video.getId() + ".mp4");
 					
 					Uri uriSavedVideoFile = Uri.fromFile(videoFile);
+					VideoDetailActivity.this.newFileName = uriSavedVideoFile.toString().replace("file://", "");
 					
 					cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uriSavedVideoFile);
 					cameraIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
