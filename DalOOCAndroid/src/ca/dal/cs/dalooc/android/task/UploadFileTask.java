@@ -1,6 +1,5 @@
 package ca.dal.cs.dalooc.android.task;
 
-import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -57,10 +56,10 @@ public class UploadFileTask extends AsyncTask<String, Integer, Boolean> {
 		byte[] buffer;
 		int maxBufferSize = 1*1024;
 //		int maxBufferSize = 1*1024*1024;
-
+		FileInputStream fileInputStream = null;
 		try
 		{
-			FileInputStream fileInputStream = new FileInputStream(new File(pathToOurFile) );
+			fileInputStream = new FileInputStream(new File(pathToOurFile) );
 	
 			URL url = new URL(urlServer);
 			connection = (HttpURLConnection) url.openConnection();
@@ -159,11 +158,18 @@ public class UploadFileTask extends AsyncTask<String, Integer, Boolean> {
 	        }
 	        Log.i("Server Response Time", CDate + "");
 
-			fileInputStream.close();
-			outputStream.flush();
-			outputStream.close();
+	        if (fileInputStream != null) {
+				fileInputStream.close();
+			}
+			if (outputStream != null) {
+				outputStream.flush();
+				outputStream.close();
+				outputStream = null;
+			}
+			connection.disconnect();
 		} catch (Exception ex) {
 			//Exception handling
+			
 			Log.e(LOG_TAG, ex.toString());
 			fireOnUploadFileTaskDoneEvent(FILE_NOT_UPLOADED);
 			return false;

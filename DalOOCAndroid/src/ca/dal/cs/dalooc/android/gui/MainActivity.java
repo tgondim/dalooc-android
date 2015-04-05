@@ -234,7 +234,9 @@ public class MainActivity extends Activity implements OnItemClickListener, OnWeb
 				if (extras != null) {
 					Course returnCourse = (Course)extras.get(CourseSectionFragment.ARG_COURSE);
 					if (returnCourse != null) {
-						this.courseAdapter.getCourseList().set(this.lastPositionClicked, returnCourse);
+						if ((this.lastPositionClicked >= 0) && (this.lastPositionClicked <= this.courseAdapter.getCourseList().size())) {
+							this.courseAdapter.getCourseList().set(this.lastPositionClicked, returnCourse);
+						}
 					}
 					Boolean removeCourse = extras.getBoolean(ARG_REMOVE_COURSE_FROM_LIST, false);
 					Boolean refreshCourseList = extras.getBoolean(ARG_REFRESH_COURSE_LIST, false);
